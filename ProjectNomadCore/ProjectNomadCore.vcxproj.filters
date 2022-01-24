@@ -1,0 +1,304 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="SimLayer.h" />
+    <ClInclude Include="Utilities\DebugMessage.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\SharedUtilities.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CollisionHelpers.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CollisionData.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FixedPoint.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FPVector.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FPQuat.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FPMath.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FPMath2.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Assertion.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCore\Transform.h">
+      <Filter>GameCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\FPEulerAngles.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCore\GameConstants.h">
+      <Filter>GameCore</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Duration.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Timer.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Ray.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Line.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\SimToUnrealEvent.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\QuickStepEvents.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\GrappleEvents.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\UtilityEvents.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\VectorUtilities.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\AttackEvents.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Events\EquipEvents.h">
+      <Filter>Utilities\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Player\PlayerStateCategory.h">
+      <Filter>Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Player\PlayerAllowedActionsInState.h">
+      <Filter>Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Vendor\EnTT\entt.hpp" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Example.h" />
+    <ClInclude Include="GameCore\Components\Components.h" />
+    <ClInclude Include="GameCore\Components\Renderer\ExternalRendererHelpers.h" />
+    <ClInclude Include="GameCore\Components\Renderer\RendererComponents.h" />
+    <ClInclude Include="GameCore\Components\Renderer\RendererComponentCreators.h" />
+    <ClInclude Include="GameCore\Entities\EntityCreationHelper.h" />
+    <ClInclude Include="GameCore\Entities\EntityCreationRequest.h" />
+    <ClInclude Include="GameCore\Entities\EntityHelpers.h" />
+    <ClInclude Include="GameCore\Entities\Entity.h" />
+    <ClInclude Include="GameCore\Entities\EntityPhysicsHelpers.h" />
+    <ClInclude Include="GameCore\Entities\EntityRendererHelper.h" />
+    <ClInclude Include="GameCore\Entities\HumanoidStateHandler.h" />
+    <ClInclude Include="GameCore\Entities\HumanoidStateHandlerInterface.h" />
+    <ClInclude Include="GameCore\GameManager.h" />
+    <ClInclude Include="GameCore\Systems\AttackActionSystem.h" />
+    <ClInclude Include="GameCore\Systems\BasicFrictionSystem.h" />
+    <ClInclude Include="GameCore\Systems\BasicGravitySystem.h" />
+    <ClInclude Include="GameCore\Systems\BasicJumpSystem.h" />
+    <ClInclude Include="GameCore\Systems\BasicSpawnSystem.h" />
+    <ClInclude Include="GameCore\Systems\DeathSystem.h" />
+    <ClInclude Include="GameCore\Systems\DrawDynamicEntityColliders.h" />
+    <ClInclude Include="GameCore\Systems\GrappleActionSystem.h" />
+    <ClInclude Include="GameCore\Systems\GrappleAimAssistSystem.h" />
+    <ClInclude Include="GameCore\Systems\GrappleProjectileFlightSystem.h" />
+    <ClInclude Include="GameCore\Systems\GrappleQuickPullSystem.h" />
+    <ClInclude Include="GameCore\Systems\Helpers\SystemCollisionHelpers.h" />
+    <ClInclude Include="GameCore\Systems\QuickStepActionSystem.h" />
+    <ClInclude Include="GameCore\Systems\DrawStaticCollidersSystem.h" />
+    <ClInclude Include="GameCore\Systems\EnemyMovementInputSystem.h" />
+    <ClInclude Include="GameCore\Systems\HitfreezeSystem.h" />
+    <ClInclude Include="GameCore\Systems\HitstunSystem.h" />
+    <ClInclude Include="GameCore\Systems\InputTrackingForNextFrameSystem.h" />
+    <ClInclude Include="GameCore\Systems\BasicMovementSystem.h" />
+    <ClInclude Include="GameCore\Systems\PlayerMovementInputSystem.h" />
+    <ClInclude Include="GameCore\Systems\PlayerStateTransitionSystem.h" />
+    <ClInclude Include="GameCore\Systems\System.h" />
+    <ClInclude Include="GameCore\Systems\TryGrappleStartSystem.h" />
+    <ClInclude Include="GameCore\Systems\UnrealActorUpdatingSystem.h" />
+    <ClInclude Include="GameCore\Systems\UpdateIfInAirSystem.h" />
+    <ClInclude Include="GameCore\Systems\UpdateIfTouchingWallSystem.h" />
+    <ClInclude Include="GameCore\Systems\UpdateMainPlayerInputsSystem.h" />
+    <ClInclude Include="GameCore\Systems\UpdatePlayerCameraSystem.h" />
+    <ClInclude Include="GameCore\Systems\_ExampleSystem.h" />
+    <ClInclude Include="Physics\Collider.h" />
+    <ClInclude Include="Physics\SimpleCollisions.h" />
+    <ClInclude Include="Physics\ComplexCollisions.h" />
+    <ClInclude Include="Utilities\CallbackTypes.h" />
+    <ClInclude Include="Utilities\Randomizer.h" />
+    <ClInclude Include="GameCore\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
+    <ClInclude Include="Data\AnimationDataIO.h" />
+    <ClInclude Include="Data\AttackAnimDataProvider.h" />
+    <ClInclude Include="Data\Containers\FlexArray.h" />
+    <ClInclude Include="Data\FileIOHelpers.h" />
+    <ClInclude Include="Data\Gameplay\FrameSnapshot.h" />
+    <ClInclude Include="Data\Gameplay\HitReactIdentifier.h" />
+    <ClInclude Include="Data\Gameplay\PlayerInputsForFrame.h" />
+    <ClInclude Include="Data\Gameplay\AttackIdentifier.h" />
+    <ClInclude Include="Data\Gameplay\Static\AttackData.h" />
+    <ClInclude Include="Data\Gameplay\Static\HitReactData.h" />
+    <ClInclude Include="Data\HitReactAnimDataProvider.h" />
+    <ClInclude Include="Data\ReplayReader.h" />
+    <ClInclude Include="Data\ReplayWriter.h" />
+    <ClInclude Include="Data\SnapshotManager.h" />
+    <ClInclude Include="GameCore\Components\Components.def" />
+    <ClInclude Include="GameCore\Components\ComponentsSize.h" />
+    <ClInclude Include="GameCore\GameplayManager.h" />
+    <ClInclude Include="GameCore\Systems\AttackChargeActionSystem.h" />
+    <ClInclude Include="GameCore\Systems\Helpers\MovementHelper.h" />
+    <ClInclude Include="Network\NetworkManagerCallbackTypes.h" />
+    <ClInclude Include="Network\CrossPlatformIdWrapper.h" />
+    <ClInclude Include="Network\EpicAccountIdWrapper.h" />
+    <ClInclude Include="Network\NetStatus.h" />
+    <ClInclude Include="Network\NetworkSecrets.h" />
+    <ClInclude Include="Network\NetworkManagerSingleton.h" />
+    <ClInclude Include="Physics\ColliderHelpers.h" />
+    <ClInclude Include="Physics\Simplex.h" />
+    <ClInclude Include="Utilities\DebugFlags.h" />
+    <ClInclude Include="Utilities\Singleton.h" />
+    <ClInclude Include="Utilities\NetLogMessage.h" />
+    <ClInclude Include="Utilities\SimContextSingleton.h" />
+    <ClInclude Include="Vendor\cereal\cereal.hpp" />
+    <ClInclude Include="Vendor\date\date.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_achievements.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_achievements_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_achievements_types_deprecated.inl" />
+    <ClInclude Include="Vendor\EOS\Include\eos_anticheatclient.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_anticheatclient_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_anticheatcommon_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_anticheatserver.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_anticheatserver_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_auth.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_auth_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_base.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_common.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_connect.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_connect_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_ecom.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_ecom_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_friends.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_friends_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_init.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_kws.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_kws_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_leaderboards.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_leaderboards_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_leaderboards_types_deprecated.inl" />
+    <ClInclude Include="Vendor\EOS\Include\eos_lobby.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_lobby_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_logging.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_metrics.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_metrics_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_mods.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_mods_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_p2p.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_p2p_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_platform_prereqs.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_playerdatastorage.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_playerdatastorage_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_presence.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_presence_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_progressionsnapshot.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_progressionsnapshot_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_reports.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_reports_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_result.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc_admin.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc_admin_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc_audio.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc_audio_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_rtc_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_sanctions.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_sanctions_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_sdk.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_sessions.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_sessions_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_stats.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_stats_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_titlestorage.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_titlestorage_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_ui.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_ui_keys.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_ui_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_userinfo.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_userinfo_types.h" />
+    <ClInclude Include="Vendor\EOS\Include\eos_version.h" />
+    <ClInclude Include="Vendor\EOS\Include\Linux\eos_Linux_base.h" />
+    <ClInclude Include="Vendor\EOS\Include\Mac\eos_Mac_base.h" />
+    <ClInclude Include="Vendor\EOS\Include\Windows\eos_Windows.h" />
+    <ClInclude Include="Vendor\EOS\Include\Windows\eos_Windows_base.h" />
+    <ClInclude Include="Vendor\fpm\fixed.hpp" />
+    <ClInclude Include="Vendor\fpm\ios.hpp" />
+    <ClInclude Include="Vendor\fpm\math.hpp" />
+    <ClInclude Include="Vendor\rapidjson\allocators.h" />
+    <ClInclude Include="Vendor\rapidjson\cursorstreamwrapper.h" />
+    <ClInclude Include="Vendor\rapidjson\document.h" />
+    <ClInclude Include="Vendor\rapidjson\encodedstream.h" />
+    <ClInclude Include="Vendor\rapidjson\encodings.h" />
+    <ClInclude Include="Vendor\rapidjson\error\en.h" />
+    <ClInclude Include="Vendor\rapidjson\error\error.h" />
+    <ClInclude Include="Vendor\rapidjson\filereadstream.h" />
+    <ClInclude Include="Vendor\rapidjson\filewritestream.h" />
+    <ClInclude Include="Vendor\rapidjson\fwd.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\biginteger.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\clzll.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\diyfp.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\dtoa.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\ieee754.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\itoa.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\meta.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\pow10.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\regex.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\stack.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\strfunc.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\strtod.h" />
+    <ClInclude Include="Vendor\rapidjson\internal\swap.h" />
+    <ClInclude Include="Vendor\rapidjson\istreamwrapper.h" />
+    <ClInclude Include="Vendor\rapidjson\memorybuffer.h" />
+    <ClInclude Include="Vendor\rapidjson\memorystream.h" />
+    <ClInclude Include="Vendor\rapidjson\msinttypes\inttypes.h" />
+    <ClInclude Include="Vendor\rapidjson\msinttypes\stdint.h" />
+    <ClInclude Include="Vendor\rapidjson\ostreamwrapper.h" />
+    <ClInclude Include="Vendor\rapidjson\pointer.h" />
+    <ClInclude Include="Vendor\rapidjson\prettywriter.h" />
+    <ClInclude Include="Vendor\rapidjson\rapidjson.h" />
+    <ClInclude Include="Vendor\rapidjson\reader.h" />
+    <ClInclude Include="Vendor\rapidjson\schema.h" />
+    <ClInclude Include="Vendor\rapidjson\stream.h" />
+    <ClInclude Include="Vendor\rapidjson\stringbuffer.h" />
+    <ClInclude Include="Vendor\rapidjson\uri.h" />
+    <ClInclude Include="Vendor\rapidjson\writer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{c08b8ea6-e2ef-4538-b8d6-9073a016052c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{90f72795-cfc8-4f13-812c-b791eba5c84c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{f5f58322-a910-4024-89f3-5d1d1f33cbe3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameCore">
+      <UniqueIdentifier>{d43d2edc-f18c-45ac-bde1-b8f11c7ab63c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{e65932af-e69a-4875-974a-fb70e7069632}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities\Events">
+      <UniqueIdentifier>{ed5f14cf-f27c-4be8-81ad-59b12db3108c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Player">
+      <UniqueIdentifier>{5ec97f0c-e2c9-4c7f-9f10-7240e8b69f63}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+  </ItemGroup>
+</Project>

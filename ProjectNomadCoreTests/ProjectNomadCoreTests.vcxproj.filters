@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="GameCore\TransformTests.cpp" />
+    <ClCompile Include="Math\FixedPointTests.cpp" />
+    <ClCompile Include="Math\FPEulerAnglesTests.cpp" />
+    <ClCompile Include="Math\FPMath2Tests.cpp" />
+    <ClCompile Include="Math\FPMathTests.cpp" />
+    <ClCompile Include="Math\FPQuatTests.cpp" />
+    <ClCompile Include="Math\FPVectorTests.cpp" />
+    <ClCompile Include="Math\VectorUtilitiesTests.cpp" />
+    <ClCompile Include="Physics\CollisionHelpersTests.cpp" />
+    <ClCompile Include="Physics\LineTests.cpp" />
+    <ClCompile Include="Physics\RayTests.cpp" />
+    <ClCompile Include="Physics\ColliderTests.cpp" />
+    <ClCompile Include="Physics\SimpleCollisionsTests.cpp" />
+    <ClCompile Include="SimLayerTests.cpp" />
+    <ClCompile Include="TestHelpers\TestHelpers.cpp" />
+    <ClCompile Include="Physics\ComplexCollisionsTests.cpp" />
+    <ClCompile Include="Data\Gameplay\PlayerInputsForFrameTests.cpp" />
+    <ClCompile Include="Data\ReplayReaderTests.cpp" />
+    <ClCompile Include="Data\ReplayWriterTests.cpp" />
+    <ClCompile Include="GameCore\Components\ComponentsTests.cpp" />
+    <ClCompile Include="Sandbox\SnapshotTests.cpp" />
+    <ClCompile Include="Data\AnimationDataIOTests.cpp" />
+    <ClCompile Include="Data\AttackAnimDataProviderTestscpp.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="TestHelpers\TestHelpers.h" />
+    <ClInclude Include="Sandbox\TestComponents.h" />
+    <ClInclude Include="Sandbox\TestGameManager.h" />
+    <ClInclude Include="Sandbox\TestSpawnSystem.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{07b19d7b-f231-4c1b-b40f-0b224778a6b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{3f416985-61b1-45a7-8dda-007766f29c6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{c71fad80-b9a1-4d5e-b4f3-bb0265d7e337}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameCore">
+      <UniqueIdentifier>{d63a1909-4e81-4f79-afac-6d91e4658a51}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
