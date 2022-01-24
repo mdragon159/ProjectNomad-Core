@@ -8,6 +8,20 @@ In particular, this repo focuses on supporting a fully deterministic cross-platf
 However, take note that this library is in early development with various bugs, TODOs, and otherwise messy 
 in-progress code.
 
+## Requirements
+1. Install Visual Studio (using 2019 Community edition).
+- Make sure to install the "Desktop development with C++" workload/package set. In addition, after clicking on that workload, make sure "Test Adapter for Google Test" 
+is selected in the sidebar
+
+Recommended to also use [JetBrains Rider for Unreal IDE](https://www.jetbrains.com/lp/rider-unreal/) as Visual Studio is very... not good with C++
+
+## Setup
+1. Check out repo
+   - Recommended to create a folder as high up in file directory as possible for repo. This is due to
+     Google Test files being named farrr too long
+2. Open the solution located in `Solution/ProjectNomadCore.sln`
+3. Build and run tests
+
 ## Physics Engine Details
 
 The intention behind the physics engine is the following:

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{c7e43bbb-997a-412f-b99b-45f5addb1164}</ProjectGuid>
+    <ProjectGuid>{93F26E90-DFC3-415B-BEC9-29443349228D}</ProjectGuid>
     <RootNamespace>ProjectNomadCore</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>ProjectNomadCore</ProjectName>
