@@ -9,19 +9,14 @@ namespace ProjectNomad {
     ///     as std::vector's array is effectively a pointer to elsewhere in memory.
     /// NOTE: Order not guaranteed to be in add() call order. Check remove() implementation for more details
     /// </summary>
-    template <typename LoggerType, typename ContentType, uint32_t MaxSize>
+    template <typename ContentType, uint32_t MaxSize>
     class FlexArray {
-        static_assert(std::is_base_of_v<ILogger, LoggerType>, "LoggerType must inherit from ILogger");
         static_assert(MaxSize > 0, "MaxSize must be greater than 0");
 
-        LoggerType& logger;
-        
         ContentType array[MaxSize];
         uint32_t headIndex = 0; // Points to where next element should be added
 
     public:
-        FlexArray(LoggerType& logger) : logger(logger) {}
-        
         static constexpr uint32_t getMaxSize() {
             return MaxSize;
         }
@@ -33,11 +28,6 @@ namespace ProjectNomad {
         // Returns true if succeeds
         bool add(const ContentType& element) {
             if (headIndex >= MaxSize) {
-                logger.logErrorMessage(
-                    "FlexArray::add",
-                    "Attempted to add element when head already >= MaxSize. Head: " + std::to_string(headIndex)
-                            + " and MaxSize: " + std::to_string(MaxSize)
-                );
                 return false;
             }
             
@@ -49,18 +39,9 @@ namespace ProjectNomad {
         const ContentType& get(uint32_t index) {
             // Check index in bounds
             if (index > MaxSize - 1) {
-                logger.logErrorMessage(
-                    "FlexArray::get",
-                    "Attempted to retrieve outside of MaxSize with index: " + std::to_string(index)
-                );
                 return array[0];
             }
             if (index >= headIndex) {
-                logger.logErrorMessage(
-                    "FlexArray::get",
-                    "Attempted to retrieve outside of head with head: " + std::to_string(headIndex)
-                                + " and index: " + std::to_string(index)
-                );
                 return array[0];
             }
 
@@ -68,22 +49,17 @@ namespace ProjectNomad {
             return array[index];
         }
 
-        // Returns true if succeeds
+        /// <summary>
+        /// Removes the element at the given index and moves last element to index.
+        /// FUTURE: Supply iterator and erase functions. Consumer should not need to know to decrement index if looping and removing
+        /// </summary>
+        /// <returns>Returns true if succeeds in removing element at given index</returns>
         bool remove(uint32_t index) {
             // Check index in bounds
             if (index > MaxSize - 1) {
-                logger.logErrorMessage(
-                    "FlexArray::remove",
-                    "Attempted to remove outside of MaxSize with index: " + std::to_string(index)
-                );
                 return false;
             }
             if (index >= headIndex) {
-                logger.logErrorMessage(
-                    "FlexArray::remove",
-                    "Attempted to remove outside of head with head: " + std::to_string(headIndex)
-                                + " and index: " + std::to_string(index)
-                );
                 return false;
             }
             
