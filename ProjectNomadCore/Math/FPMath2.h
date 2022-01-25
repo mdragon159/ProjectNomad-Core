@@ -4,7 +4,7 @@
 #include "FPVector.h"
 #include "FPQuat.h"
 #include "FPEulerAngles.h"
-#include "Utilities/CoreConstants.h"
+#include "GameCore/CoreConstants.h"
 
 namespace ProjectNomad {
 
