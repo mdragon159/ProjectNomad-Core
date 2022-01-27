@@ -192,6 +192,7 @@
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
+    <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
     <ClInclude Include="Utilities\DebugMessage.h" />
     <ClInclude Include="Utilities\ILogger.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
