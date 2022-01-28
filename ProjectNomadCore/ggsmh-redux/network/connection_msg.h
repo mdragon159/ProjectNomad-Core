@@ -38,28 +38,28 @@ struct ConnectionMsg
    } hdr;
    union {
       struct {
-         uint32      random_request;  /* please reply back with this random data */
+         uint32_t      random_request;  /* please reply back with this random data */
          uint16      remote_magic;
          uint8       remote_endpoint;
       } sync_request;
       
       struct {
-         uint32      random_reply;    /* OK, here's your random data back */
+         uint32_t      random_reply;    /* OK, here's your random data back */
       } sync_reply;
       
       struct {
          int8        frame_advantage; /* what's the other guy's frame advantage? */
-         uint32      ping;
+         uint32_t      ping;
       } quality_report;
       
       struct {
-         uint32      pong;
+         uint32_t      pong;
       } quality_reply;
 
       struct {
          connect_status    peer_connect_status[CONNECTION_MSG_MAX_PLAYERS];
 
-         uint32            start_frame;
+         uint32_t            start_frame;
 
          int               disconnect_requested:1;
          int               ack_frame:31;

@@ -264,6 +264,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="ggsmh-redux\README.md" />
+    <Content Include="ggsmh-redux\TODO.md" />
     <Content Include="Vendor\cereal\README.md" />
     <Content Include="Vendor\EnTT\LICENSE" />
     <Content Include="Vendor\EnTT\README.md" />

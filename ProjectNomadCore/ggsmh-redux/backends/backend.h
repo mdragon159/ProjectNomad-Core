@@ -8,8 +8,8 @@
 #ifndef _BACKEND_H
 #define _BACKEND_H
 
-#include "ggponet.h"
-#include "types.h"
+#include "ggsmh-redux/ggponet.h"
+#include "ggsmh-redux/types.h"
 
 struct GGPOSession {
    virtual ~GGPOSession() { }

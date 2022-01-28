@@ -13,6 +13,7 @@
 #define assertm(exp, msg) assert(((void)msg, exp))
 
 // I... have no idea where the below came from. Should work now given using C++17... methinks?
+// TODO: Use templated function format over macro and place within a namespace
 //template<typename T1, typename T2>
 //constexpr auto assertm(T1 exp, T2  msg) { return assert(((void)msg, exp)); }
 

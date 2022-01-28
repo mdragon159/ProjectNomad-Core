@@ -41,8 +41,7 @@ SyncTestBackend::~SyncTestBackend()
 {
 }
 
-GGPOErrorCode
-SyncTestBackend::DoPoll(int timeout)
+GGPOErrorCode SyncTestBackend::DoPoll(int timeout)
 {
    if (!_running) {
       GGPOEvent info;
@@ -54,8 +53,7 @@ SyncTestBackend::DoPoll(int timeout)
    return GGPO_OK;
 }
 
-GGPOErrorCode
-SyncTestBackend::AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle)
+GGPOErrorCode SyncTestBackend::AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle)
 {
    if (player->player_num < 1 || player->player_num > _num_players) {
       return GGPO_ERRORCODE_PLAYER_OUT_OF_RANGE;
@@ -64,8 +62,7 @@ SyncTestBackend::AddPlayer(GGPOPlayer *player, GGPOPlayerHandle *handle)
    return GGPO_OK;
 }
 
-GGPOErrorCode
-SyncTestBackend::AddLocalInput(GGPOPlayerHandle player, void *values, int size)
+GGPOErrorCode SyncTestBackend::AddLocalInput(GGPOPlayerHandle player, void *values, int size)
 {
    if (!_running) {
       return GGPO_ERRORCODE_NOT_SYNCHRONIZED;
@@ -78,8 +75,7 @@ SyncTestBackend::AddLocalInput(GGPOPlayerHandle player, void *values, int size)
    return GGPO_OK;
 }
 
-GGPOErrorCode
-SyncTestBackend::SyncInput(void *values,
+GGPOErrorCode SyncTestBackend::SyncInput(void *values,
                            int size,
                            int *disconnect_flags)
 {
@@ -99,8 +95,7 @@ SyncTestBackend::SyncInput(void *values,
    return GGPO_OK;
 }
 
-GGPOErrorCode
-SyncTestBackend::IncrementFrame(void)
+GGPOErrorCode SyncTestBackend::IncrementFrame(void)
 {  
    _sync.IncrementFrame();
    _current_input.erase();
@@ -157,8 +152,7 @@ SyncTestBackend::IncrementFrame(void)
    return GGPO_OK;
 }
 
-void
-SyncTestBackend::RaiseSyncError(const char *fmt, ...)
+void SyncTestBackend::RaiseSyncError(const char *fmt, ...)
 {
    char buf[1024];
    va_list args;
@@ -172,8 +166,7 @@ SyncTestBackend::RaiseSyncError(const char *fmt, ...)
    DebugBreak();
 }
 
-GGPOErrorCode
-SyncTestBackend::Logv(char *fmt, va_list list)
+GGPOErrorCode SyncTestBackend::Logv(char *fmt, va_list list)
 {
    if (_logfp) {
       vfprintf(_logfp, fmt, list);
@@ -181,8 +174,7 @@ SyncTestBackend::Logv(char *fmt, va_list list)
    return GGPO_OK;
 }
 
-void
-SyncTestBackend::BeginLog(int saving)
+void SyncTestBackend::BeginLog(int saving)
 {
    EndLog();
 
@@ -196,8 +188,7 @@ SyncTestBackend::BeginLog(int saving)
     fopen_s(&_logfp, filename, "w");
 }
 
-void
-SyncTestBackend::EndLog()
+void SyncTestBackend::EndLog()
 {
    if (_logfp) {
       fprintf(_logfp, "Closing log file.\n");
@@ -205,8 +196,7 @@ SyncTestBackend::EndLog()
       _logfp = NULL;
    }
 }
-void
-SyncTestBackend::LogSaveStates(SavedInfo &info)
+void SyncTestBackend::LogSaveStates(SavedInfo &info)
 {
    char filename[MAX_PATH];
    sprintf_s(filename, ARRAY_SIZE(filename), "synclogs\\state-%04d-original.log", _sync.GetFrameCount());

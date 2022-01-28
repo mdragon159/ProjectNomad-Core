@@ -8,10 +8,10 @@
 #ifndef _SYNCTEST_H
 #define _SYNCTEST_H
 
-#include "types.h"
+#include "ggsmh-redux/types.h"
 #include "backend.h"
-#include "sync.h"
-#include "ring_buffer.h"
+#include "ggsmh-redux/sync.h"
+#include "ggsmh-redux/ring_buffer.h"
 
 class SyncTestBackend : public IQuarkBackend {
 public:

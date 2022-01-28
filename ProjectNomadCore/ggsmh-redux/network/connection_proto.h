@@ -8,13 +8,13 @@
 #ifndef _CONNECTION_PROTO_H_
 #define _CONNECTION_PROTO_H_
 
-#include "poll.h"
+#include "ggsmh-redux/poll.h"
 #include "connection.h"
 #include "connection_msg.h"
-#include "game_input.h"
-#include "timesync.h"
-#include "ggponet.h"
-#include "ring_buffer.h"
+#include "ggsmh-redux/game_input.h"
+#include "ggsmh-redux/timesync.h"
+#include "ggsmh-redux/ggponet.h"
+#include "ggsmh-redux/ring_buffer.h"
 
 class ConnectionProtocol : public IPollSink
 {
@@ -120,7 +120,6 @@ protected:
    bool OnQualityReply(ConnectionMsg *msg, int len);
    bool OnKeepAlive(ConnectionMsg *msg, int len);
 
-protected:
    /*
     * Network transmission information
     */
@@ -157,13 +156,13 @@ protected:
    State          _current_state;
    union {
       struct {
-         uint32   roundtrips_remaining;
-         uint32   random;
+         uint32_t   roundtrips_remaining;
+         uint32_t   random;
       } sync;
       struct {
-         uint32   last_quality_report_time;
-         uint32   last_network_stats_interval;
-         uint32   last_input_packet_recv_time;
+         uint32_t   last_quality_report_time;
+         uint32_t   last_network_stats_interval;
+         uint32_t   last_input_packet_recv_time;
       } running;
    } _state;
 

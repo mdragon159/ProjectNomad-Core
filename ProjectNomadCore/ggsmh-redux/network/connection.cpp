@@ -5,7 +5,7 @@
  * in the LICENSE file.
  */
 
-#include "types.h"
+#include "ggsmh-redux/types.h"
 #include "connection.h"
 
 Connection::Connection() 

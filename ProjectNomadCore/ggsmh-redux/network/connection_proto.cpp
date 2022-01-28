@@ -5,9 +5,9 @@
  * in the LICENSE file.
  */
 
-#include "types.h"
+#include "ggsmh-redux/types.h"
 #include "connection_proto.h"
-#include "bitvector.h"
+#include "ggsmh-redux/bitvector.h"
 
 static const int CONNECTION_HEADER_SIZE = 28;     /* Size of IP + CONNECTION headers */
 static const int NUM_SYNC_PACKETS = 5;

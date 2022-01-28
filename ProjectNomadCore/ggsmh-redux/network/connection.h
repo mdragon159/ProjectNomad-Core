@@ -8,10 +8,10 @@
 #ifndef _CONNECTION_H
 #define _CONNECTION_H
 
-#include "poll.h"
+#include "ggsmh-redux/poll.h"
 #include "connection_msg.h"
-#include "ggponet.h"
-#include "ring_buffer.h"
+#include "ggsmh-redux/ggponet.h"
+#include "ggsmh-redux/ring_buffer.h"
 
 #define MAX_CONNECTION_ENDPOINTS     16
 

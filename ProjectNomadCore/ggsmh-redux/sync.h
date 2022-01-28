@@ -38,7 +38,6 @@ public:
       } u;
    };
 
-public:
    Sync(ConnectionMsg::connect_status *connect_status);
    virtual ~Sync();
 
@@ -84,7 +83,6 @@ protected:
    bool CheckSimulationConsistency(int *seekTo);
    void ResetPrediction(int frameNumber);
 
-protected:
    GGPOSessionCallbacks _callbacks;
    SavedState     _savedstate;
    Config         _config;

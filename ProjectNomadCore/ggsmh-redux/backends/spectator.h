@@ -8,12 +8,12 @@
 #ifndef _SPECTATOR_H
 #define _SPECTATOR_H
 
-#include "types.h"
-#include "poll.h"
-#include "sync.h"
+#include "ggsmh-redux/types.h"
+#include "ggsmh-redux/poll.h"
+#include "ggsmh-redux/sync.h"
 #include "backend.h"
-#include "timesync.h"
-#include "network/connection_proto.h"
+#include "ggsmh-redux/timesync.h"
+#include "ggsmh-redux/network/connection_proto.h"
 
 #define SPECTATOR_FRAME_BUFFER_SIZE    64
 
