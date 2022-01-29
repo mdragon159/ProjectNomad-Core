@@ -1,17 +1,10 @@
-/* -----------------------------------------------------------------------
- * GGPO.net (http://ggpo.net)  -  Copyright 2009 GroundStorm Studios, LLC.
- *
- * Use of this software is governed by the MIT license that can be found
- * in the LICENSE file.
- */
-
-#ifndef _CONNECTION_MSG_H
-#define _CONNECTION_MSG_H
+#pragma once
 
 #define MAX_COMPRESSED_BITS       4096
 #define CONNECTION_MSG_MAX_PLAYERS          4
 
 #pragma pack(push, 1)
+#include <cstdint>
 
 struct ConnectionMsg
 {
@@ -75,7 +68,6 @@ struct ConnectionMsg
 
    } u;
 
-public:
    int PacketSize() {
       return sizeof(hdr) + PayloadSize();
    }
@@ -103,5 +95,3 @@ public:
 };
 
 #pragma pack(pop)
-
-#endif   

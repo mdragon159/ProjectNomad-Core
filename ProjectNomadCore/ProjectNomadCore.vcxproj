@@ -274,21 +274,9 @@
     <Content Include="Vendor\rapidjson\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ggsmh-redux\backends\p2p.cpp" />
-    <ClCompile Include="ggsmh-redux\backends\spectator.cpp" />
-    <ClCompile Include="ggsmh-redux\backends\synctest.cpp" />
-    <ClCompile Include="ggsmh-redux\bitvector.cpp" />
-    <ClCompile Include="ggsmh-redux\game_input.cpp" />
-    <ClCompile Include="ggsmh-redux\input_queue.cpp" />
-    <ClCompile Include="ggsmh-redux\log.cpp" />
-    <ClCompile Include="ggsmh-redux\main.cpp" />
-    <ClCompile Include="ggsmh-redux\network\connection.cpp" />
-    <ClCompile Include="ggsmh-redux\network\connection_proto.cpp" />
+    <ClInclude Include="ggsmh-redux\GGPOMain.h" />
     <ClCompile Include="ggsmh-redux\platform_linux.cpp" />
     <ClCompile Include="ggsmh-redux\platform_windows.cpp" />
-    <ClCompile Include="ggsmh-redux\poll.cpp" />
-    <ClCompile Include="ggsmh-redux\sync.cpp" />
-    <ClCompile Include="ggsmh-redux\timesync.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

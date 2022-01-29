@@ -6,7 +6,6 @@ Get this working ASAP with main project and EOS
 
 ### Will do
 Priority:
-- Move implementation from .cpp to .h
 - Replace/remove platform-specific code
 - (Replace network layer with an EOS compatible abstraction, but work at this layer 
   likely already done)
@@ -29,7 +28,7 @@ For style (lower priority):
   `typedef strut {} varName`
 - Remove all `__cdecl` usages
 - Remove all `(void)` function param lists
-- Remove (practically) all macros
+- Remove (practically) all macros and defines
 
 ### Much further in future
 - Unit tests
