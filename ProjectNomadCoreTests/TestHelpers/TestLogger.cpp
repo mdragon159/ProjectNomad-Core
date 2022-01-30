@@ -72,3 +72,51 @@ void TestLogger::addCapsuleMessage(fp displayTime, const Collider& capsule, Outp
 }
 
 #pragma endregion
+
+#pragma region NetLog Messages
+
+std::queue<NetLogMessage>& TestLogger::getNetLogMessages() {
+    return emptyNetLogQueue;
+}
+
+void TestLogger::addNetLogMessage(std::string message) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addNetLogMessage(std::string message, NetLogCategory category) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addNetLogMessage(std::string message, OutputColor color) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addInfoNetLog(std::string identifier, std::string message) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addWarnNetLog(std::string identifier, std::string message) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addErrorNetLog(std::string identifier, std::string message) {
+    wasNetLogMessageLogged = true;
+}
+
+void TestLogger::addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) {
+    wasNetLogMessageLogged = true;
+}
+
+#pragma endregion

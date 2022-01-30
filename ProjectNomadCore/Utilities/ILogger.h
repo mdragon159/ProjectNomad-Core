@@ -1,6 +1,7 @@
 #pragma once
 #include <queue>
 
+#include "NetLogMessage.h"
 #include "Utilities/DebugMessage.h"
 #include "Physics/Collider.h"
 
@@ -44,5 +45,31 @@ namespace ProjectNomad {
         virtual void addCapsuleMessage(fp displayTime, const Collider& capsule, OutputColor outputColor) = 0;
 
 #pragma endregion
+
+        #pragma region NetLog Messages
+
+        virtual std::queue<NetLogMessage>& getNetLogMessages() = 0;
+        
+        virtual void addNetLogMessage(std::string message) = 0;
+
+        virtual void addNetLogMessage(std::string message, NetLogCategory category) = 0;
+
+        virtual void addNetLogMessage(std::string message, OutputColor color) = 0;
+
+        virtual void addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) = 0;
+
+        virtual void addInfoNetLog(std::string identifier, std::string message) = 0;
+
+        virtual void addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+        
+        virtual void addWarnNetLog(std::string identifier, std::string message) = 0;
+
+        virtual void addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+
+        virtual void addErrorNetLog(std::string identifier, std::string message) = 0;
+
+        virtual void addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+
+        #pragma endregion 
     };
 }

@@ -7,7 +7,10 @@ using namespace ProjectNomad;
 class TestLogger : public ILogger {
     std::queue<DebugMessage> emptyQueue;
     bool wasMessageLogged = false;
-    
+
+    std::queue<NetLogMessage> emptyNetLogQueue;
+    bool wasNetLogMessageLogged = false;
+
 public:
     ~TestLogger() override {}
 
@@ -36,6 +39,18 @@ public:
     void addCapsuleMessage(fp displayTime, const Collider& capsule) override;
     void addCapsuleMessage(fp displayTime, const Collider& capsule,
         OutputColor outputColor) override;
+
+    std::queue<NetLogMessage>& getNetLogMessages() override;
+    void addNetLogMessage(std::string message) override;
+    void addNetLogMessage(std::string message, NetLogCategory category) override;
+    void addNetLogMessage(std::string message, OutputColor color) override;
+    void addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) override;
+    void addInfoNetLog(std::string identifier, std::string message) override;
+    void addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) override;
+    void addWarnNetLog(std::string identifier, std::string message) override;
+    void addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) override;
+    void addErrorNetLog(std::string identifier, std::string message) override;
+    void addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) override;
 
 #pragma endregion 
     

@@ -195,8 +195,10 @@
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
+    <ClInclude Include="Utilities\CoreTypeShortcuts.h" />
     <ClInclude Include="Utilities\DebugMessage.h" />
     <ClInclude Include="Utilities\ILogger.h" />
+    <ClInclude Include="Utilities\LoggerSingleton.h" />
     <ClInclude Include="Utilities\NetLogMessage.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
     <ClInclude Include="Utilities\Singleton.h" />
