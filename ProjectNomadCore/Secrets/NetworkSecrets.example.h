@@ -21,6 +21,6 @@ namespace ProjectNomad {
 
         /** Game name */
         // Not really a secret, can be extracted and put elsewhere
-        static constexpr char GameName[] = "DragonJawad's Test Game";
+        static constexpr char GameName[] = "Game Name";
     };
 }

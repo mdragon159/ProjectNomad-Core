@@ -19,8 +19,12 @@ Recommended to also use [JetBrains Rider for Unreal IDE](https://www.jetbrains.c
 1. Check out repo
    - Recommended to create a folder as high up in file directory as possible for repo. This is due to
      Google Test files being named farrr too long
-2. Open the solution located in `Solution/ProjectNomadCore.sln`
-3. Build and run tests
+2. Open the solution located in `Solution/ProjectNomadCore.sln`\
+3. Create a copy for all files in `ProjectNomadCore/Secrets` and remove '.example.' from their names
+    - Eg, copy `NetworkSecrets.example.h` and name it `NetworkSecrets.h`
+    - For full functionality, you can fill in the secrets with your own values. However for now, 
+        the project as a whole will compile without those secrets filled in
+4. Build and run tests
 
 ## Physics Engine Details
 
