@@ -5,6 +5,7 @@
  * in the LICENSE file.
  */
 
+#include "pch.h"
 #include "platform_windows.h"
 
 int

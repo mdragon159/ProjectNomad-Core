@@ -171,28 +171,6 @@
     <ClInclude Include="GameCore\BaseSystem.h" />
     <ClInclude Include="GameCore\CoreComponents.h" />
     <ClInclude Include="GameCore\CoreConstants.h" />
-    <ClInclude Include="ggsmh-redux\backends\backend.h" />
-    <ClInclude Include="ggsmh-redux\backends\p2p.h" />
-    <ClInclude Include="ggsmh-redux\backends\spectator.h" />
-    <ClInclude Include="ggsmh-redux\backends\synctest.h" />
-    <ClInclude Include="ggsmh-redux\bitvector.h" />
-    <ClInclude Include="ggsmh-redux\game_input.h" />
-    <ClInclude Include="ggsmh-redux\ggponet.h" />
-    <ClInclude Include="ggsmh-redux\input_queue.h" />
-    <ClInclude Include="ggsmh-redux\log.h" />
-    <ClInclude Include="ggsmh-redux\network\connection.h" />
-    <ClInclude Include="ggsmh-redux\network\connection_msg.h" />
-    <ClInclude Include="ggsmh-redux\network\connection_proto.h" />
-    <ClInclude Include="ggsmh-redux\platform_linux.h" />
-    <ClInclude Include="ggsmh-redux\platform_windows.h" />
-    <ClInclude Include="ggsmh-redux\poll.h" />
-    <ClInclude Include="ggsmh-redux\ring_buffer.h" />
-    <ClInclude Include="ggsmh-redux\static_buffer.h" />
-    <ClInclude Include="ggsmh-redux\sync.h" />
-    <ClInclude Include="ggsmh-redux\timesync.h" />
-    <ClInclude Include="ggsmh-redux\types.h" />
-    <ClInclude Include="ggsmh-redux\zconf.h" />
-    <ClInclude Include="ggsmh-redux\zlib.h" />
     <ClInclude Include="Math\FixedPoint.h" />
     <ClInclude Include="Math\FPEulerAngles.h" />
     <ClInclude Include="Math\FPMath.h" />
@@ -200,6 +178,7 @@
     <ClInclude Include="Math\FPQuat.h" />
     <ClInclude Include="Math\FPVector.h" />
     <ClInclude Include="Math\VectorUtilities.h" />
+    <ClInclude Include="Network\BaseNetMessage.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Physics\Collider.h" />
     <ClInclude Include="Physics\ColliderHelpers.h" />
@@ -212,6 +191,7 @@
     <ClInclude Include="Physics\Ray.h" />
     <ClInclude Include="Physics\Simplex.h" />
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
+    <ClInclude Include="Rollback\RollbackManager.h" />
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
@@ -263,8 +243,6 @@
     <ClInclude Include="Vendor\rapidjson\writer.h" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ggsmh-redux\README.md" />
-    <Content Include="ggsmh-redux\TODO.md" />
     <Content Include="Vendor\cereal\README.md" />
     <Content Include="Vendor\EnTT\LICENSE" />
     <Content Include="Vendor\EnTT\README.md" />
@@ -274,9 +252,6 @@
     <Content Include="Vendor\rapidjson\README.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ggsmh-redux\GGPOMain.h" />
-    <ClCompile Include="ggsmh-redux\platform_linux.cpp" />
-    <ClCompile Include="ggsmh-redux\platform_windows.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
