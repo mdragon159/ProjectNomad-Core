@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="GameCore\TransformTests.cpp" />
     <ClCompile Include="Math\FixedPointTests.cpp" />
     <ClCompile Include="Math\FPEulerAnglesTests.cpp" />
     <ClCompile Include="Math\FPMath2Tests.cpp" />
@@ -15,23 +14,16 @@
     <ClCompile Include="Physics\RayTests.cpp" />
     <ClCompile Include="Physics\ColliderTests.cpp" />
     <ClCompile Include="Physics\SimpleCollisionsTests.cpp" />
-    <ClCompile Include="SimLayerTests.cpp" />
     <ClCompile Include="TestHelpers\TestHelpers.cpp" />
     <ClCompile Include="Physics\ComplexCollisionsTests.cpp" />
-    <ClCompile Include="Data\Gameplay\PlayerInputsForFrameTests.cpp" />
-    <ClCompile Include="Data\ReplayReaderTests.cpp" />
-    <ClCompile Include="Data\ReplayWriterTests.cpp" />
-    <ClCompile Include="GameCore\Components\ComponentsTests.cpp" />
-    <ClCompile Include="Sandbox\SnapshotTests.cpp" />
-    <ClCompile Include="Data\AnimationDataIOTests.cpp" />
-    <ClCompile Include="Data\AttackAnimDataProviderTestscpp.cpp" />
+    <ClCompile Include="Utilities\Containers\FlexArrayTests.cpp" />
+    <ClCompile Include="Utilities\Containers\InPlaceQueueTests.cpp" />
+    <ClCompile Include="TestHelpers\TestLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="TestHelpers\TestHelpers.h" />
-    <ClInclude Include="Sandbox\TestComponents.h" />
-    <ClInclude Include="Sandbox\TestGameManager.h" />
-    <ClInclude Include="Sandbox\TestSpawnSystem.h" />
+    <ClInclude Include="TestHelpers\TestLogger.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
