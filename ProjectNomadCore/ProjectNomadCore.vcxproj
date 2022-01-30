@@ -198,6 +198,7 @@
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Rollback\RollbackManager.h" />
     <ClInclude Include="Secrets\NetworkSecrets.example.h" />
+    <ClInclude Include="Secrets\NetworkSecrets.h" />
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
