@@ -197,7 +197,9 @@
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
     <ClInclude Include="Utilities\DebugMessage.h" />
     <ClInclude Include="Utilities\ILogger.h" />
+    <ClInclude Include="Utilities\NetLogMessage.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
+    <ClInclude Include="Utilities\Singleton.h" />
     <ClInclude Include="Vendor\cereal\cereal.hpp" />
     <ClInclude Include="Vendor\EnTT\entt.hpp" />
     <ClInclude Include="Vendor\EOS\Include\eos_achievements.h" />
