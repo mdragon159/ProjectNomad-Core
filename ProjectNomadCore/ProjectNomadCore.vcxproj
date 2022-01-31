@@ -196,14 +196,17 @@
     <ClInclude Include="Physics\Ray.h" />
     <ClInclude Include="Physics\Simplex.h" />
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
+    <ClInclude Include="Rollback\RollbackStaticSettings.h" />
     <ClInclude Include="Rollback\RollbackManager.h" />
     <ClInclude Include="Secrets\NetworkSecrets.example.h" />
     <ClInclude Include="Secrets\NetworkSecrets.h" />
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
+    <ClInclude Include="Utilities\Containers\RingBuffer.h" />
     <ClInclude Include="Utilities\CoreTypeShortcuts.h" />
     <ClInclude Include="Utilities\DebugMessage.h" />
+    <ClInclude Include="Utilities\FrameType.h" />
     <ClInclude Include="Utilities\ILogger.h" />
     <ClInclude Include="Utilities\LoggerSingleton.h" />
     <ClInclude Include="Utilities\NetLogMessage.h" />
