@@ -3,10 +3,12 @@
 
 namespace ProjectNomad {
     class RollbackStaticSettings {
+    public:
         static constexpr bool UseLockstep = true;
         
         static constexpr FrameType OfflineInputDelay = 3;
         static constexpr FrameType OnlineInputDelay = 3;
+        static constexpr FrameType MaxInputDelay = 10;
 
         static constexpr FrameType MaxRollbackFrames = 10; // Rollback up to this number of frames
     };

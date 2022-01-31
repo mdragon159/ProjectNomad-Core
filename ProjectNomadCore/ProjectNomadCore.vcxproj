@@ -171,6 +171,8 @@
     <ClInclude Include="GameCore\BaseSystem.h" />
     <ClInclude Include="GameCore\CoreComponents.h" />
     <ClInclude Include="GameCore\CoreConstants.h" />
+    <ClInclude Include="GameCore\PlayerId.h" />
+    <ClInclude Include="GameCore\PlayerInput.h" />
     <ClInclude Include="Math\FixedPoint.h" />
     <ClInclude Include="Math\FPEulerAngles.h" />
     <ClInclude Include="Math\FPMath.h" />
