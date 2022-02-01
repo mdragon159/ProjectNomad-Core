@@ -10,6 +10,7 @@
 #include "CrossPlatformIdWrapper.h"
 #include "EpicAccountIdWrapper.h"
 #include "IEOSWrapperManager.h"
+#include "PacketReliability.h"
 #include "Network/NetworkManagerCallbackTypes.h"
 #include "Secrets/NetworkSecrets.h"
 #include "Utilities/LoggerSingleton.h"
@@ -262,30 +263,16 @@ namespace ProjectNomad {
             EOS_ProductUserId formattedTargetCrossPlatformId = EOS_ProductUserId_FromString(targetCrossPlatformId.c_str());
             return CrossPlatformIdWrapper(formattedTargetCrossPlatformId);
         }
-        
-#pragma endregion 
-#pragma region Debug/Testing Methods
 
-        // VARIATIONS to make:
-        // TestSendMessage (the one with pure string sending and not needing connection open already)
-        // SendReliableMessage (assuming open connection)
-        // SendQuickUnreliableMessage (on existing connection)
-        
-        void testSendMessage(const std::string& targetCrossPlatformId, const std::string& message) {
+        void sendMessage(CrossPlatformIdWrapper targetId, const void* data, uint32_t dataLengthInBytes, PacketReliability packetReliability) {
             if (!isCrossPlatformLoggedIn()) {
-                logger.addWarnNetLog("EWS::TestSendMessage", "Not cross platform logged in");
+                logger.addWarnNetLog("EWS::sendMessage", "Not cross platform logged in");
                 return;
             }
-            if (message.empty()) {
-                logger.addWarnNetLog("EWS::TestSendMessage", "Empty message, nothing to send");
+            if (!targetId.isValid()) {
+                logger.addWarnNetLog("EWS::sendMessage", "Target cross platform id is invalid");
                 return;
             }
-            if (targetCrossPlatformId.empty()) {
-                logger.addWarnNetLog("EWS::TestSendMessage", "Target cross platform id is empty");
-                return;
-            }
-
-            EOS_ProductUserId formattedTargetCrossPlatformId = EOS_ProductUserId_FromString(targetCrossPlatformId.c_str());
 
             EOS_HP2P p2pHandle = EOS_Platform_GetP2PInterface(platformHandle);
 
@@ -296,14 +283,14 @@ namespace ProjectNomad {
             EOS_P2P_SendPacketOptions options;
             options.ApiVersion = EOS_P2P_SENDPACKET_API_LATEST;
             options.LocalUserId = loggedInCrossPlatformId.getAccountId();
-            options.RemoteUserId = formattedTargetCrossPlatformId;
+            options.RemoteUserId = targetId.getAccountId();
             options.SocketId = &socketId;
             options.bAllowDelayedDelivery = EOS_TRUE; // PLACEHOLDER: Set to false once separately setting up connections
             options.Channel = 0;
-            options.Reliability = EOS_EPacketReliability::EOS_PR_ReliableOrdered;
+            options.Reliability = convertPacketReliability(packetReliability);
 
-            options.DataLengthBytes = static_cast<uint32_t>(message.size());
-            options.Data = message.data();
+            options.DataLengthBytes = dataLengthInBytes;
+            options.Data = data;
 
             EOS_EResult result = EOS_P2P_SendPacket(p2pHandle, &options);
             if (result == EOS_EResult::EOS_Success) {
@@ -315,8 +302,29 @@ namespace ProjectNomad {
             if (result != EOS_EResult::EOS_Success) {
                 logger.addErrorNetLog(
                     "EWS::TestSendMessage",
-                    "Failed to send message to target id: " + targetCrossPlatformId);
+                    "Failed to send message");
             }
+        }
+        
+#pragma endregion 
+#pragma region Debug/Testing Methods
+
+        void testSendMessage(const std::string& targetCrossPlatformId, const std::string& message) {
+            if (targetCrossPlatformId.empty()) {
+                logger.addWarnNetLog("EWS::TestSendMessage", "Empty targetCrossPlatformId");
+                return;
+            }
+            if (message.empty()) {
+                logger.addWarnNetLog("EWS::TestSendMessage", "Empty message, nothing to send");
+                return;
+            }
+
+            sendMessage(
+                CrossPlatformIdWrapper::fromString(targetCrossPlatformId),
+                message.data(),
+                static_cast<uint32_t>(message.size()),
+                PacketReliability::ReliableOrdered
+            );            
         }
 
         void printLoggedInId() {
@@ -801,6 +809,23 @@ namespace ProjectNomad {
 
         std::string toString(const EOS_EResult& result) {
             return EOS_EResult_ToString(result);
+        }
+
+        EOS_EPacketReliability convertPacketReliability(PacketReliability inPacketReliability) {
+            switch (inPacketReliability) {
+                case PacketReliability::UnreliableUnordered:
+                    return EOS_EPacketReliability::EOS_PR_UnreliableUnordered;
+                case PacketReliability::ReliableUnordered:
+                    return EOS_EPacketReliability::EOS_PR_ReliableUnordered;
+                case PacketReliability::ReliableOrdered:
+                    return EOS_EPacketReliability::EOS_PR_ReliableOrdered;
+                default:
+                    logger.logWarnMessage(
+                        "EWS::convertPacketReliability",
+                        "Unexpected PacketReliability value, perhaps missing case?"
+                    );
+                return EOS_EPacketReliability::EOS_PR_ReliableOrdered;
+            }
         }
 
 #pragma endregion

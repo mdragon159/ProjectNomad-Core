@@ -180,13 +180,13 @@
     <ClInclude Include="Math\FPQuat.h" />
     <ClInclude Include="Math\FPVector.h" />
     <ClInclude Include="Math\VectorUtilities.h" />
-    <ClInclude Include="Network\BaseNetMessage.h" />
     <ClInclude Include="Network\EOS\CrossPlatformIdWrapper.h" />
     <ClInclude Include="Network\EOS\IEOSWrapperManager.h" />
     <ClInclude Include="Network\EOS\EOSWrapperSingleton.h" />
     <ClInclude Include="Network\EOS\EOSWrapperStatus.h" />
     <ClInclude Include="Network\EOS\EpicAccountIdWrapper.h" />
     <ClInclude Include="Network\EOS\PacketReliability.h" />
+    <ClInclude Include="Network\NetMessages.h" />
     <ClInclude Include="Network\NetworkManagerCallbackTypes.h" />
     <ClInclude Include="Network\NetworkManagerSingleton.h" />
     <ClInclude Include="pch.h" />

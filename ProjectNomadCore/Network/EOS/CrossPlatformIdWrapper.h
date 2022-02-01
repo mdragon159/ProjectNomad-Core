@@ -10,6 +10,13 @@ namespace ProjectNomad {
         CrossPlatformIdWrapper() {}
         CrossPlatformIdWrapper(EOS_ProductUserId accountId) : accountId(accountId) {}
 
+        // Note that this method doesn't return a validated id, it just returns the string in the appropriate format.
+        // This also means that isValid method will always return true due to being unable to verify
+        static CrossPlatformIdWrapper fromString(const std::string& id) {
+            EOS_ProductUserId formattedId = EOS_ProductUserId_FromString(id.c_str());
+            return CrossPlatformIdWrapper(formattedId);
+        }
+        
         EOS_ProductUserId getAccountId() {
             return accountId;
         }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BaseNetMessage.h"
+#include "NetMessages.h"
 #include "EOS/EOSWrapperSingleton.h"
 #include "EOS/PacketReliability.h"
 #include "GameCore/PlayerId.h"
@@ -21,8 +21,8 @@ namespace ProjectNomad {
 
         NetworkManagerStatus managerStatus = NetworkManagerStatus::NotInitialized;
 
-        PlayerId localPlayerId = {};
-        PlayerId connectedPlayerId = {};
+        PlayerId localPlayerId = PlayerId(PlayerSpot::Player1);
+        PlayerId connectedPlayerId = PlayerId(PlayerSpot::INVALID);
         
     public:
         ~NetworkManagerSingleton() override {}
@@ -68,10 +68,9 @@ namespace ProjectNomad {
                 );
                 return;
             }
-            
-            // TODO: Send "TryConnect" message to target player
-            // On other side, when message received, send back "AcceptGame" message then set id
-            // Finally, on original side, when "AcceptGame" message received then set id
+
+            InitiateConnectionMessage tryConnectMessage;
+            sendMessage(CrossPlatformIdWrapper::fromString(targetCrossPlatformId), tryConnectMessage, PacketReliability::ReliableOrdered);
         }
 
         void disconnectFromCurrentSession() {}
@@ -104,7 +103,16 @@ namespace ProjectNomad {
         template<typename MessageType>
         void sendMessageToConnectedPlayer(const MessageType& message, PacketReliability packetReliability) {
             static_assert(std::is_base_of_v<BaseNetMessage, MessageType>, "MessageType must inherit from BaseNetMessage");
-            
+
+            if (managerStatus != NetworkManagerStatus::ConnectedToPlayer) {
+                logger.logWarnMessage(
+                    "NMS::sendMessageToConnectedPlayer",
+                    "Called while not connected to a player"
+                );
+                return;
+            }
+
+            sendMessage(connectedPlayerId.crossPlatformId, message, packetReliability);
         }
 
         PlayerId getLocalPlayerId() {
@@ -117,7 +125,7 @@ namespace ProjectNomad {
                     "NetworkManagerSingleton::getConnectedPlayerId",
                     "Trying to get connected player id while not connected to anyone"
                 );
-                return {};
+                return PlayerId();
             }
 
             return connectedPlayerId;
@@ -127,16 +135,33 @@ namespace ProjectNomad {
 
         void onLoginSuccess(CrossPlatformIdWrapper loggedInCrossPlatformId) override {
             managerStatus = NetworkManagerStatus::LoggedIn;
-            logger.addInfoNetLog(
-                "NMS::onLoginSuccess",
-                "Got called"
-            );
-
-            // TODO
+            localPlayerId.crossPlatformId = loggedInCrossPlatformId;
         }
         
         void onMessageReceived(CrossPlatformIdWrapper peerId, const std::vector<char>& messageData) override {
-            // For now, simply output message
+            if (messageData.empty()) {
+                logger.addWarnNetLog("NMS::onMessageReceived", "Somehow received empty message...?");
+            }
+            
+            NetMessageType messageType = static_cast<NetMessageType>(messageData[0]);
+            switch (messageType) {
+                case NetMessageType::TryConnect:
+                    sendAcceptConnectionMessage(peerId);
+                    rememberAcceptedPlayerConnection(false, peerId);
+                    break;
+
+                case NetMessageType::AcceptGame:
+                    rememberAcceptedPlayerConnection(true, peerId);
+                    break;
+
+                default:
+                    logger.addWarnNetLog(
+                        "NMS::onMessageReceived",
+                        "Received unexpected message type: " + std::to_string(static_cast<int>(messageType))
+                    );
+            }
+            
+            /*// For now, simply output message
             std::string messageAsString(messageData.begin(), messageData.end());
             logger.addInfoNetLog("NMS::onMessageReceived", "Received message: " + messageAsString);
 
@@ -146,12 +171,50 @@ namespace ProjectNomad {
                 logger.addErrorNetLog("NMS::onMessageReceived", "Failed to convert id to string");
                 return;
             }
-            logger.addInfoNetLog("NMS::onMessageReceived", "Peer id is: " + peerIdAsString);
+            logger.addInfoNetLog("NMS::onMessageReceived", "Peer id is: " + peerIdAsString);*/
         }
 
         #pragma endregion 
     
     private:
-        void onMessageReceived() {}
+        template<typename MessageType>
+        void sendMessage(CrossPlatformIdWrapper targetId,
+                        const MessageType& message,
+                        PacketReliability packetReliability) {
+            static_assert(std::is_base_of_v<BaseNetMessage, MessageType>, "MessageType must inherit from BaseNetMessage");
+            
+            eosWrapperSingleton.sendMessage(
+                targetId,
+                &message,
+                sizeof(message),
+                packetReliability
+            );
+        }
+
+        void rememberAcceptedPlayerConnection(bool didLocalPlayerInitiateConnection, CrossPlatformIdWrapper otherPlayerId) {
+            connectedPlayerId.crossPlatformId = otherPlayerId;
+            
+            // Select who's player 1 vs 2 based on who initiated connection
+            // This method was chosen as needed *some* consistent way to determine who's which player and this is pretty simple
+            if (didLocalPlayerInitiateConnection) {
+                localPlayerId.playerSpot = PlayerSpot::Player1;
+                connectedPlayerId.playerSpot = PlayerSpot::Player2;
+            }
+            else {
+                localPlayerId.playerSpot = PlayerSpot::Player2;
+                connectedPlayerId.playerSpot = PlayerSpot::Player1;
+            }
+
+            managerStatus = NetworkManagerStatus::ConnectedToPlayer;
+            logger.addWarnNetLog(
+                "NMS::rememberAcceptedPlayerConnection",
+                "Accepted connection!"
+            );
+        }
+
+        void sendAcceptConnectionMessage(CrossPlatformIdWrapper otherPlayerId) {
+            AcceptConnectionMessage acceptConnectionMessage;
+            sendMessage(otherPlayerId, acceptConnectionMessage, PacketReliability::ReliableOrdered);
+        }
     };
 }
