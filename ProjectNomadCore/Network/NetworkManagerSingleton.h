@@ -10,13 +10,12 @@ namespace ProjectNomad {
     enum class NetworkManagerStatus : uint8_t {
         NotInitialized,
         InitializedButNotLoggedIn,
-        TryingToLogin,
         LoggedIn,
         ConnectedToPlayer   // Assuming cannot be connected to a session without being logged in
     };
 
     /// <summary>Interface class to network features</summary>
-    class NetworkManagerSingleton {
+    class NetworkManagerSingleton : public IEOSWrapperManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
         EOSWrapperSingleton& eosWrapperSingleton = Singleton<EOSWrapperSingleton>::get();
 
@@ -26,6 +25,8 @@ namespace ProjectNomad {
         PlayerId connectedPlayerId = {};
         
     public:
+        ~NetworkManagerSingleton() override {}
+        
         #pragma region Lifecycle: Occasionally called methods
 
         void initialize() {
@@ -36,7 +37,8 @@ namespace ProjectNomad {
                 );
                 return;
             }
-            
+
+            eosWrapperSingleton.setWrapperManager(this);
             if (eosWrapperSingleton.tryInitialize()) {
                 managerStatus = NetworkManagerStatus::InitializedButNotLoggedIn;
             }
@@ -52,7 +54,9 @@ namespace ProjectNomad {
             }
             
             if (eosWrapperSingleton.tryBeginLoginAttempt(devAuthName)) {
-               managerStatus = NetworkManagerStatus::TryingToLogin; 
+                // In future, we can set a state to prevent multiple login attempts
+                // BUT we'd then need a callback in case login fails
+                // So... lazy choice for now is to do nothing here
             }
         }
 
@@ -119,15 +123,35 @@ namespace ProjectNomad {
             return connectedPlayerId;
         }
 
-    private:
-        void onMessageReceived() {}
+        #pragma region EOSWrapper Interface
 
-        #pragma region Callbacks from EOSWrapper
+        void onLoginSuccess(CrossPlatformIdWrapper loggedInCrossPlatformId) override {
+            managerStatus = NetworkManagerStatus::LoggedIn;
+            logger.addInfoNetLog(
+                "NMS::onLoginSuccess",
+                "Got called"
+            );
+
+            // TODO
+        }
         
-        void onLoginSuccess(CrossPlatformIdWrapper loggedInCrossPlatformId) {}
+        void onMessageReceived(CrossPlatformIdWrapper peerId, const std::vector<char>& messageData) override {
+            // For now, simply output message
+            std::string messageAsString(messageData.begin(), messageData.end());
+            logger.addInfoNetLog("NMS::onMessageReceived", "Received message: " + messageAsString);
 
-        void onConnectionAccepted(CrossPlatformIdWrapper remotePlayerId) {}
+            // Also for now output the peer id
+            std::string peerIdAsString;
+            if (!peerId.tryToString(peerIdAsString)) {
+                logger.addErrorNetLog("NMS::onMessageReceived", "Failed to convert id to string");
+                return;
+            }
+            logger.addInfoNetLog("NMS::onMessageReceived", "Peer id is: " + peerIdAsString);
+        }
 
         #pragma endregion 
+    
+    private:
+        void onMessageReceived() {}
     };
 }

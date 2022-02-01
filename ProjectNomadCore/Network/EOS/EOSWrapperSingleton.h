@@ -9,6 +9,7 @@
 
 #include "CrossPlatformIdWrapper.h"
 #include "EpicAccountIdWrapper.h"
+#include "IEOSWrapperManager.h"
 #include "Network/NetworkManagerCallbackTypes.h"
 #include "Secrets/NetworkSecrets.h"
 #include "Utilities/LoggerSingleton.h"
@@ -23,6 +24,7 @@ namespace ProjectNomad {
 
         NetStatusChangeCallback netStatusChangeCallback = nullptr;
         NetGotSelfIdCallback netGotSelfIdCallback = nullptr;
+        IEOSWrapperManager* eosWrapperManager = nullptr;
 
         EpicAccountIdWrapper loggedInEpicAccountId = {};
         CrossPlatformIdWrapper loggedInCrossPlatformId = {};
@@ -61,7 +63,7 @@ namespace ProjectNomad {
         /// <returns>Returns true if initialization succeeded</returns>
         bool tryInitialize() {
             if (isInitialized()) {
-                logger.addInfoNetLog("NMS::Initialize", "NetworkManager is already initialized");
+                logger.addInfoNetLog("EWS::Initialize", "NetworkManager is already initialized");
                 return false;
             }
 
@@ -83,12 +85,12 @@ namespace ProjectNomad {
                 // No idea, just proceed onwards
                 // Update: In reality, callback setting and platform creation never succeed if already configured .-.
                 logger.addInfoNetLog(
-                    "NMS::Initialize",
+                    "EWS::Initialize",
                     "EOS_Initialize returned EOS_AlreadyConfigured, proceeding with init attempt"
                 );
             } else if (initResult != EOS_EResult::EOS_Success) {
                 logger.addErrorNetLog(
-                    "NMS::Initialize",
+                    "EWS::Initialize",
                     "EOS SDK failed to init with result: " + std::string(EOS_EResult_ToString(initResult))
                 );
                 return false;
@@ -99,9 +101,9 @@ namespace ProjectNomad {
                 Singleton<EOSWrapperSingleton>::get().handleEosLogMessage(message);
             });
             if (setLogCallbackResult != EOS_EResult::EOS_Success) {
-                logger.addWarnNetLog("NMS::Initialize", "Set logging callback failed");
+                logger.addWarnNetLog("EWS::Initialize", "Set logging callback failed");
             } else {
-                logger.addInfoNetLog("NMS::Initialize", "Logging callback set");
+                logger.addInfoNetLog("EWS::Initialize", "Logging callback set");
                 EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
             }
 
@@ -114,6 +116,9 @@ namespace ProjectNomad {
 
         /// <param name="forceShutdown">If true, then will actually shutdown. Yes it's kind of dumb that false does nothing atm</param>
         void cleanupState(bool forceShutdown) {
+            // FUTURE: Theoretically *should* clean up eosWrapperManager reference, but both are singletons
+            //          Thus, theoretically also don't need to clean that up... at least right now
+            
             // Clean up callbacks to assure they don't persist between game instances/runs
             netStatusChangeCallback = nullptr;
             netGotSelfIdCallback = nullptr;
@@ -137,10 +142,10 @@ namespace ProjectNomad {
                     // Shutdown is supposedly done! (Even if it fails, we won't know right now)
                     // At the very least, we can report that our work here is complete and we are no longer initialized
                     currentNetStatus = EOSWrapperStatus::NotInitialized;
-                    logger.addInfoNetLog("NMS::Shutdown", "Shutdown attempt completed");
+                    logger.addInfoNetLog("EWS::Shutdown", "Shutdown attempt completed");
                 }
                 else {
-                    logger.addInfoNetLog("NMS::Shutdown", "Not initialized");
+                    logger.addInfoNetLog("EWS::Shutdown", "Not initialized");
                 }
             }
         }
@@ -158,11 +163,11 @@ namespace ProjectNomad {
         /// <returns>Returns true if login request is successfully sent</returns>
         bool tryBeginLoginAttempt(const std::string& devAuthName) {
             if (!isInitialized()) {
-                logger.addInfoNetLog("NMS::Login", "Not initialized");
+                logger.addInfoNetLog("EWS::Login", "Not initialized");
                 return false;
             }
             if (isBasicLoggedIn()) {
-                logger.addInfoNetLog("NMS::Login", "Already logged in");
+                logger.addInfoNetLog("EWS::Login", "Already logged in");
                 return false;
             }
 
@@ -196,21 +201,21 @@ namespace ProjectNomad {
             // TODO: Setup AddConnectAuthExpirationNotification() (connect auth expiration callback) if/as necessary
             // Waiting until this is really necessary to truly understand it before implementing
 
-            logger.addInfoNetLog("NMS::Login", "Successfully sent login request");
+            logger.addInfoNetLog("EWS::Login", "Successfully sent login request");
             return true;
         }
 
         void logout() {
             if (!isBasicLoggedIn()) {
-                logger.addInfoNetLog("NMS::Logout", "Not logged in");
+                logger.addInfoNetLog("EWS::Logout", "Not logged in");
                 return;
             }
             if (authHandle == nullptr) {
-                logger.addErrorNetLog("NMS::Logout", "Is logged in but somehow no auth handle");
+                logger.addErrorNetLog("EWS::Logout", "Is logged in but somehow no auth handle");
                 return;
             }
 
-            logger.addInfoNetLog("NMS::Logout", "Logging out...");
+            logger.addInfoNetLog("EWS::Logout", "Logging out...");
 
             EOS_Auth_LogoutOptions LogoutOptions;
             LogoutOptions.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
@@ -238,13 +243,17 @@ namespace ProjectNomad {
             if (loggedInCrossPlatformId.isValid()) {
                 std::string result;
                 if (!loggedInCrossPlatformId.tryToString(result)) {
-                    logger.addErrorNetLog("NMS::registerNetGotSelfIdListener", "Failed to convert id to string");
+                    logger.addErrorNetLog("EWS::registerNetGotSelfIdListener", "Failed to convert id to string");
                     return;
                 }
 
                 callback(result);
             }
-        } 
+        }
+
+        void setWrapperManager(IEOSWrapperManager* iEOSWrapperManager) {
+            eosWrapperManager = iEOSWrapperManager;
+        }
 
 #pragma endregion
 #pragma region Ordinary Connection & Message Sending
@@ -264,15 +273,15 @@ namespace ProjectNomad {
         
         void testSendMessage(const std::string& targetCrossPlatformId, const std::string& message) {
             if (!isCrossPlatformLoggedIn()) {
-                logger.addWarnNetLog("NMS::TestSendMessage", "Not cross platform logged in");
+                logger.addWarnNetLog("EWS::TestSendMessage", "Not cross platform logged in");
                 return;
             }
             if (message.empty()) {
-                logger.addWarnNetLog("NMS::TestSendMessage", "Empty message, nothing to send");
+                logger.addWarnNetLog("EWS::TestSendMessage", "Empty message, nothing to send");
                 return;
             }
             if (targetCrossPlatformId.empty()) {
-                logger.addWarnNetLog("NMS::TestSendMessage", "Target cross platform id is empty");
+                logger.addWarnNetLog("EWS::TestSendMessage", "Target cross platform id is empty");
                 return;
             }
 
@@ -299,45 +308,45 @@ namespace ProjectNomad {
             EOS_EResult result = EOS_P2P_SendPacket(p2pHandle, &options);
             if (result == EOS_EResult::EOS_Success) {
                 logger.addInfoNetLog(
-                    "NMS::TestSendMessage",
+                    "EWS::TestSendMessage",
                     "Successfully attempted to send message"
                 );
             }
             if (result != EOS_EResult::EOS_Success) {
                 logger.addErrorNetLog(
-                    "NMS::TestSendMessage",
+                    "EWS::TestSendMessage",
                     "Failed to send message to target id: " + targetCrossPlatformId);
             }
         }
 
         void printLoggedInId() {
             if (!isBasicLoggedIn()) {
-                logger.addInfoNetLog("NMS::PrintLoggedInId", "Not logged in");
+                logger.addInfoNetLog("EWS::PrintLoggedInId", "Not logged in");
                 return;
             }
 
             std::string idAsString;
             if (!loggedInEpicAccountId.tryToString(idAsString)) {
-                logger.addErrorNetLog("NMS::PrintLoggedInId", "Failed to convert id to string");
+                logger.addErrorNetLog("EWS::PrintLoggedInId", "Failed to convert id to string");
                 return;
             }
 
-            logger.addInfoNetLog("NMS::PrintLoggedInId", "Id: " + idAsString);
+            logger.addInfoNetLog("EWS::PrintLoggedInId", "Id: " + idAsString);
         }
 
         void printLoggedInCrossPlatformId() {
             if (!isCrossPlatformLoggedIn()) {
-                logger.addInfoNetLog("NMS::PrintLoggedInCrossPlatformId", "Not logged in");
+                logger.addInfoNetLog("EWS::PrintLoggedInCrossPlatformId", "Not logged in");
                 return;
             }
 
             std::string idAsString;
             if (!loggedInCrossPlatformId.tryToString(idAsString)) {
-                logger.addErrorNetLog("NMS::PrintLoggedInCrossPlatformId", "Failed to convert id to string");
+                logger.addErrorNetLog("EWS::PrintLoggedInCrossPlatformId", "Failed to convert id to string");
                 return;
             }
 
-            logger.addInfoNetLog("NMS::PrintLoggedInCrossPlatformId", "Id: " + idAsString);
+            logger.addInfoNetLog("EWS::PrintLoggedInCrossPlatformId", "Id: " + idAsString);
         }
 
 #pragma endregion
@@ -364,7 +373,7 @@ namespace ProjectNomad {
         // Based on SDK sample's FAuthentication::LoginCompleteCallbackFn
         void loginCompleteCallback(const EOS_Auth_LoginCallbackInfo* data) {
             if (data == nullptr) {
-                logger.addErrorNetLog("NMS::LoginCompleteCallback", "Input data is unexpectedly null");
+                logger.addErrorNetLog("EWS::LoginCompleteCallback", "Input data is unexpectedly null");
                 return;
             }
 
@@ -372,11 +381,11 @@ namespace ProjectNomad {
                 onSuccessfulEpicLogin(data->LocalUserId);
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_PinGrantCode) {
-                logger.addWarnNetLog("NMS::LoginCompleteCallback", "Waiting for PIN grant...?");
+                logger.addWarnNetLog("EWS::LoginCompleteCallback", "Waiting for PIN grant...?");
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_MFARequired) {
                 logger.addWarnNetLog(
-                    "NMS::LoginCompleteCallback",
+                    "EWS::LoginCompleteCallback",
                     "MFA Code needs to be entered before logging in"
                 );
 
@@ -386,7 +395,7 @@ namespace ProjectNomad {
             }
             else if (data->ResultCode == EOS_EResult::EOS_InvalidUser) {
                 if (data->ContinuanceToken != nullptr) {
-                    logger.addInfoNetLog("NMS::LoginCompleteCallback", "Login failed, external account not found");
+                    logger.addInfoNetLog("EWS::LoginCompleteCallback", "Login failed, external account not found");
 
                     // PLACEHOLDER: Check sample's FAuthentication::LoginCompleteCallbackFn for relevant code here
                     // Something something try to continue login or something...?
@@ -394,37 +403,37 @@ namespace ProjectNomad {
                     // See following section in docs for more info:
                     // https://dev.epicgames.com/docs/services/en-US/EpicAccountServices/AuthInterface/index.html#externalaccountauthentication
                 } else {
-                    logger.addErrorNetLog("NMS::LoginCompleteCallback", "Continuation Token is invalid");
+                    logger.addErrorNetLog("EWS::LoginCompleteCallback", "Continuation Token is invalid");
                 }
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_AccountFeatureRestricted) {
                 if (data->AccountFeatureRestrictedInfo) {
                     std::string verificationURI = data->AccountFeatureRestrictedInfo->VerificationURI;
                     logger.addErrorNetLog(
-                        "NMS::LoginCompleteCallback",
+                        "EWS::LoginCompleteCallback",
                         "Login failed, account is restricted. User must visit URI: " + verificationURI
                     );
                 } else {
                     logger.addErrorNetLog(
-                        "NMS::LoginCompleteCallback",
+                        "EWS::LoginCompleteCallback",
                         "Login failed, account is restricted. VerificationURI is invalid!"
                     );
                 }
             }
             else if (EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 logger.addErrorNetLog(
-                    "NMS::LoginCompleteCallback",
+                    "EWS::LoginCompleteCallback",
                     "Login Failed - Error Code: " + toString(data->ResultCode)
                 );
             }
             else {
-                logger.addWarnNetLog("NMS::LoginCompleteCallback", "Hit final else statement unexpectedly");
+                logger.addWarnNetLog("EWS::LoginCompleteCallback", "Hit final else statement unexpectedly");
             }
         }
 
         void crossPlatformLoginCompleteCallback(const EOS_Connect_LoginCallbackInfo* data) {
             if (data == nullptr) {
-                logger.addErrorNetLog("NMS::CrossPlatformLoginCompleteCallback", "Data is nullptr");
+                logger.addErrorNetLog("EWS::CrossPlatformLoginCompleteCallback", "Data is nullptr");
                 return;
             }
 
@@ -433,25 +442,25 @@ namespace ProjectNomad {
             }
             else {
                 logger.addErrorNetLog(
-                    "NMS::CrossPlatformLoginCompleteCallback",
+                    "EWS::CrossPlatformLoginCompleteCallback",
                     "Cross plat login failed with result: " + toString(data->ResultCode));
             }
         }
 
         void logoutCompleteCallback(const EOS_Auth_LogoutCallbackInfo* data) {
             if (data == nullptr) {
-                logger.addErrorNetLog("NMS::LogoutCompleteCallback", "Input data is unexpectedly null");
+                logger.addErrorNetLog("EWS::LogoutCompleteCallback", "Input data is unexpectedly null");
                 return;
             }
 
             if (data->ResultCode == EOS_EResult::EOS_Success) {
-                logger.addInfoNetLog("NMS::LogoutCompleteCallback", "Logged out successfully");
+                logger.addInfoNetLog("EWS::LogoutCompleteCallback", "Logged out successfully");
 
                 // Note that logging out event game-wise can (and likely should be) handled on the LoginStatusChanged callback side
             }
             else {
                 logger.addErrorNetLog(
-                    "NMS::LogoutCompleteCallback",
+                    "EWS::LogoutCompleteCallback",
                     "Logout Failed - Error Code: " + toString(data->ResultCode)
                 );
             }
@@ -466,13 +475,13 @@ namespace ProjectNomad {
         // Based on SDK sample's FP2PNAT::OnIncomingConnectionRequest(const EOS_P2P_OnIncomingConnectionRequestInfo* Data)
         void onIncomingConnectionRequest(const EOS_P2P_OnIncomingConnectionRequestInfo* data) {
             if (data == nullptr) {
-                logger.addErrorNetLog("NMS::OnIncomingConnectionRequest", "Input data is unexpectedly null");
+                logger.addErrorNetLog("EWS::OnIncomingConnectionRequest", "Input data is unexpectedly null");
                 return;
             }
 
             if (!isCrossPlatformLoggedIn()) {
                 logger.addErrorNetLog(
-                    "NMS::OnIncomingConnectionRequest",
+                    "EWS::OnIncomingConnectionRequest",
                     "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?");
                 return;
             }
@@ -480,7 +489,7 @@ namespace ProjectNomad {
             std::string socketName = data->SocketId->SocketName;
             if (socketName != "CHAT") {
                 logger.addWarnNetLog(
-                    "NMS::OnIncomingConnectionRequest",
+                    "EWS::OnIncomingConnectionRequest",
                     "Unexpected socket name, ignoring. Incoming name: " + socketName);
                 return;
             }
@@ -505,20 +514,20 @@ namespace ProjectNomad {
                 std::string remoteIdAsString;
                 if (!wrappedRemoteId.tryToString(remoteIdAsString)) {
                     logger.addWarnNetLog(
-                    "NMS::OnIncomingConnectionRequest",
+                    "EWS::OnIncomingConnectionRequest",
                     "Could not convert remote user id to string"
                     );
                     return;
                 }
                 
                 logger.addInfoNetLog(
-                    "NMS::OnIncomingConnectionRequest",
+                    "EWS::OnIncomingConnectionRequest",
                     "Successfully accepted connection from: " + remoteIdAsString
                 );
             }
             else {
                 logger.addErrorNetLog(
-                    "NMS::OnIncomingConnectionRequest",
+                    "EWS::OnIncomingConnectionRequest",
                     "EOS_P2P_AcceptConnection failed with result: " + toString(result)
                 );
             }
@@ -553,11 +562,11 @@ namespace ProjectNomad {
 
             platformHandle = EOS_Platform_Create(&platformOptions);
             if (platformHandle == nullptr) {
-                logger.addErrorNetLog("NMS::createPlatformInstance", "EOS Platform failed to init");
+                logger.addErrorNetLog("EWS::createPlatformInstance", "EOS Platform failed to init");
                 return false;
             }
 
-            logger.addInfoNetLog("NMS::createPlatformInstance", "EOS Platform successfully initialized!");
+            logger.addInfoNetLog("EWS::createPlatformInstance", "EOS Platform successfully initialized!");
             return true;
         }
 
@@ -574,10 +583,10 @@ namespace ProjectNomad {
 
             std::string userIdAsString;
             if (!loggedInEpicAccountId.tryToString(userIdAsString)) {
-               logger.addErrorNetLog("NMS::onSuccessfulLogin", "Could not convert user id to string");
+               logger.addErrorNetLog("EWS::onSuccessfulLogin", "Could not convert user id to string");
             }
             logger.addInfoNetLog(
-                "NMS::onSuccessfulLogin",
+                "EWS::onSuccessfulLogin",
                 "Login Complete - User ID: " + userIdAsString
             );
             
@@ -591,16 +600,19 @@ namespace ProjectNomad {
             std::string userIdAsString;
             if (!loggedInCrossPlatformId.tryToString(userIdAsString)) {
                 logger.addErrorNetLog(
-                    "NMS::onSuccessfulCrossPlatformLogin",
+                    "EWS::onSuccessfulCrossPlatformLogin",
                     "Could not convert cross platform id to string");
             }
             logger.addInfoNetLog(
-                "NMS::onSuccessfulCrossPlatformLogin",
+                "EWS::onSuccessfulCrossPlatformLogin",
                 "Login Complete - Cross Platform User ID: " + userIdAsString
             );
 
             if (netGotSelfIdCallback) {
                 netGotSelfIdCallback(userIdAsString);
+            }
+            if (eosWrapperManager) {
+                eosWrapperManager->onLoginSuccess(loggedInCrossPlatformId);
             }
 
             subscribeToConnectionRequests();
@@ -637,16 +649,14 @@ namespace ProjectNomad {
             }
             else if (result == EOS_EResult::EOS_Success)
             {
-                // Convert message to simple strin
-                std::string messageAsString(messageData.begin(), messageData.end());
-                
-                // For now, simply output message
-                logger.addInfoNetLog("NMS::handleReceivedMessages", "Received message: " + messageAsString);
+                if (eosWrapperManager) {
+                    eosWrapperManager->onMessageReceived(CrossPlatformIdWrapper(peerId), messageData);
+                }
             }
             else
             {
                 logger.addErrorNetLog(
-                    "NMS::handleReceivedMessages",
+                    "EWS::handleReceivedMessages",
                     "EOS_P2P_ReceivePacket failed with result: " + toString(result)
                 );
             }
@@ -663,11 +673,11 @@ namespace ProjectNomad {
         // Based on SDK sample's FAuthentication::ConnectLogin
         void startCrossPlatformLogin() {
             if (authHandle == nullptr) {
-                logger.addErrorNetLog("NMS::startCrossPlatformLogin", "AuthHandle null");
+                logger.addErrorNetLog("EWS::startCrossPlatformLogin", "AuthHandle null");
                 return;
             }
             if (connectHandle == nullptr) {
-                logger.addErrorNetLog("NMS::startCrossPlatformLogin", "ConnectHandle null");
+                logger.addErrorNetLog("EWS::startCrossPlatformLogin", "ConnectHandle null");
                 return;
             }
             
@@ -695,7 +705,7 @@ namespace ProjectNomad {
             }
             else {
                 logger.addErrorNetLog(
-                    "NMS::startCrossPlatformLogin",
+                    "EWS::startCrossPlatformLogin",
                     "EOS_Auth_CopyUserAuthToken failed with result: " + toString(result)
                 );
             }
@@ -705,14 +715,14 @@ namespace ProjectNomad {
             // Safety sanity checks
             if (!isCrossPlatformLoggedIn()) {
                 logger.addErrorNetLog(
-                    "NMS::subscribeToConnectionRequests",
+                    "EWS::subscribeToConnectionRequests",
                     "Not cross platform logged in"
                 );
                 return;
             }
             if (isSubscribedToConnectionRequests()) {
                 logger.addErrorNetLog(
-                    "NMS::subscribeToConnectionRequests",
+                    "EWS::subscribeToConnectionRequests",
                     "Already subscribed to connection requests"
                 );
                 return;
@@ -737,13 +747,13 @@ namespace ProjectNomad {
 
             if (isSubscribedToConnectionRequests()) {
                 logger.addInfoNetLog(
-                    "NMS::subscribeToConnectionRequests",
+                    "EWS::subscribeToConnectionRequests",
                     "Successfully subscribed"
                 );
             }
             else {
                 logger.addErrorNetLog(
-                    "NMS::subscribeToConnectionRequests",
+                    "EWS::subscribeToConnectionRequests",
                     "Failed to subscribe, bad notification id returned"
                 );
             }
@@ -751,7 +761,7 @@ namespace ProjectNomad {
 
         void unsubscribeFromConnectionRequests() {
             if (!isSubscribedToConnectionRequests()) {
-                logger.addInfoNetLog("NMS::unsubscribeFromConnectionRequests", "Not subscribed already");
+                logger.addInfoNetLog("EWS::unsubscribeFromConnectionRequests", "Not subscribed already");
             }
 
             EOS_HP2P p2pHandle = EOS_Platform_GetP2PInterface(platformHandle);

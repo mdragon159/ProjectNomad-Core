@@ -182,7 +182,7 @@
     <ClInclude Include="Math\VectorUtilities.h" />
     <ClInclude Include="Network\BaseNetMessage.h" />
     <ClInclude Include="Network\EOS\CrossPlatformIdWrapper.h" />
-    <ClInclude Include="Network\EOS\EOSWrapperInterface.h" />
+    <ClInclude Include="Network\EOS\IEOSWrapperManager.h" />
     <ClInclude Include="Network\EOS\EOSWrapperSingleton.h" />
     <ClInclude Include="Network\EOS\EOSWrapperStatus.h" />
     <ClInclude Include="Network\EOS\EpicAccountIdWrapper.h" />
