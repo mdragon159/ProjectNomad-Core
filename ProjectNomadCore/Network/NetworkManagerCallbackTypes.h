@@ -2,9 +2,9 @@
 
 #include <functional>
 
-#include "NetStatus.h"
+#include "EOS/EOSWrapperStatus.h"
 
 namespace ProjectNomad {
-    using NetStatusChangeCallback = std::function<void(NetStatus currentNetStatus)>;
+    using NetStatusChangeCallback = std::function<void(EOSWrapperStatus currentNetStatus)>;
     using NetGotSelfIdCallback = std::function<void(const std::string& selfCrossPlatformId)>;
 }
