@@ -1,4 +1,6 @@
 #pragma once
+#include "InputBuffer.h"
+#include "RollbackCommunicationHandler.h"
 #include "RollbackStaticSettings.h"
 #include "GameCore/PlayerId.h"
 #include "GameCore/PlayerInput.h"
@@ -10,21 +12,20 @@
 namespace ProjectNomad {
     class RollbackManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
+        RollbackCommunicationHandler communicationHandler;
         
-        // Buffer to retrieve inputs. Head represents current frame + input delay
-        //      Size is MaxRollblackFrames + MaxInputDelay to cover worst edge case for data storage
-        //      (ie, if have max input delay AND need to rollback to the furthest back possible frame)
-        using InputsBuffer = RingBuffer<PlayerInput, RollbackStaticSettings::MaxRollbackFrames + RollbackStaticSettings::MaxInputDelay>;
-        InputsBuffer inputBufferForPlayer1;
-        InputsBuffer inputBufferForPlayer2;
+        InputBuffer inputBufferForPlayer1;
+        InputBuffer inputBufferForPlayer2;
 
         // Settings
         FrameType currentInputDelay = RollbackStaticSettings::OnlineInputDelay; // NOTE: Assuming both players have same input delay
         bool isLocalPlayer1 = true; // For now hardcoding only two players
+        bool isMultiplayerGame = false;
         
         // Various normal processing state
         bool isInitialized = false;
         FrameType latestLocalFrame = 0;
+        FrameType latestRemotePlayerFrame = 0;
     
     public:
         RollbackManager() {
@@ -32,9 +33,10 @@ namespace ProjectNomad {
         }
 
         // Expected to call this method before normal usage. Furthermore, call this method if game ends and new game is started
-        void initializeForGameStart(PlayerId localPlayerId) {
+        void initializeForNewGame(PlayerId localPlayerId) {
             resetState();
             isLocalPlayer1 = localPlayerId.playerSpot == PlayerSpot::Player1;
+            isMultiplayerGame = communicationHandler.isMultiplayerGame();
 
             isInitialized = true;
         }
@@ -47,6 +49,8 @@ namespace ProjectNomad {
         /// <param name="currentFrame">Should always be one more than the previously called frame</param>
         /// <param name="localPlayerInput">Current frame's input for the local player</param>
         void doFrameUpdate(FrameType currentFrame, const PlayerInput& localPlayerInput) {
+            // TODO: If lockstep setting on, then wait for input from other player before proceeding
+            
             if (!isInitialized) {
                 logger.logWarnMessage("RollbackManager::doFrameUpdate", "Not initialized!");
                 return;
@@ -59,7 +63,13 @@ namespace ProjectNomad {
                 );
             }
 
-            getLocalPlayerInputBuffer().add(localPlayerInput);
+            InputBuffer& localInputsBuffer = getLocalPlayerInputBuffer();
+            localInputsBuffer.add(localPlayerInput);
+
+            if (isMultiplayerGame) {
+                communicationHandler.sendInputsToRemotePlayer(currentFrame, localInputsBuffer);
+            }
+
             latestLocalFrame = currentFrame;
         }
 
@@ -107,29 +117,109 @@ namespace ProjectNomad {
             }
         }
 
+        void onMessageReceivedFromConnectedPlayer(NetMessageType messageType, const std::vector<char>& messageData) {
+            if (!isMultiplayerGame) {
+                logger.logWarnMessage(
+                "RollbackManager::onMessageReceivedFromConnectedPlayer",
+                "Manager not initialized to be a multiplayer game! \
+                                Current expectation is that MP connection is setup BEFORE RollbackManager is initialized"
+                );
+                return;
+            }
+            
+            // FUTURE: Would be nice if code is refactored such that this handling can happen in the CommunicationHandler
+            // FUTURE: Should be safer way to handle these casts. Perhaps at least do size checks?
+            switch (messageType) {
+                case NetMessageType::InputUpdate: {
+                    const InputUpdateMessage* updateMessage = reinterpret_cast<const InputUpdateMessage*>(messageData.data());
+                    handleInputUpdateFromConnectedPlayer(*updateMessage);
+                    break;
+                }
+
+                default:
+                    logger.logWarnMessage(
+                        "RollbackManager::onMessageReceivedFromConnectedPlayer",
+                        "Message type not in list of handled cases: " + std::to_string(static_cast<int>(messageType))
+                );
+            }
+        }
+
     private:
         void resetState() {
             isInitialized = false; // Just in case but shouldn't be necessary
             latestLocalFrame = 0;
+            latestRemotePlayerFrame = 0;
             
             // Prefill input buffer with input delay's worth of data
             // This will guarantee input buffer has enough data to "look back" at the beginning of the game
             //      FUTURE: Note that the for loop may not be necessary depending on what `= {}` does exactly
+            //      FUTURE: Also prefilling with enough data for INPUTS_HISTORY_SIZE. Either should explicitly choose max value
+            //              or pick a better approach
             inputBufferForPlayer1 = {};
             inputBufferForPlayer2 = {};
-            for (FrameType i = 0; i < currentInputDelay; i++) {
+            for (FrameType i = 0; i < RollbackStaticSettings::MaxRollbackFrames; i++) {
                 inputBufferForPlayer1.add({});
                 inputBufferForPlayer2.add({});
             }
         }
 
-        InputsBuffer& getLocalPlayerInputBuffer() {
+        InputBuffer& getLocalPlayerInputBuffer() {
             if (isLocalPlayer1) {
                 return inputBufferForPlayer1;
             }
             else {
                 return inputBufferForPlayer2;
             }
+        }
+
+        InputBuffer& getRemotePlayerInputBuffer() {
+            if (isLocalPlayer1) {
+                return inputBufferForPlayer2;
+            }
+            else {
+                return inputBufferForPlayer1;
+            }
+        }
+
+        void handleInputUpdateFromConnectedPlayer(const InputUpdateMessage& inputUpdateMessage) {
+            if (inputUpdateMessage.updateFrame <= latestRemotePlayerFrame) {
+                logger.logWarnMessage(
+                    "RollbackManager::handleInputUpdateFromConnectedPlayer",
+                    "Received older frame input: " + std::to_string(inputUpdateMessage.updateFrame)
+                );
+                return;
+            }
+
+            FrameType amountOfMissingInputs = inputUpdateMessage.updateFrame - latestRemotePlayerFrame;
+            if (amountOfMissingInputs > RollbackStaticSettings::MaxRollbackFrames) {
+                logger.logWarnMessage(
+                    "RollbackManager::handleInputUpdateFromConnectedPlayer",
+                    "Received input for frame outside rollback window. Frame: " + std::to_string(inputUpdateMessage.updateFrame)
+                );
+                // TODO: End game or otherwise resolve the inconsistency!
+                return;
+            }
+
+            // Add missing data
+            // FUTURE: Have two separate variables here, INPUTS_HISTORY_SIZE and MaxRollbackFrames. Right now they're equal,
+            //          but in future they could be different. At risk here to have a bug when those don't equal
+            InputBuffer& remoteInputsBuffer = getRemotePlayerInputBuffer();
+            for (FrameType i = 0; i < amountOfMissingInputs; i++) {
+                // index 0 is the latest frame so add backwards
+                const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfMissingInputs - i);
+                remoteInputsBuffer.add(remotePlayerInput);
+            }
+
+            // TODO: Check against prediction and remember to roll back if necessary
+            
+            latestRemotePlayerFrame = inputUpdateMessage.updateFrame;
+
+            // Some temp debug/verification logging
+            logger.logInfoMessage(
+                "RollbackManager::handleInputUpdateFromConnectedPlayer",
+                "Successfully processed InputsUpdateMessage for frame " + std::to_string(inputUpdateMessage.updateFrame)
+                + " with latest jump input: " + std::to_string(inputUpdateMessage.playerInputs[0].isJumpPressed)
+            );
         }
     };
 }

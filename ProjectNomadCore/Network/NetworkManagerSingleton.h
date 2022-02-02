@@ -1,5 +1,6 @@
 #pragma once
 
+#include "INetMessageSubscriber.h"
 #include "NetMessages.h"
 #include "EOS/EOSWrapperSingleton.h"
 #include "EOS/PacketReliability.h"
@@ -18,6 +19,8 @@ namespace ProjectNomad {
     class NetworkManagerSingleton : public IEOSWrapperManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
         EOSWrapperSingleton& eosWrapperSingleton = Singleton<EOSWrapperSingleton>::get();
+
+        INetMessageSubscriber* messageSubscriber = nullptr;
 
         NetworkManagerStatus managerStatus = NetworkManagerStatus::NotInitialized;
 
@@ -42,6 +45,10 @@ namespace ProjectNomad {
             if (eosWrapperSingleton.tryInitialize()) {
                 managerStatus = NetworkManagerStatus::InitializedButNotLoggedIn;
             }
+        }
+
+        void registerNetMessageSubscriber(INetMessageSubscriber* netMessageSubscriber) {
+            messageSubscriber = netMessageSubscriber;
         }
 
         void loginViaDevAuth(const std::string& devAuthName) {
@@ -88,6 +95,8 @@ namespace ProjectNomad {
         }
 
         void cleanupState(bool forceShutdown) {
+            messageSubscriber = nullptr;
+            
             // Unlike other typical singletons in project, the EOSWrapper is "managed" by this class
             // Thus pass on the clean up call to the EOSWrapper
             eosWrapperSingleton.cleanupState(forceShutdown);
@@ -131,6 +140,10 @@ namespace ProjectNomad {
             return connectedPlayerId;
         }
 
+        bool isConnectedToPlayer() {
+            return managerStatus == NetworkManagerStatus::ConnectedToPlayer;
+        }
+
         #pragma region EOSWrapper Interface
 
         void onLoginSuccess(CrossPlatformIdWrapper loggedInCrossPlatformId) override {
@@ -150,15 +163,21 @@ namespace ProjectNomad {
                     rememberAcceptedPlayerConnection(false, peerId);
                     break;
 
-                case NetMessageType::AcceptGame:
+                case NetMessageType::AcceptConnection:
                     rememberAcceptedPlayerConnection(true, peerId);
                     break;
 
                 default:
-                    logger.addWarnNetLog(
-                        "NMS::onMessageReceived",
-                        "Received unexpected message type: " + std::to_string(static_cast<int>(messageType))
-                    );
+                    // FUTURE: Verify peer id is the connected player, esp before sending off to other systems
+                    if (messageSubscriber) {
+                        messageSubscriber->onMessageReceivedFromConnectedPlayer(messageType, messageData);
+                    }
+                    else {
+                        logger.addInfoNetLog(
+                            "NMS::onMessageReceived",
+                            "No registered message subscriber found, likely a bug"
+                        );
+                    }
             }
             
             /*// For now, simply output message

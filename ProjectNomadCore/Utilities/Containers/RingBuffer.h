@@ -45,7 +45,7 @@ namespace ProjectNomad {
         /// Eg, supplying an offset of 2 will return the value inserted 3 elements ago (0th, 1st, 2nd spot).
         /// </param>
         /// <returns>Value stored in buffer represented by the "front" (latest inserted value) offsetted by the provided value</returns>
-        const ContentType& get(uint32_t offset) {
+        const ContentType& get(uint32_t offset) const {
             // Multiple operations to calculate desired index
             //      1. Add Size to prevent underflow (assuming offset is < Size)
             //      2. Subtract 1 as headIndex is pointing one spot *ahead* of most recently added element
