@@ -204,6 +204,7 @@
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Rollback\InputBuffer.h" />
     <ClInclude Include="Rollback\RollbackCommunicationHandler.h" />
+    <ClInclude Include="Rollback\RollbackUpdateResult.h" />
     <ClInclude Include="Rollback\RollbackStaticSettings.h" />
     <ClInclude Include="Rollback\RollbackManager.h" />
     <ClInclude Include="Secrets\NetworkSecrets.example.h" />

@@ -179,18 +179,6 @@ namespace ProjectNomad {
                         );
                     }
             }
-            
-            /*// For now, simply output message
-            std::string messageAsString(messageData.begin(), messageData.end());
-            logger.addInfoNetLog("NMS::onMessageReceived", "Received message: " + messageAsString);
-
-            // Also for now output the peer id
-            std::string peerIdAsString;
-            if (!peerId.tryToString(peerIdAsString)) {
-                logger.addErrorNetLog("NMS::onMessageReceived", "Failed to convert id to string");
-                return;
-            }
-            logger.addInfoNetLog("NMS::onMessageReceived", "Peer id is: " + peerIdAsString);*/
         }
 
         #pragma endregion 

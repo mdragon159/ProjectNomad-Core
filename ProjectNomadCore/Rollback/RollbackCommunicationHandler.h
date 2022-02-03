@@ -14,6 +14,10 @@ namespace ProjectNomad {
         }
 
         void sendInputsToRemotePlayer(FrameType currentFrame, const InputBuffer& remoteInputs) {
+            // TODO: Only send inputs up to what was last ack'd
+            // eg, if other player ack'd up to 5 frames ago, then send the last 5 frames of data only
+            // (need to figure out how to flexibly size the struct though, should be fairly straightforward)
+        
             InputHistoryArray inputHistory;
             for (FrameType i = 0; i < INPUTS_HISTORY_SIZE; i++) {
                 // Note that 0th spot is current frame's input
