@@ -1,6 +1,7 @@
 #pragma once
 #include "InputBuffer.h"
 #include "RollbackCommunicationHandler.h"
+#include "RollbackManagerSnapshot.h"
 #include "RollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
@@ -14,20 +15,15 @@ namespace ProjectNomad {
     class RollbackManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
         RollbackCommunicationHandler communicationHandler;
-        
-        InputBuffer inputBufferForPlayer1;
-        InputBuffer inputBufferForPlayer2;
 
-        // Settings
+        // Settings which aren't expected to change mid-game
+        bool isInitialized = false;
         FrameType currentInputDelay = RollbackStaticSettings::OnlineInputDelay; // NOTE: Assuming both players have same input delay
         bool isLocalPlayer1 = true; // For now hardcoding only two players
         bool isMultiplayerGame = false;
         
         // Various normal processing state
-        bool isInitialized = false;
-        FrameType latestLocalStoredInputFrame = 0;
-        FrameType latestLocalFrame = 0;
-        FrameType latestRemotePlayerFrame = 0;
+        RollbackManagerGameState gameState = {};
     
     public:
         RollbackManager() {
@@ -59,13 +55,13 @@ namespace ProjectNomad {
 
             // Only handle the input for a given frame once
             // Eg, even if we're skipping this frame, then store the input and communicate it to MP session (if any)
-            if (currentFrame == latestLocalStoredInputFrame + 1) {
+            if (currentFrame == gameState.latestLocalStoredInputFrame + 1) {
                 handleLocalFrameInput(currentFrame, localPlayerInput);
             }
 
             // If lockstep setting on, then wait for input from other player before proceeding
             // This acts as a quick lockstep implementation test as well as a good way to test waiting logic
-            if (RollbackStaticSettings::UseLockstep && isMultiplayerGame && latestRemotePlayerFrame < currentFrame) {
+            if (RollbackStaticSettings::UseLockstep && isMultiplayerGame && gameState.latestRemotePlayerFrame < currentFrame) {
                 // logger.logInfoMessage(
                 //     "RollbackManager::doFrameUpdate",
                 //     "Skipping frame to be in lockstep. Current frame: " + std::to_string(currentFrame)
@@ -75,16 +71,16 @@ namespace ProjectNomad {
             }
 
             // Sanity check: If this isn't strictly one frame more than the previous frame, then something went wrong
-            if (latestLocalFrame != 0 && currentFrame != latestLocalFrame + 1) {
+            if (gameState.latestLocalFrame != 0 && currentFrame != gameState.latestLocalFrame + 1) {
                 logger.logWarnMessage(
                     "RollbackManager::doFrameUpdate",
-                    "Unexpected currentFrame value! latestLocalFrame: " + std::to_string(latestLocalFrame)
+                    "Unexpected currentFrame value! latestLocalFrame: " + std::to_string(gameState.latestLocalFrame)
                         + ", currentFrame: " + std::to_string(currentFrame)
                 );
             }
 
             // Finally remember that this frame was processed and allow game to proceed normally
-            latestLocalFrame = currentFrame;
+            gameState.latestLocalFrame = currentFrame;
             return { RollbackDecision::ProceedNormally };
         }
 
@@ -98,7 +94,7 @@ namespace ProjectNomad {
         /// </param>
         /// <returns>Intended player input for given player on given frame</returns>
         PlayerInput getPlayerInput(PlayerId playerId, FrameType frameToRetrieveInputsFor) {
-            if (frameToRetrieveInputsFor > latestLocalFrame) {
+            if (frameToRetrieveInputsFor > gameState.latestLocalFrame) {
                 logger.logWarnMessage(
                     "RollbackManager::getInput",
                     "Provided retrieval frame greater than latest frame"
@@ -106,7 +102,7 @@ namespace ProjectNomad {
                 return {};
             }
 
-            FrameType frameOffset = latestLocalFrame - frameToRetrieveInputsFor;
+            FrameType frameOffset = gameState.latestLocalFrame - frameToRetrieveInputsFor;
             if (frameOffset > RollbackStaticSettings::MaxRollbackFrames) {
                 logger.logWarnMessage(
                     "RollbackManager::getInput",
@@ -119,9 +115,9 @@ namespace ProjectNomad {
 
             switch(playerId.playerSpot) {
                 case PlayerSpot::Player1:
-                    return inputBufferForPlayer1.get(frameOffset);
+                    return gameState.inputBufferForPlayer1.get(frameOffset);
                 case PlayerSpot::Player2:
-                    return inputBufferForPlayer2.get(frameOffset);
+                    return gameState.inputBufferForPlayer2.get(frameOffset);
 
                 default:
                     logger.logWarnMessage(
@@ -161,49 +157,57 @@ namespace ProjectNomad {
             }
         }
 
+        void storeSnapshot(RollbackManagerGameState& output) const {
+            output = gameState;
+        }
+
+        void restoreSnapshot(const RollbackManagerGameState& snapshot) {
+            gameState = snapshot;
+        }
+
     private:
         void resetState() {
             isInitialized = false; // Just in case but shouldn't be necessary
-            latestLocalFrame = 0;
-            latestRemotePlayerFrame = 0;
+            gameState.latestLocalFrame = 0;
+            gameState.latestRemotePlayerFrame = 0;
             
             // Prefill input buffer with input delay's worth of data
             // This will guarantee input buffer has enough data to "look back" at the beginning of the game
             //      FUTURE: Note that the for loop may not be necessary depending on what `= {}` does exactly
             //      FUTURE: Also prefilling with enough data for INPUTS_HISTORY_SIZE. Either should explicitly choose max value
             //              or pick a better approach
-            inputBufferForPlayer1 = {};
-            inputBufferForPlayer2 = {};
+            gameState.inputBufferForPlayer1 = {};
+            gameState.inputBufferForPlayer2 = {};
             for (FrameType i = 0; i < RollbackStaticSettings::MaxRollbackFrames; i++) {
-                inputBufferForPlayer1.add({});
-                inputBufferForPlayer2.add({});
+                gameState.inputBufferForPlayer1.add({});
+                gameState.inputBufferForPlayer2.add({});
             }
         }
 
         InputBuffer& getLocalPlayerInputBuffer() {
             if (isLocalPlayer1) {
-                return inputBufferForPlayer1;
+                return gameState.inputBufferForPlayer1;
             }
             else {
-                return inputBufferForPlayer2;
+                return gameState.inputBufferForPlayer2;
             }
         }
 
         InputBuffer& getRemotePlayerInputBuffer() {
             if (isLocalPlayer1) {
-                return inputBufferForPlayer2;
+                return gameState.inputBufferForPlayer2;
             }
             else {
-                return inputBufferForPlayer1;
+                return gameState.inputBufferForPlayer1;
             }
         }
 
         void handleLocalFrameInput(FrameType currentFrame, const PlayerInput& localPlayerInput) {
-            if (currentFrame != latestLocalStoredInputFrame + 1) { // Sanity check. Likely extraneous but nice to have
+            if (currentFrame != gameState.latestLocalStoredInputFrame + 1) { // Sanity check. Likely extraneous but nice to have
                 logger.logWarnMessage(
                     "RollbackManager::handleLocalFrameInput",
                     "Unexpected current frame! Current frame: " + std::to_string(currentFrame)
-                        + ", latestLocalStoredInputFrame: " + std::to_string(latestLocalStoredInputFrame)
+                        + ", latestLocalStoredInputFrame: " + std::to_string(gameState.latestLocalStoredInputFrame)
                 );
                 return; // Don't continue as storing additional data will break input buffer frame tracking assumptions
             }
@@ -216,11 +220,11 @@ namespace ProjectNomad {
                 communicationHandler.sendInputsToRemotePlayer(currentFrame, localInputsBuffer);
             }
             
-            latestLocalStoredInputFrame = currentFrame;
+            gameState.latestLocalStoredInputFrame = currentFrame;
         }
 
         void handleInputUpdateFromConnectedPlayer(const InputUpdateMessage& inputUpdateMessage) {
-            if (inputUpdateMessage.updateFrame <= latestRemotePlayerFrame) {
+            if (inputUpdateMessage.updateFrame <= gameState.latestRemotePlayerFrame) {
                 logger.logWarnMessage(
                     "RollbackManager::handleInputUpdateFromConnectedPlayer",
                     "Received older frame input: " + std::to_string(inputUpdateMessage.updateFrame)
@@ -228,7 +232,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            FrameType amountOfMissingInputs = inputUpdateMessage.updateFrame - latestRemotePlayerFrame;
+            FrameType amountOfMissingInputs = inputUpdateMessage.updateFrame - gameState.latestRemotePlayerFrame;
             if (amountOfMissingInputs > RollbackStaticSettings::MaxRollbackFrames) {
                 logger.logWarnMessage(
                     "RollbackManager::handleInputUpdateFromConnectedPlayer",
@@ -250,7 +254,7 @@ namespace ProjectNomad {
 
             // TODO: Check against prediction and remember to roll back if necessary
             
-            latestRemotePlayerFrame = inputUpdateMessage.updateFrame;
+            gameState.latestRemotePlayerFrame = inputUpdateMessage.updateFrame;
 
             // Some temp debug/verification logging
             // logger.logInfoMessage(

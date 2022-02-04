@@ -294,14 +294,16 @@ namespace ProjectNomad {
 
             EOS_EResult result = EOS_P2P_SendPacket(p2pHandle, &options);
             if (result == EOS_EResult::EOS_Success) {
-                logger.addInfoNetLog(
-                    "EWS::TestSendMessage",
-                    "Successfully attempted to send message"
-                );
+                // FUTURE: Return whether or not sending the message was a success
+                
+                // logger.addInfoNetLog(
+                //     "EWS::sendMessage",
+                //     "Successfully attempted to send message"
+                // );
             }
             if (result != EOS_EResult::EOS_Success) {
                 logger.addErrorNetLog(
-                    "EWS::TestSendMessage",
+                    "EWS::sendMessage",
                     "Failed to send message");
             }
         }
