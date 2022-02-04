@@ -34,4 +34,24 @@ namespace RingBufferTests {
         EXPECT_EQ(987, toTest.get(1));
         EXPECT_EQ(789, toTest.get(2));
     }
+
+    TEST_F(RingBufferTests, swapInsert_swapsAndInsertsAsExpected) {
+        RingBuffer<int, 3> toTest;
+
+        toTest.add(12);
+        toTest.add(45);
+        toTest.add(78);
+        toTest.add(90);
+
+        int val = 1234;
+        toTest.swapInsert(val);
+        
+        EXPECT_EQ(1234, toTest.get(0));
+        EXPECT_EQ(90, toTest.get(1));
+        EXPECT_EQ(78, toTest.get(2));
+
+        // Perhaps shouldn't be testing this as no intention of swapped-out value being useful,
+        //  but might as well verify behavior atm
+        EXPECT_EQ(45, val);
+    }
 }

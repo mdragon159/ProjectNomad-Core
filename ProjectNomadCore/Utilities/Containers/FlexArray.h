@@ -7,7 +7,7 @@ namespace ProjectNomad {
     /// Array in place with fixed size but with helpful operations to have dynamic size in place (up to MaxSize).
     /// Intended to be alternative to std::vector for snapshot/memcpy behavior,
     ///     as std::vector's array is effectively a pointer to elsewhere in memory.
-    /// NOTE: Order not guaranteed to be in add() call order. Check remove() implementation for more details
+    /// NOTE: Order not guaranteed to be in add() call order after remove() is called. Check remove() implementation for more details
     /// </summary>
     template <typename ContentType, uint32_t MaxSize>
     class FlexArray {
@@ -21,8 +21,12 @@ namespace ProjectNomad {
             return MaxSize;
         }
 
-        uint32_t getSize() {
+        uint32_t getSize() const {
             return headIndex;
+        }
+
+        bool isEmpty() const {
+            return headIndex == 0;
         }
 
         // Returns true if succeeds
@@ -65,6 +69,7 @@ namespace ProjectNomad {
             
             // If not at end, then move element at end into current spot (not retaining order so no need to move all elements around)
             if (index != headIndex - 1) {
+                // FUTURE: Swap may be faster...? At least in some cases?
                 array[index] = array[headIndex - 1];
             }
             headIndex--; // Decrease active size of array by one; element pointed by head is now "invalid"/unused

@@ -27,6 +27,27 @@ namespace FlexArrayTests {
         EXPECT_EQ(1, toTest.getSize());
     }
 
+    TEST_F(FlexArrayTests, isEmpty_whenEmpty_returnsTrue) {
+        FlexArray<int, 3> toTest;
+        
+        EXPECT_TRUE(toTest.isEmpty());
+    }
+
+    TEST_F(FlexArrayTests, isEmpty_whenElementAdded_returnsFalse) {
+        FlexArray<int, 3> toTest;
+        toTest.add(123);
+        
+        EXPECT_FALSE(toTest.isEmpty());
+    }
+
+    TEST_F(FlexArrayTests, isEmpty_whenElementAddedThenRemoved_returnsTrue) {
+        FlexArray<int, 3> toTest;
+        toTest.add(123);
+        toTest.remove(0);
+        
+        EXPECT_TRUE(toTest.isEmpty());
+    }
+
     TEST_F(FlexArrayTests, getSize_whenOneElementAddedThenRemoved_returnsZero) {
         FlexArray<int, 100> toTest;
         toTest.add(100);

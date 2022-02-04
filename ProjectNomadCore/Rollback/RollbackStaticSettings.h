@@ -4,7 +4,7 @@
 namespace ProjectNomad {
     class RollbackStaticSettings {
     public:
-        static constexpr bool UseLockstep = true;
+        static constexpr bool UseLockstep = false;
         
         static constexpr FrameType OfflineInputDelay = 3;
         static constexpr FrameType OnlineInputDelay = 3;

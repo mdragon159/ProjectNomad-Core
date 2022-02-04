@@ -35,6 +35,16 @@ namespace ProjectNomad {
             headIndex = (headIndex + 1) % Size;
         }
 
+        /// <summary>Uses swap to insert the provided element into the "front" of the buffer. This method should</summary>
+        /// <param name="element">
+        /// Element that is swap-inserted into the "front" of the buffer.
+        /// No guarantee the new value will be meaningful and thus new value should not be used after swap.
+        /// </param>
+        void swapInsert(ContentType& element) {
+            std::swap(element, array[headIndex]);
+            headIndex = (headIndex + 1) % Size;
+        }
+
         /// <summary>
         /// Retrieves element at "front" (latest value) of buffer then moving "backwards" by offset amount.
         /// This call has no safeguards in case of an invalid offset and thus responsibility is fully on user to correctly

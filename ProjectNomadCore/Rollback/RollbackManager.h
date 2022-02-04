@@ -1,7 +1,9 @@
 #pragma once
 #include "InputBuffer.h"
+#include "InputPredictor.h"
 #include "RollbackCommunicationHandler.h"
-#include "RollbackManagerSnapshot.h"
+#include "RollbackManagerGameState.h"
+#include "RollbackSnapshotManager.h"
 #include "RollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
@@ -9,12 +11,16 @@
 #include "Utilities/FrameType.h"
 #include "Utilities/LoggerSingleton.h"
 #include "Utilities/Singleton.h"
+#include "Utilities/Containers/FlexArray.h"
 #include "Utilities/Containers/RingBuffer.h"
 
 namespace ProjectNomad {
+    template <typename SnapshotType>
     class RollbackManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
         RollbackCommunicationHandler communicationHandler;
+        RollbackSnapshotManager<SnapshotType> snapshotManager;
+        InputPredictor inputPredictor;
 
         // Settings which aren't expected to change mid-game
         bool isInitialized = false;
@@ -24,6 +30,10 @@ namespace ProjectNomad {
         
         // Various normal processing state
         RollbackManagerGameState gameState = {};
+        // Technically the below state is part of "GameState" but we should never need the data in snapshots (...supposedly)
+        FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> predictedInputs = {};
+        bool needToRollback = false;
+        FrameType frameToRollbackTo = 0;
     
     public:
         RollbackManager() {
@@ -50,7 +60,7 @@ namespace ProjectNomad {
         RollbackUpdateResult doFrameUpdate(FrameType currentFrame, const PlayerInput& localPlayerInput) {
             if (!isInitialized) {
                 logger.logWarnMessage("RollbackManager::doFrameUpdate", "Not initialized!");
-                return { RollbackDecision::ProceedNormally };
+                return RollbackUpdateResult::ProceedNormally();
             }
 
             // Only handle the input for a given frame once
@@ -67,7 +77,7 @@ namespace ProjectNomad {
                 //     "Skipping frame to be in lockstep. Current frame: " + std::to_string(currentFrame)
                 //         + ", Remote frame: " + std::to_string(latestRemotePlayerFrame)
                 // );
-                return { RollbackDecision::WaitFrame };
+                return RollbackUpdateResult::WaitFrame();
             }
 
             // Sanity check: If this isn't strictly one frame more than the previous frame, then something went wrong
@@ -78,14 +88,22 @@ namespace ProjectNomad {
                         + ", currentFrame: " + std::to_string(currentFrame)
                 );
             }
-
-            // Finally remember that this frame was processed and allow game to proceed normally
             gameState.latestLocalFrame = currentFrame;
-            return { RollbackDecision::ProceedNormally };
+
+            if (needToRollback) {
+                // Reset flag as assuming rollback will be handled immediately
+                needToRollback = false;
+                
+                // Allow caller to handle actual rollback (restoring snapshot and recalculating state up to current frame)
+                return  RollbackUpdateResult::Rollback(frameToRollbackTo);
+            }
+            
+            return RollbackUpdateResult::ProceedNormally();
         }
 
-        // TODO: Snapshot stuff
-        void onGameFrameEnd() {}
+        void onGameFrameEnd(SnapshotType& snapshot) {
+            snapshotManager.storeSnapshot(gameState.latestLocalFrame, snapshot);
+        }
 
         /// <summary>Retrieves input for a given frame. Assumes doFrameUpdate() has been called for every frame already</summary>
         /// <param name="playerId">Player to retrieve inputs for</param>
@@ -93,7 +111,7 @@ namespace ProjectNomad {
         /// Frame to retrieve inputs for. Must be <= current frame and within max rollback range
         /// </param>
         /// <returns>Intended player input for given player on given frame</returns>
-        PlayerInput getPlayerInput(PlayerId playerId, FrameType frameToRetrieveInputsFor) {
+        PlayerInput getPlayerInput(const PlayerId& playerId, FrameType frameToRetrieveInputsFor) {
             if (frameToRetrieveInputsFor > gameState.latestLocalFrame) {
                 logger.logWarnMessage(
                     "RollbackManager::getInput",
@@ -113,6 +131,18 @@ namespace ProjectNomad {
 
             frameOffset += currentInputDelay; // Simple way to apply arbitrary input delay
 
+            if (isRemotePlayer(playerId) && frameToRetrieveInputsFor > gameState.latestRemotePlayerFrame) {
+                PlayerInput predictedInput = inputPredictor.predictInput(
+                    frameToRetrieveInputsFor, gameState.latestRemotePlayerFrame, getRemotePlayerInputBuffer());
+
+                // Store predicted input so we can check prediction vs real input later on to determine if need to rollback
+                // And yeah, given current predictor's implementation we don't need an entire array as prediction for entire
+                //     prediction period. However, this implementation is independent of InputPredictor and thus using this
+                predictedInputs.add(predictedInput);
+
+                return predictedInput;
+            }
+            
             switch(playerId.playerSpot) {
                 case PlayerSpot::Player1:
                     return gameState.inputBufferForPlayer1.get(frameOffset);
@@ -157,6 +187,11 @@ namespace ProjectNomad {
             }
         }
 
+        const SnapshotType& retrieveSnapshot(FrameType frameToRetrieveSnapshotFor) {
+            return snapshotManager.getSnapshot(frameToRetrieveSnapshotFor);
+        }
+
+        // FUTURE: Perhaps rename to something akin to "storeSnapshotData" for clarity vs other snapshot behavior
         void storeSnapshot(RollbackManagerGameState& output) const {
             output = gameState;
         }
@@ -242,6 +277,51 @@ namespace ProjectNomad {
                 return;
             }
 
+            if (!predictedInputs.isEmpty()) {
+                // Calculate if we need to rollback (given a prior input update didn't already determine we need to rollback) 
+                if (!needToRollback) {
+                    // Check if any predicted inputs were inaccurate and thus if we need to rollback
+                    // Note that need to start with the earliest prediction as need to rollback to earliest inaccurate prediction
+                    for (uint32_t i = 0; i < amountOfMissingInputs; i++) {
+                        // TODO: Could latestLocalFrame ever be off? DRAW THIS OUT! What happens if their "heads" are different?
+                        //       AH WAIT, IS IT BECAUSE THIS IS EXACTLY HOW MUCH DATA IS MISSING, NOT HOW MUCH IS IN THE PACKET?!
+                        FrameType predictionFrame = gameState.latestLocalFrame - (predictedInputs.getSize() - 1 - i);
+                        if (predictionFrame > inputUpdateMessage.updateFrame) { // Sanity check
+                            logger.logWarnMessage(
+                               "RollbackManager::handleInputUpdateFromConnectedPlayer",
+                               "Somehow predictionFrame > message's updateFrame! i: " + std::to_string(i) +
+                                    ", pred frame: " + std::to_string(predictionFrame) +
+                                    ", local frame: " + std::to_string(gameState.latestLocalFrame) +
+                                    ", msg frame: " + std::to_string(inputUpdateMessage.updateFrame)
+                            );
+                            break;
+                        }
+                    
+                        FrameType remoteInputOffset = inputUpdateMessage.updateFrame - predictionFrame; // index 0 is the latest frame so go backwards from there
+                        if (predictedInputs.get(i) != inputUpdateMessage.playerInputs[remoteInputOffset]) {
+                            needToRollback = true;
+                            frameToRollbackTo = predictionFrame;
+                            break; // We found the earliest misprediction so no need to check predictions further
+                        }
+                    }
+                }
+                
+                // Clear out predicted inputs since no longer need em (regardless if rolling back or if they were accurate)
+                if (predictedInputs.getSize() == amountOfMissingInputs) { // Do we have data for all our predictions?
+                    predictedInputs = {};
+                }
+                else { // Otherwise remove only the predictions we have data for and thus no longer need
+                    // FlexArray (currently) doesn't support removing elements while retaining order
+                    // Thus copy over remaining data into a new array then copy that into the original array
+                    // FUTURE: Make this more efficient...? Is this even worth worrying about at all?
+                    FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> uncheckedPredictions;
+                    for (uint32_t i = amountOfMissingInputs; i < predictedInputs.getSize(); i++) {
+                        uncheckedPredictions.add(predictedInputs.get(i));
+                    }
+                    predictedInputs = uncheckedPredictions;
+                }
+            }
+
             // Add missing data
             // FUTURE: Have two separate variables here, INPUTS_HISTORY_SIZE and MaxRollbackFrames. Right now they're equal,
             //          but in future they could be different. At risk here to have a bug when those don't equal
@@ -252,16 +332,20 @@ namespace ProjectNomad {
                 remoteInputsBuffer.add(remotePlayerInput);
             }
 
-            // TODO: Check against prediction and remember to roll back if necessary
-            
             gameState.latestRemotePlayerFrame = inputUpdateMessage.updateFrame;
+        }
 
-            // Some temp debug/verification logging
-            // logger.logInfoMessage(
-            //     "RollbackManager::handleInputUpdateFromConnectedPlayer",
-            //     "Successfully processed InputsUpdateMessage for frame " + std::to_string(inputUpdateMessage.updateFrame)
-            //     + " with latest jump input: " + std::to_string(inputUpdateMessage.playerInputs[0].isJumpPressed)
-            // );
+        bool isRemotePlayer(const PlayerId& playerId) {
+            if (!isMultiplayerGame) {
+                return false;
+            }
+
+            if (isLocalPlayer1) {
+                return playerId.playerSpot == PlayerSpot::Player2;
+            }
+            else {
+                return playerId.playerSpot == PlayerSpot::Player1;
+            }
         }
     };
 }
