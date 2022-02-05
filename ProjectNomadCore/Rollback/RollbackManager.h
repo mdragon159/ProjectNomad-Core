@@ -267,8 +267,8 @@ namespace ProjectNomad {
                 return;
             }
 
-            FrameType amountOfMissingInputs = inputUpdateMessage.updateFrame - gameState.latestRemotePlayerFrame;
-            if (amountOfMissingInputs > RollbackStaticSettings::MaxRollbackFrames) {
+            FrameType amountOfNewInputs = inputUpdateMessage.updateFrame - gameState.latestRemotePlayerFrame;
+            if (amountOfNewInputs > RollbackStaticSettings::MaxRollbackFrames) {
                 logger.logWarnMessage(
                     "RollbackManager::handleInputUpdateFromConnectedPlayer",
                     "Received input for frame outside rollback window. Frame: " + std::to_string(inputUpdateMessage.updateFrame)
@@ -278,13 +278,24 @@ namespace ProjectNomad {
             }
 
             if (!predictedInputs.isEmpty()) {
+                // Sanity check: Predicted inputs should be used every frame that goes beyond latestRemotePlayerFrame
+                if (predictedInputs.getSize() != gameState.latestLocalFrame - gameState.latestRemotePlayerFrame) {
+                    logger.logWarnMessage(
+                               "RollbackManager::handleInputUpdateFromConnectedPlayer",
+                               "predictedInputs.getSize() != drift size! \
+                                    , predictions size: " + std::to_string(predictedInputs.getSize()) +
+                                    ", local frame: " + std::to_string(gameState.latestLocalFrame) +
+                                    ", latestRemotePlayerFrame: " + std::to_string(gameState.latestRemotePlayerFrame)
+                            );
+                    predictedInputs = {};
+                    return;
+                }
+                
                 // Calculate if we need to rollback (given a prior input update didn't already determine we need to rollback) 
                 if (!needToRollback) {
                     // Check if any predicted inputs were inaccurate and thus if we need to rollback
                     // Note that need to start with the earliest prediction as need to rollback to earliest inaccurate prediction
-                    for (uint32_t i = 0; i < amountOfMissingInputs; i++) {
-                        // TODO: Could latestLocalFrame ever be off? DRAW THIS OUT! What happens if their "heads" are different?
-                        //       AH WAIT, IS IT BECAUSE THIS IS EXACTLY HOW MUCH DATA IS MISSING, NOT HOW MUCH IS IN THE PACKET?!
+                    for (uint32_t i = 0; i < amountOfNewInputs && i < predictedInputs.getSize(); i++) {
                         FrameType predictionFrame = gameState.latestLocalFrame - (predictedInputs.getSize() - 1 - i);
                         if (predictionFrame > inputUpdateMessage.updateFrame) { // Sanity check
                             logger.logWarnMessage(
@@ -307,7 +318,7 @@ namespace ProjectNomad {
                 }
                 
                 // Clear out predicted inputs since no longer need em (regardless if rolling back or if they were accurate)
-                if (predictedInputs.getSize() == amountOfMissingInputs) { // Do we have data for all our predictions?
+                if (predictedInputs.getSize() <= amountOfNewInputs) { // Do we have data for all our predictions?
                     predictedInputs = {};
                 }
                 else { // Otherwise remove only the predictions we have data for and thus no longer need
@@ -315,7 +326,7 @@ namespace ProjectNomad {
                     // Thus copy over remaining data into a new array then copy that into the original array
                     // FUTURE: Make this more efficient...? Is this even worth worrying about at all?
                     FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> uncheckedPredictions;
-                    for (uint32_t i = amountOfMissingInputs; i < predictedInputs.getSize(); i++) {
+                    for (uint32_t i = amountOfNewInputs; i < predictedInputs.getSize(); i++) {
                         uncheckedPredictions.add(predictedInputs.get(i));
                     }
                     predictedInputs = uncheckedPredictions;
@@ -326,9 +337,9 @@ namespace ProjectNomad {
             // FUTURE: Have two separate variables here, INPUTS_HISTORY_SIZE and MaxRollbackFrames. Right now they're equal,
             //          but in future they could be different. At risk here to have a bug when those don't equal
             InputBuffer& remoteInputsBuffer = getRemotePlayerInputBuffer();
-            for (FrameType i = 0; i < amountOfMissingInputs; i++) {
+            for (FrameType i = 0; i < amountOfNewInputs; i++) {
                 // index 0 is the latest frame so add backwards
-                const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfMissingInputs - i);
+                const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfNewInputs - i);
                 remoteInputsBuffer.add(remotePlayerInput);
             }
 
