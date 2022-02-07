@@ -53,9 +53,13 @@ namespace ProjectNomad {
         /// <summary>
         /// Get angle between two vectors in degrees
         /// </summary>
-        /// <param name="a">First vector< (doesn't need to be a unit vector)/param>
+        /// <param name="a">First vector (doesn't need to be a unit vector)</param>
         /// <param name="b">Second vector (doesn't need to be a unit vector)</param>
-        /// <returns>Angle between vectors in degrees</returns>
+        /// <returns>
+        /// Angle between vectors in degrees in range of [0, 180].
+        /// Note that this method does not make any distinction between "left" and "right".
+        /// ie, Forward x Left = 90 and  Forward x Right = 90 as well. Use isXYCrossDotPositive to distinguish the two.
+        /// </returns>
         static fp getAngleBetweenVectorsInDegrees(FPVector a, FPVector b) {
             // TODO: I don't even remember what formula I used
             fp value = a.normalized().dot(b.normalized());
@@ -63,12 +67,14 @@ namespace ProjectNomad {
         }
 
         /// <summary>
-        /// TODO? What's this typically used for?
+        /// As name states, this simply returns whether A x B dotted with up direction is positive.
+        /// In practice, this is used with getAngleBetweenVectorsInDegrees to determine "left" vs "right" (on XY plane).
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns>TODO? What's this typically used for?</returns>
+        /// <param name="a">First vector (doesn't need to be a unit vector)</param>
+        /// <param name="b">Second vector (doesn't need to be a unit vector)</param>
+        /// <returns>Positive if b is to "right" of a, and negative if b is to "left" of a. See unit tests for examples</returns>
         static bool isXYCrossDotPositive(FPVector a, FPVector b) {
+            // TODO: A source link from years back would be nice
             return a.cross(b).dot(FPVector::up()) >= fp{0};
         }
 

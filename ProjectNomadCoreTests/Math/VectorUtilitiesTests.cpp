@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Math/VectorUtilities.h"
+#include "TestHelpers/TestHelpers.h"
 
 using namespace ProjectNomad;
 
@@ -152,6 +153,70 @@ namespace VectorUtilitiesTests {
         ASSERT_EQ(FPVector(fp{0}, fp{0}, fp{-125}), parallelComponentResult);
         ASSERT_EQ(FPVector(fp{125}, fp{200}, fp{0}), perpComponentResult);
         ASSERT_TRUE(isParallelOppDirResult);
+    }
+
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenSameDirection_returnsZero) {;
+        FPVector secondDir = FPVector::forward();
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
+
+        TestHelpers::expectNear(fp{0}, result, fp{0.01f});
+    }
+
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToLeftDirection_returnsPositive90) {;
+        FPVector secondDir = FPVector::right() * fp{-1};
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
+
+        TestHelpers::expectNear(fp{90}, result, fp{0.01f});
+    }
+
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToRightDirection_returnsPositive90) {;
+        FPVector secondDir = FPVector::right();
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
+
+        TestHelpers::expectNear(fp{90}, result, fp{0.01f});
+    }
+
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenOppositeDirection_returns180) {;
+        FPVector secondDir = FPVector::forward() * fp{-1};
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
+
+        TestHelpers::expectNear(fp{180}, result, fp{0.01f});
+    }
+
+    TEST(isXYCrossDotPositive, forwardComparison_whenSameDirection_returnsTrue) {;
+        FPVector secondDir = FPVector::forward();
+
+        bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
+
+        EXPECT_TRUE(result);
+    }
+
+    TEST(isXYCrossDotPositive, forwardComparison_whenToLeftDirection_returnsFalse) {;
+        FPVector secondDir = FPVector::right() * fp{-1};
+
+        bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST(isXYCrossDotPositive, forwardComparison_whenToRightDirection_returnsTrue) {;
+        FPVector secondDir = FPVector::right();
+
+        bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
+
+        EXPECT_TRUE(result);
+    }
+
+    TEST(isXYCrossDotPositive, forwardComparison_whenOppositeDirection_returnsTrue) {;
+        FPVector secondDir = FPVector::forward() * fp{-1};
+
+        bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
+
+        EXPECT_TRUE(result);
     }
 
     // Parallel
