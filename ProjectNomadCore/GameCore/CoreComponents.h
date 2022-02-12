@@ -10,6 +10,11 @@ namespace ProjectNomad {
     struct TransformComponent {
         FPVector location;
         FPQuat rotation;
+
+        // Represents direction that entity is facing, *assuming* +x axis is intended to be forward direction
+        FPVector getForwardDirection() const {
+            return rotation * FPVector::forward();
+        }
     };
 
     struct PhysicsComponent {
