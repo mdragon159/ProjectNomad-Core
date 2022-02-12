@@ -14,7 +14,8 @@ namespace ProjectNomad {
         fp controllerLookUp = fp{0};
 
         bool isJumpPressed = false;
-        bool isBlockDodgePressed = false;
+        bool isDodgePressed = false;
+        bool isBlockPressed = false;
         bool isGrapplePressed = false;
         bool isGrappleAimPressed = false;
         bool isAttackPressed = false;
@@ -22,15 +23,16 @@ namespace ProjectNomad {
 
         template <class Archive>
         void serialize(Archive& ar, std::uint32_t const version) {
-            ar(moveForward, moveRight, mouseTurn, mouseLookUp, controllerTurn, controllerLookUp,
-                isJumpPressed, isBlockDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed, isCrouchPressed);
+            ar(moveForward, moveRight, mouseTurn, mouseLookUp, controllerTurn, controllerLookUp, isJumpPressed,
+                isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed, isCrouchPressed);
         }
     };
 
     // Explicitly define equality operators as pre-C++20 can't auto-generate this: https://stackoverflow.com/a/5740505/3735890
     inline bool operator==(const PlayerInput& lhs, const PlayerInput& rhs) {
         return  lhs.isJumpPressed == rhs.isJumpPressed &&
-                lhs.isBlockDodgePressed == rhs.isBlockDodgePressed &&
+                lhs.isDodgePressed == rhs.isDodgePressed &&
+                lhs.isBlockPressed == rhs.isBlockPressed &&
                 lhs.isGrapplePressed == rhs.isGrapplePressed &&
                 lhs.isGrappleAimPressed == rhs.isGrappleAimPressed &&
                 lhs.isAttackPressed == rhs.isAttackPressed &&
