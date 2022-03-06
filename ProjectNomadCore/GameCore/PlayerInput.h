@@ -13,18 +13,20 @@ namespace ProjectNomad {
         fp controllerTurn = fp{0};
         fp controllerLookUp = fp{0};
 
+        bool isInteractPressed = false;
         bool isJumpPressed = false;
         bool isDodgePressed = false;
         bool isBlockPressed = false;
         bool isGrapplePressed = false;
         bool isGrappleAimPressed = false;
         bool isAttackPressed = false;
+        bool isSecondaryAttackPressed = false;
         bool isCrouchPressed = false;
 
         template <class Archive>
         void serialize(Archive& ar, std::uint32_t const version) {
             ar(moveForward, moveRight, mouseTurn, mouseLookUp, controllerTurn, controllerLookUp, isJumpPressed,
-                isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed, isCrouchPressed);
+                isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed, isSecondaryAttackPressed, isCrouchPressed);
         }
     };
 
@@ -36,6 +38,7 @@ namespace ProjectNomad {
                 lhs.isGrapplePressed == rhs.isGrapplePressed &&
                 lhs.isGrappleAimPressed == rhs.isGrappleAimPressed &&
                 lhs.isAttackPressed == rhs.isAttackPressed &&
+                lhs.isSecondaryAttackPressed == rhs.isSecondaryAttackPressed &&
                 lhs.isCrouchPressed == rhs.isCrouchPressed &&
                     
                 lhs.moveForward == rhs.moveForward &&
