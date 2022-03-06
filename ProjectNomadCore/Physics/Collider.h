@@ -18,36 +18,37 @@ namespace ProjectNomad {
         // TODO: Assert error if half size or rotation is invalid
         // Half size must be positive (>0 in all dimensions)
         // Rotation must be a unit quaternion
-        
+
         // Avoid needing to use pointers via dangerous union type, see following for quick explanation regarding union:
         // https://stackoverflow.com/a/3071899/3735890
         // This allows us to not have redundant/unused data across all types, but need to be careful with usage
         // Oof, also union with 3 floats which Unreal does -_- Not using FPVector as not sure if composite types works well here
         union SharedColliderData {
             struct {
-                fp halfSizeX {0}; // Positive halfwidth extents in each direction per axis from center point
-                fp halfSizeY {0};
-                fp halfSizeZ {0};
+                fp halfSizeX{0}; // Positive halfwidth extents in each direction per axis from center point
+                fp halfSizeY{0};
+                fp halfSizeZ{0};
             } Box;
 
             struct {
-                fp radius {0};      // Radius of rounded ends of capsule
-                fp halfHeight {0};  // One half of total height of capsule, including rounded ends. Should be >= radius
+                fp radius{0}; // Radius of rounded ends of capsule
+                fp halfHeight{0}; // One half of total height of capsule, including rounded ends. Should be >= radius
             } Capsule;
 
             struct {
-                fp radius {0};
+                fp radius{0};
             } Sphere;
 
-        	// Using a named union and explicit constructors due to fp not having a default constructor
-        	// See following for more info: https://www.codeproject.com/Answers/1187708/Having-problems-with-union-forcing-initiation-of-a#answer1
-        	SharedColliderData() : Box(), Capsule(), Sphere() {}
+            // Using a named union and explicit constructors due to fp not having a default constructor
+            // See following for more info: https://www.codeproject.com/Answers/1187708/Having-problems-with-union-forcing-initiation-of-a#answer1
+            SharedColliderData() : Box(), Capsule(), Sphere() {}
         };
-    	SharedColliderData sharedCollisionData;
-        
+
+        SharedColliderData sharedCollisionData;
+
 #pragma region Setters/"Constructors"
 
-    	void setBox(const FPVector& newCenter, const FPVector& halfSize) {
+        void setBox(const FPVector& newCenter, const FPVector& halfSize) {
             setBox(newCenter, FPQuat::identity(), halfSize);
         }
 
@@ -55,7 +56,7 @@ namespace ProjectNomad {
             colliderType = ColliderType::Box;
             setCenter(newCenter);
             setRotation(newRotation);
-            
+
             setBoxHalfSize(halfSize);
         }
 
@@ -67,7 +68,7 @@ namespace ProjectNomad {
             colliderType = ColliderType::Capsule;
             setCenter(newCenter);
             setRotation(newRotation);
-            
+
             setCapsuleRadius(radius);
             setCapsuleHalfHeight(halfHeight);
         }
@@ -76,17 +77,17 @@ namespace ProjectNomad {
             colliderType = ColliderType::Sphere;
             setCenter(newCenter);
             // No need to set rotation as rotation is useless for sphere
-            
+
             setSphereRadius(radius);
         }
-        
-#pragma endregion 
+
+#pragma endregion
 #pragma region Is Type Helpers
 
         bool isNotInitialized() const {
             return colliderType == ColliderType::NotInitialized;
         }
-        
+
         bool isBox() const {
             return colliderType == ColliderType::Box;
         }
@@ -98,10 +99,10 @@ namespace ProjectNomad {
         bool isSphere() const {
             return colliderType == ColliderType::Sphere;
         }
-        
+
 #pragma endregion
 #pragma region Setters/Getters
-        
+
         void setCenter(const FPVector& newCenter) {
             center = newCenter;
         }
@@ -134,8 +135,10 @@ namespace ProjectNomad {
                 // TODO: Resolve circular dependencies (ie, use .cpp files) and take in SimContext for check and logging
                 return FPVector::zero();
             }
-            
-            return { sharedCollisionData.Box.halfSizeX, sharedCollisionData.Box.halfSizeY, sharedCollisionData.Box.halfSizeZ };
+
+            return {
+                sharedCollisionData.Box.halfSizeX, sharedCollisionData.Box.halfSizeY, sharedCollisionData.Box.halfSizeZ
+            };
         }
 
         void setCapsuleRadius(const fp& newRadius) {
@@ -191,7 +194,7 @@ namespace ProjectNomad {
 
             return sharedCollisionData.Sphere.radius;
         }
-        
+
 #pragma endregion
 #pragma region Shared Utility Functions
 
@@ -204,7 +207,7 @@ namespace ProjectNomad {
         FPVector toWorldSpaceForOriginCenteredValue(const FPVector& value) const {
             // This is its own separate public method as useful for directions
             // (ie, directions are always with origin at 0, just need to rotate em between world vs local)
-            
+
             // Quick wayyyy later note off top of head:
             // This is assuming <0, 0, 0> is center of world. I think
             return rotation * value;
@@ -227,7 +230,7 @@ namespace ProjectNomad {
         FPVector toLocalSpaceForOriginCenteredValue(const FPVector& value) const {
             // This is its own separate public method as useful for directions
             // (ie, directions are always with origin at 0, just need to rotate em between world vs local)
-            
+
             // Quick wayyyy later note off top of head:
             // This is assuming <0, 0, 0> is center of world. TODO: Redo comments on this and prior two functions
             return rotation.inverted() * value;
@@ -248,7 +251,8 @@ namespace ProjectNomad {
                     return "Capsule center: {" + center.toString()
                         + "}, rotation: {" + rotation.toString()
                         + "}, radius: {" + std::to_string(static_cast<float>(sharedCollisionData.Capsule.radius))
-                        + "}, halfHeight: {" + std::to_string(static_cast<float>(sharedCollisionData.Capsule.halfHeight))
+                        + "}, halfHeight: {" + std::to_string(
+                            static_cast<float>(sharedCollisionData.Capsule.halfHeight))
                         + "}";
 
                 case ColliderType::Sphere:
@@ -263,25 +267,25 @@ namespace ProjectNomad {
 
         std::string getTypeAsString() const {
             switch (colliderType) {
-            case ColliderType::NotInitialized:
-                return "<Not Initialized Collider>";
+                case ColliderType::NotInitialized:
+                    return "<Not Initialized Collider>";
 
-            case ColliderType::Box:
-                return "Box";
-                
-            case ColliderType::Capsule:
-                return "Capsule";
-                
-            case ColliderType::Sphere:
-                return "Sphere";
+                case ColliderType::Box:
+                    return "Box";
 
-            default:
-                return "<Unknown Collider Type. Implement please!>";
+                case ColliderType::Capsule:
+                    return "Capsule";
+
+                case ColliderType::Sphere:
+                    return "Sphere";
+
+                default:
+                    return "<Unknown Collider Type. Implement please!>";
             }
         }
-        
-#pragma endregion 
-        
+
+#pragma endregion
+
 #pragma region Box Specific Functionality
 
         std::vector<FPVector> getBoxVerticesInWorldCoordinates() const {
@@ -323,7 +327,7 @@ namespace ProjectNomad {
 
         bool isLocalSpacePtWithinBox(const FPVector& localPoint) const {
             FPVector halfSize = getBoxHalfSize();
-            
+
             // If outside bounds of an axis, then know for sure not located in the obb
             if (localPoint.x < -halfSize.x || localPoint.x > halfSize.x) return false;
             if (localPoint.y < -halfSize.y || localPoint.y > halfSize.y) return false;
@@ -332,7 +336,7 @@ namespace ProjectNomad {
             // Within bounds of all three axes. Thus, point is definitely located within the obb
             return true;
         }
-        
+
 #pragma endregion
 #pragma region Capsule Specific Functionality
 
@@ -347,24 +351,25 @@ namespace ProjectNomad {
         /// <returns>Returns medial line extremes of capsule (either end of center line of capsule offset by radius)</returns>        
         Line getCapsuleMedialLineExtremes() const {
             fp pointDistanceFromCenter = getMedialHalfLineLength();
-            
+
             // Calculate rotated directions towards "bottom" and "top"
             // Note that this is dependent on capsule's default orientation being vertical
             FPVector rotatedUpDir = rotation * FPVector::up();
             FPVector rotatedDownDir = rotatedUpDir * fp{-1};
 
             // Calculate the extreme points then return em
-            FPVector pointA = center + rotatedDownDir * pointDistanceFromCenter; // Small optimization note: Don't need rotatedDownDir. Just subtract
+            FPVector pointA = center + rotatedDownDir * pointDistanceFromCenter;
+            // Small optimization note: Don't need rotatedDownDir. Just subtract
             FPVector pointB = center + rotatedUpDir * pointDistanceFromCenter;
-            return { pointA, pointB };
+            return {pointA, pointB};
         }
-        
+
 #pragma endregion
 #pragma region Sphere Specific Functionality
 
         // None, yay simple shape =D
-        
-#pragma endregion 
+
+#pragma endregion
     };
 
     inline std::ostream& operator<<(std::ostream& os, const Collider& value) {

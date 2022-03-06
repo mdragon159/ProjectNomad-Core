@@ -222,6 +222,7 @@
     <ClInclude Include="Utilities\ILogger.h" />
     <ClInclude Include="Utilities\LoggerSingleton.h" />
     <ClInclude Include="Utilities\NetLogMessage.h" />
+    <ClInclude Include="Utilities\Randomizer.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
     <ClInclude Include="Utilities\Singleton.h" />
     <ClInclude Include="Vendor\cereal\cereal.hpp" />
@@ -298,6 +299,7 @@
     <ClInclude Include="Vendor\fpm\fixed.hpp" />
     <ClInclude Include="Vendor\fpm\ios.hpp" />
     <ClInclude Include="Vendor\fpm\math.hpp" />
+    <ClInclude Include="Vendor\random\random.hpp" />
     <ClInclude Include="Vendor\rapidjson\allocators.h" />
     <ClInclude Include="Vendor\rapidjson\cursorstreamwrapper.h" />
     <ClInclude Include="Vendor\rapidjson\document.h" />
@@ -343,6 +345,9 @@
     <Content Include="Vendor\EnTT\README.md" />
     <Content Include="Vendor\EOS\README.md" />
     <Content Include="Vendor\fpm\README.md" />
+    <Content Include="Vendor\random\LICENSE.MIT" />
+    <Content Include="Vendor\random\README-original.md" />
+    <Content Include="Vendor\random\README.md" />
     <Content Include="Vendor\rapidjson\license.txt" />
     <Content Include="Vendor\rapidjson\readme-original.md" />
     <Content Include="Vendor\rapidjson\README.md" />

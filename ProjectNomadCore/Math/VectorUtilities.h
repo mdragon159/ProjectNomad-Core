@@ -78,10 +78,10 @@ namespace ProjectNomad {
             return a.cross(b).dot(FPVector::up()) >= fp{0};
         }
 
-        static FPVector zeroOutZ(FPVector vector) {
+        static FPVector zeroOutZ(const FPVector& vector) {
             return FPVector(vector.x, vector.y, fp{0});
         }
-        static FPVector zeroOutXY(FPVector vector) {
+        static FPVector zeroOutXY(const FPVector& vector) {
             return FPVector(fp{0}, fp{0}, vector.z);
         }
     };
