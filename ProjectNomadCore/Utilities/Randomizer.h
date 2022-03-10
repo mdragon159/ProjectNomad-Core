@@ -16,6 +16,9 @@ namespace ProjectNomad {
 
         // TODO: Use a rollback-able seed
         //       Also extensive unit tests to assure consistent behavior with reseeding
+        // FUTURE: Check performance of re-seeding -> number gen.
+        //          Perhaps use Lehman RNG if performance too heavy... which it likely is
+        //          Useful ref: https://youtu.be/ZZY9YE7rZJw?t=871
         
         FPVector getRandomLocation(const Collider& bounds) {
             if (bounds.isBox()) {
@@ -25,9 +28,9 @@ namespace ProjectNomad {
                 FPVector min = bounds.getCenter() - halfSize;
                 
                 // Randomize along each axis
-                fp x = getRandomFixedPoint(min.x, max.x);
-                fp y = getRandomFixedPoint(min.y, max.y);
-                fp z = getRandomFixedPoint(min.z, max.z);
+                fp x = getRandomNumber(min.x, max.x);
+                fp y = getRandomNumber(min.y, max.y);
+                fp z = getRandomNumber(min.z, max.z);
 
                 return FPVector(x, y, z);
             }
@@ -36,10 +39,14 @@ namespace ProjectNomad {
             return bounds.getCenter();
         }
 
-    private:
-        fp getRandomFixedPoint(fp min, fp max) {
+        fp getRandomNumber(fp min, fp max) {
             auto rawResult = Random::get(min.raw_value(), max.raw_value());
             return fp::from_raw_value(rawResult);
         }
+
+        uint32_t getRandomNumber(uint32_t min, uint32_t max) {
+            return Random::get(min, max);
+        }
+
     };
 }
