@@ -168,5 +168,13 @@ namespace ProjectNomad {
         static constexpr fp minLimit() {
             return fp::from_raw_value(std::numeric_limits<fpBaseType>::min());
         }
+
+        static uint32_t safeUnsignedDecrement(uint32_t startingValue, uint32_t decrementAmount) {
+            if (startingValue < decrementAmount) { // Underflow (less than 0) prevention
+                return 0;
+            }
+            
+            return startingValue - decrementAmount;
+        }
     };
 }
