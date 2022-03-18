@@ -142,6 +142,14 @@ namespace ProjectNomad {
             return radiansToDegrees(acosR(value));
         }
 
+        static fp asinR(const fp& value) {
+            return asin(value);
+        }
+
+        static fp asinD(const fp& value) {
+            return radiansToDegrees(asinR(value));
+        }
+
         // Returns angle in radians
         static fp atanR(const fp& y, const fp& x) {
             return fpm::atan2(y, x);
