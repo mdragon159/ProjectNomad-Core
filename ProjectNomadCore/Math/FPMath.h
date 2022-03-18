@@ -165,8 +165,8 @@ namespace ProjectNomad {
             b = tmp;
         }
 
-        static bool isNear(const fp& val, const fp& expectedVal, const fp& errorRange) {
-            return val > expectedVal - errorRange && val < expectedVal + errorRange; 
+        static bool isNear(const fp& val, const fp& expectedVal, const fp& positiveErrorRange) {
+            return val >= expectedVal - positiveErrorRange && val <= expectedVal + positiveErrorRange; 
         }
 
         static constexpr fp maxLimit() {

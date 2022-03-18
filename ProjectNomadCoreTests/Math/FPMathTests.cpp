@@ -501,4 +501,25 @@ namespace FPMathTests {
         ASSERT_EQ(2.5f, static_cast<float>(a));
         ASSERT_EQ(-1, static_cast<float>(b));
     }
+
+    TEST(isNear, whenEquivalentValues_returnsTrue) {
+        fp a = fp{1};
+        fp b = a;
+
+        EXPECT_TRUE(FPMath::isNear(a, b, fp{0}));
+        EXPECT_TRUE(FPMath::isNear(a, b, fp{1}));
+        EXPECT_TRUE(FPMath::isNear(a, b, fp{1000}));
+    }
+
+    TEST(isNear, whenDifferentValues_whenWithinErrorRange_returnsTrue) {
+        EXPECT_TRUE(FPMath::isNear(fp{1}, fp{1.1f}, fp{0.1f}));
+        EXPECT_TRUE(FPMath::isNear(fp{1}, fp{100}, fp{100}));
+        EXPECT_FALSE(FPMath::isNear(fp{1}, fp{-100}, fp{99}));
+        EXPECT_TRUE(FPMath::isNear(fp{-2}, fp{2}, fp{5}));
+    }
+
+    TEST(isNear, whenDifferentValues_whenOutsideErrorRange_returnsFalse) {
+        EXPECT_FALSE(FPMath::isNear(fp{1}, fp{1.1f}, fp{0}));
+        EXPECT_FALSE(FPMath::isNear(fp{-5}, fp{1}, fp{5.9f}));
+    }
 }
