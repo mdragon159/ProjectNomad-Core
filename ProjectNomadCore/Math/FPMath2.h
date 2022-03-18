@@ -81,6 +81,18 @@ namespace ProjectNomad {
             return result;
         }
 
+        static FPVector eulerToDirVector(const EulerAngles& euler) {
+            // Based on the following: https://stackoverflow.com/a/1568687/3735890
+            // Note that this doesn't take into account roll as it doesn't affect result here (following yaw -> pitch -> roll rotation order)
+
+            FPVector result;
+            result.x = FPMath::cosD(euler.yaw) * FPMath::cosD(euler.pitch);
+            result.y = FPMath::sinD(euler.yaw) * FPMath::cosD(euler.pitch);
+            result.z = FPMath::sinD(euler.pitch);
+
+            return result;
+        }
+
     private:
         /// <summary>
         /// Returns value zero to one with ease in and out provided by a Bezier curve.
