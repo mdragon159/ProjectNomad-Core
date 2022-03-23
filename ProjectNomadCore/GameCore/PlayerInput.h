@@ -22,11 +22,13 @@ namespace ProjectNomad {
         bool isAttackPressed = false;
         bool isSecondaryAttackPressed = false;
         bool isCrouchPressed = false;
+        bool isSwitchWeaponPressed = false;
 
         template <class Archive>
         void serialize(Archive& ar, std::uint32_t const version) {
             ar(moveForward, moveRight, mouseTurn, mouseLookUp, controllerTurn, controllerLookUp, isJumpPressed,
-                isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed, isSecondaryAttackPressed, isCrouchPressed);
+                isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed,
+                isSecondaryAttackPressed, isCrouchPressed, isSwitchWeaponPressed);
         }
     };
 
@@ -40,6 +42,7 @@ namespace ProjectNomad {
                 lhs.isAttackPressed == rhs.isAttackPressed &&
                 lhs.isSecondaryAttackPressed == rhs.isSecondaryAttackPressed &&
                 lhs.isCrouchPressed == rhs.isCrouchPressed &&
+                lhs.isSwitchWeaponPressed == rhs.isSwitchWeaponPressed &&
                     
                 lhs.moveForward == rhs.moveForward &&
                 lhs.moveRight == rhs.moveRight &&
