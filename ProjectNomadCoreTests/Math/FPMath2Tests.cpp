@@ -111,6 +111,27 @@ namespace FPMath2Tests {
         ASSERT_NEAR(0.7071, (float)result.v.y, 0.001);
         ASSERT_NEAR(-0.7071, (float)result.v.z, 0.001);
     }
+
+    TEST(FPMath2, eulerToDirVector_givenSimpleYawAndRoll_returnsExpectedDirection) {
+        EulerAngles input;
+        input.yaw = fp{90};
+        input.roll = fp{45};
+
+        FPVector result = FPMath2::eulerToDirVector(input);
+
+        FPVector expected = FPVector(fp{0}, fp{1}, fp{0});
+        TestHelpers::assertNear(expected, result, fp{0.01f});
+    }
+
+    TEST(FPMath2, dirVectorToQuat_givenSimpleYawCase_usingQuatResultsInExpectedDirection) {
+        FPVector inputDir = FPVector(fp{0}, fp{1}, fp{0});
+        FPQuat resultQuat = FPMath2::dirVectorToQuat(inputDir);
+
+        // Note that there are many (infinite?) ways to rotate a direction vector to become a different direction
+        // Thus, instead of checking exact values we'll use the quat and confirm the expected result which should be consistent
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
     
     TEST(bezierInterp, whenExtremeAlphas_returnsAorBValues) {
         fp a = fp{1};

@@ -4,6 +4,7 @@
 #include "FPVector.h"
 #include "FPQuat.h"
 #include "FPEulerAngles.h"
+#include "VectorUtilities.h"
 #include "GameCore/CoreConstants.h"
 
 namespace ProjectNomad {
@@ -91,6 +92,36 @@ namespace ProjectNomad {
             result.z = FPMath::sinD(euler.pitch);
 
             return result;
+        }
+
+        /// <returns>
+        /// Returns a quaternion which represents rotation necessary to rotate FPVector::Forward in order to match
+        /// the provided rotation vector.
+        /// </returns>
+        static FPQuat dirVectorToQuat(const FPVector& rotationVec) {
+            return dirVectorToQuat(rotationVec, FPVector::forward());
+        }
+
+        /// <returns>
+        /// Returns a quaternion which represents rotation necessary to rotate referenceVec to match the provided
+        /// rotation vector.
+        /// </returns>
+        static FPQuat dirVectorToQuat(const FPVector& rotationVec, const FPVector& referenceVec) {
+            // Goal here is to create an axis-angle representation that would rotate referenceVec to become rotationVec
+            // References: Sorry, don't really have any references here. This is more so based on what a quaternion is
+            //              and choosing to calculate the quat like this due to intended usage (eg, Transform rotation)
+            
+            // Rotation axis: Simply get direction perpendicular to both directions
+            // NOTE: Order matters here. Why this order? Too lazy to figure out the math, but guess and checked with unit tests
+            FPVector rotationAxis = referenceVec.cross(rotationVec);
+
+            // Rotation amount around axis: Get angle between the vectors
+            // Using degrees due to personal preference, and I THINK it's more accurate due to less decimal points
+            fp rotationAmountInDegrees = VectorUtilities::getAngleBetweenVectorsInDegrees(rotationVec, referenceVec);
+
+            // And that's it! We have all the info we need to rotate referenceVec into rotationVec
+            // by multiplying by the resulting quat
+            return FPQuat::fromDegrees(rotationAxis, rotationAmountInDegrees);
         }
 
     private:
