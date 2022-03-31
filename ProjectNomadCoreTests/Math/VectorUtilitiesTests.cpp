@@ -1,4 +1,7 @@
 #include "pch.h"
+
+#include "Math/FPEulerAngles.h"
+#include "Math/FPMath2.h"
 #include "Math/VectorUtilities.h"
 #include "TestHelpers/TestHelpers.h"
 
@@ -185,6 +188,16 @@ namespace VectorUtilitiesTests {
         fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
 
         TestHelpers::expectNear(fp{180}, result, fp{0.01f});
+    }
+
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenNearlyOppositeDirection_returnsExpectedValue) {
+        EulerAngles eulerAngles;
+        eulerAngles.yaw = fp{178};
+        FPVector secondDir = FPMath2::eulerToDirVector(eulerAngles);
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
+
+        TestHelpers::expectNear(fp{178}, result, fp{0.01f});
     }
 
     TEST(isXYCrossDotPositive, forwardComparison_whenSameDirection_returnsTrue) {;

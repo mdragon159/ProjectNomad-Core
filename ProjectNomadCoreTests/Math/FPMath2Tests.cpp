@@ -132,6 +132,26 @@ namespace FPMath2Tests {
         FPVector resultRotatedVec = resultQuat * FPVector::forward();
         TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
     }
+
+    TEST(FPMath2, dirVectorToQuat_givenOppositeForwardDirection_usingQuatResultsInExpectedDirection) {
+        FPVector inputDir = FPVector(fp{-1}, fp{0}, fp{0});
+        FPQuat resultQuat = FPMath2::dirVectorToQuat(inputDir);
+
+        // Note that there are many (infinite?) ways to rotate a direction vector to become a different direction
+        // Thus, instead of checking exact values we'll use the quat and confirm the expected result which should be consistent
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
+
+    TEST(FPMath2, dirVectorToQuat_givenNearlyOppositeForwardDirection_usingQuatResultsInExpectedDirection) {
+        FPVector inputDir = FPVector(fp{-0.999329f}, fp{-0.036804}, fp{0}); // Taken from a game use case that's resulting in problematic rotations
+        FPQuat resultQuat = FPMath2::dirVectorToQuat(inputDir);
+
+        // Note that there are many (infinite?) ways to rotate a direction vector to become a different direction
+        // Thus, instead of checking exact values we'll use the quat and confirm the expected result which should be consistent
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.1f});
+    }
     
     TEST(bezierInterp, whenExtremeAlphas_returnsAorBValues) {
         fp a = fp{1};

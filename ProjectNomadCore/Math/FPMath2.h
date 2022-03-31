@@ -115,6 +115,26 @@ namespace ProjectNomad {
             // NOTE: Order matters here. Why this order? Too lazy to figure out the math, but guess and checked with unit tests
             FPVector rotationAxis = referenceVec.cross(rotationVec);
 
+            // If rotation and reference vectors are parallel...
+            if (rotationAxis == FPVector::zero()) {
+                // Need any perpendicular vector. The "easy" (least thinking) way to do this is to pick any other vector
+                // then do another cross product with one of the input vectors.
+                // NOTE:
+                //      Since this is practically only used with the overload, we COULD just hardcode another perpendicular vector in.
+                //      However, gonna do this the most flexible way for now until this is relevant in an optimization pass
+                FPVector secondTestVec = FPVector::up();
+                rotationAxis = secondTestVec.cross(referenceVec);
+
+                // If our guessed not-parallel vec is actually parallel, then use a different (and certainly not parallel) vector
+                if  (rotationAxis == FPVector::zero()) {
+                    secondTestVec = FPVector::forward();
+                    rotationAxis = secondTestVec.cross(referenceVec);
+                }
+            }
+
+            // The cross product of two unit vectors is *not* always a unit vector. Thus need to re-normalize before using further
+            rotationAxis.normalize();
+
             // Rotation amount around axis: Get angle between the vectors
             // Using degrees due to personal preference, and I THINK it's more accurate due to less decimal points
             fp rotationAmountInDegrees = VectorUtilities::getAngleBetweenVectorsInDegrees(rotationVec, referenceVec);
