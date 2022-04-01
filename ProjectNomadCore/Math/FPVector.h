@@ -32,6 +32,18 @@ namespace ProjectNomad {
             return {fp{0}, fp{0}, fp{1}};
         }
 
+        static FPVector backward() {
+            return {fp{-1}, fp{0}, fp{0}};
+        }
+
+        static FPVector left() {
+            return {fp{0}, fp{-1}, fp{0}};
+        }
+
+        static FPVector down() {
+            return {fp{0}, fp{0}, fp{-1}};
+        }
+
         static fp distanceSq(FPVector from, FPVector to) {
             return (to - from).getLengthSquared();
         }

@@ -94,26 +94,49 @@ namespace ProjectNomad {
             return result;
         }
 
+        // NOTE: Method is untested (and currently unused). Needs unit tests!
+        static EulerAngles dirVectorToEuler(const FPVector& input) {
+            // High level approach: Doing the reverse of eulerToDirVector method
+            EulerAngles result;
+
+            // Pitch is very simple, as it only depends on z value
+            result.pitch = FPMath::asinD(input.z);
+
+            // If not pointing straight up or down (where yaw is irrelevant), then compute yaw
+            //    Really doing this for covering divide by zero edge case and thus explicitly checking that,
+            //     even though it may be more computationally expensive than just checking pitch or x + y values
+            fp cosOfPitch = FPMath::cosD(result.pitch);
+            if (cosOfPitch != fp{0}) {
+                // Could use x or y (with inverse sin), but arbitrarily chose x
+                result.yaw = FPMath::acosD(input.x / cosOfPitch);
+            }
+
+            // And done!
+            // Note that we don't care about roll here, as it doesn't affect the direction the vector is pointing in
+            // (given that we're following yaw -> pitch -> roll rotation order)
+            return result;
+        }
+
         /// <returns>
         /// Returns a quaternion which represents rotation necessary to rotate FPVector::Forward in order to match
         /// the provided rotation vector.
         /// </returns>
-        static FPQuat dirVectorToQuat(const FPVector& rotationVec) {
-            return dirVectorToQuat(rotationVec, FPVector::forward());
+        static FPQuat dirVectorToQuat(const FPVector& targetVec) {
+            return dirVectorToQuat(targetVec, FPVector::forward());
         }
 
         /// <returns>
         /// Returns a quaternion which represents rotation necessary to rotate referenceVec to match the provided
         /// rotation vector.
         /// </returns>
-        static FPQuat dirVectorToQuat(const FPVector& rotationVec, const FPVector& referenceVec) {
+        static FPQuat dirVectorToQuat(const FPVector& targetVec, const FPVector& referenceVec) {
             // Goal here is to create an axis-angle representation that would rotate referenceVec to become rotationVec
             // References: Sorry, don't really have any references here. This is more so based on what a quaternion is
             //              and choosing to calculate the quat like this due to intended usage (eg, Transform rotation)
             
             // Rotation axis: Simply get direction perpendicular to both directions
             // NOTE: Order matters here. Why this order? Too lazy to figure out the math, but guess and checked with unit tests
-            FPVector rotationAxis = referenceVec.cross(rotationVec);
+            FPVector rotationAxis = referenceVec.cross(targetVec);
 
             // If rotation and reference vectors are parallel...
             if (rotationAxis == FPVector::zero()) {
@@ -137,7 +160,7 @@ namespace ProjectNomad {
 
             // Rotation amount around axis: Get angle between the vectors
             // Using degrees due to personal preference, and I THINK it's more accurate due to less decimal points
-            fp rotationAmountInDegrees = VectorUtilities::getAngleBetweenVectorsInDegrees(rotationVec, referenceVec);
+            fp rotationAmountInDegrees = VectorUtilities::getAngleBetweenVectorsInDegrees(targetVec, referenceVec);
 
             // And that's it! We have all the info we need to rotate referenceVec into rotationVec
             // by multiplying by the resulting quat
