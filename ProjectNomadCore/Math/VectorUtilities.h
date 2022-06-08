@@ -60,10 +60,15 @@ namespace ProjectNomad {
         /// Note that this method does not make any distinction between "left" and "right".
         /// ie, Forward x Left = 90 and  Forward x Right = 90 as well. Use isXYCrossDotPositive to distinguish the two.
         /// </returns>
-        static fp getAngleBetweenVectorsInDegrees(FPVector a, FPVector b) {
+        static fp getAngleBetweenVectorsInDegrees(const FPVector& a, const FPVector& b) {
             // TODO: I don't even remember what formula I used. A reference here would be nice
             fp value = a.normalized().dot(b.normalized());
             return FPMath::acosD(value);
+        }
+
+        static bool isAngleBetweenVectorsInRange(const FPVector& a, const FPVector& b, fp angleRangeInclusive) {
+            fp angleBetweenAttackerDirAndFacingDir = getAngleBetweenVectorsInDegrees(a, b);
+            return angleBetweenAttackerDirAndFacingDir <= angleRangeInclusive;
         }
 
         /// <summary>
