@@ -73,7 +73,7 @@ namespace ProjectNomad {
         /// Returns the squared distance between point c and segment ab
         /// Note: Based on Real-Time Collision, Section 5.1.2.1
         /// </summary>
-        /// <param name="segment">Line to comapre with</param>
+        /// <param name="segment">Line to compare with</param>
         /// <param name="point">Point to compare with</param>
         /// <returns>Squared distance between provided point and line segment</returns>
         static fp getSquaredDistBetweenPtAndSegment(const Line& segment, const FPVector& point) {
