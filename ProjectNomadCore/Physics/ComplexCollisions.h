@@ -202,7 +202,7 @@ namespace ProjectNomad {
             }
 
             // We could find no separating axis, so definitely intersecting
-            return ImpactResult(smallestPenDepth * penDepthAxis);
+            return ImpactResult(penDepthAxis, smallestPenDepth);
         }
 
         ImpactResult isCapsuleAndCapsuleColliding(const Collider& capA, const Collider& capB) {
@@ -243,7 +243,7 @@ namespace ProjectNomad {
             bool isColliding = distSquared < radius * radius;
 
             // TODO: Calculate penetration info and such
-            return isColliding ? ImpactResult(FPVector::zero()) : ImpactResult::noCollision();
+            return isColliding ? ImpactResult(FPVector::zero(), fp{0}) : ImpactResult::noCollision();
         }
 
         ImpactResult isSphereAndSphereColliding(const Collider& sphereA, const Collider& sphereB) {
@@ -270,8 +270,7 @@ namespace ProjectNomad {
             fp intersectionDepth = (sphereA.getSphereRadius() + sphereB.getSphereRadius()) - centerDistance;
 
             if (intersectionDepth > fp{0}) {
-                FPVector intersectionDepthAndDirection = centerDifference.normalized() * intersectionDepth;
-                return ImpactResult(intersectionDepthAndDirection);
+                return ImpactResult(centerDifference.normalized(), intersectionDepth);
             }
             
             return ImpactResult::noCollision();
@@ -314,7 +313,7 @@ namespace ProjectNomad {
             //      Note that we don't need to check other end since raycast starts from this point; if second point is
             //      located within the box, then raycast will return an intersection
             if (checkAgainstBox.isLocalSpacePtWithinBox(boxSpaceCapsulePointA)) {
-                return ImpactResult(FPVector::zero()); // TODO: Pen depth/impact info
+                return ImpactResult(FPVector::zero(), fp{0}); // TODO: Pen depth/impact info
             }
             
             // Intersect ray against expanded box. Exit with no intersection if ray misses box, else get intersection point and time as result
@@ -383,7 +382,7 @@ namespace ProjectNomad {
                 timeOfIntersection = tMin;
 
                 // TODO: Pen depth/impact info
-                return ImpactResult(FPVector::zero()); // Intersection at time t == tmin /
+                return ImpactResult(FPVector::zero(), fp{0}); // Intersection at time t == tmin /
             }
 
             // TODO: How to adjust below code to NOT count simply touching as collision?
@@ -391,7 +390,7 @@ namespace ProjectNomad {
             // If only one bit set in m, then intersection point is in a face region
             if ((m & (m - 1)) == 0) {
                 // Do nothing. Time t from intersection with expanded box is correct intersection time
-                return ImpactResult(FPVector::zero()); // TODO: Pen depth/impact info
+                return ImpactResult(FPVector::zero(), fp{0}); // TODO: Pen depth/impact info
             }
             
             // p is in an edge region. Intersect against the capsule at the edge
@@ -405,7 +404,7 @@ namespace ProjectNomad {
             );
             
             // TODO: Pen depth/impact info
-            return didIntersect ? ImpactResult(FPVector::zero()) : ImpactResult::noCollision();
+            return didIntersect ? ImpactResult(FPVector::zero(), fp{0}) : ImpactResult::noCollision();
         }
 
         ImpactResult isBoxAndSphereColliding(const Collider& box, const Collider& sphere) {
@@ -447,13 +446,12 @@ namespace ProjectNomad {
             if (sphereCenterToBoxDistance == fp{0}) {
                 // Sphere center within box case
                 // TODO: One day calculate distance to nearest face for penetration depth!
-                return ImpactResult(FPVector::zero());
+                return ImpactResult(FPVector::zero(), fp{0});
             }
 
             fp intersectionDepth = sphere.getSphereRadius() - sphereCenterToBoxDistance;
             if (intersectionDepth > fp{0}) {
-                FPVector intersectionDepthAndDirection = closestPointOffSetToSphere.normalized() * intersectionDepth;
-                return ImpactResult(intersectionDepthAndDirection);
+                return ImpactResult(closestPointOffSetToSphere.normalized(), intersectionDepth);
             }
 
             return ImpactResult::noCollision();
@@ -518,7 +516,7 @@ namespace ProjectNomad {
             //                          (ie, how far to push in order to have the two touch side by side)
             fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
             
-            return ImpactResult(penetrationDir * penetrationDepth);
+            return ImpactResult(penetrationDir, penetrationDepth);
         }
 
         // Extras below for ease of typing. Mostly due to ease of scanning for consistency in isColliding
@@ -987,7 +985,7 @@ namespace ProjectNomad {
 
             // TODO: Return penetration depth scalar and direction separately
             fp penDepth = minDistance + fp{0.001f};
-            ImpactResult impactResult(minNormal * minDistance);
+            ImpactResult impactResult(minNormal, penDepth);
             return impactResult;
         }
 

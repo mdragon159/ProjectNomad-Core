@@ -17,22 +17,17 @@ namespace ProjectNomad {
 
     struct ImpactResult {
         bool isColliding;
-        FPVector movingColliderCenterLocationAtImpact;
-        FPVector impactLocation;
-        FPVector impactNormalAlongMovingCollider;
-        FPVector impactNormalAlongStaticCollider;
-        FPVector penetrationDepth; // Needs to be further fleshed out! May not even use in future! Heck, kinda useless looking at other properties...
+        FPVector penetrationDirection = FPVector::zero();
+        fp penetrationMagnitude = fp{0};
 
-        // Temp constructor for quick refactoring atm! Will also allow quick lookup for replacement
-        ImpactResult(FPVector penetrationDepth) : isColliding(true), penetrationDepth(penetrationDepth) {}
-
-        // Intended constructor for collision scenarios
-        // Note that penetration depth is not part of this as don't believe it's currently necessary with other provided data
-        ImpactResult(FPVector movingColliderCenterLocationAtImpact, FPVector impactLocation,
-            FPVector impactNormalAlongMovingCollider, FPVector impactNormalAlongStaticCollider)
-                : isColliding(true), movingColliderCenterLocationAtImpact(movingColliderCenterLocationAtImpact),
-                    impactLocation(impactLocation), impactNormalAlongMovingCollider(impactNormalAlongMovingCollider),
-                    impactNormalAlongStaticCollider(impactNormalAlongStaticCollider) {}
+        // Some well meaning but not currently used parameters below inspired by another physics (UE-PhysX code?)
+        // FPVector movingColliderCenterLocationAtImpact;
+        // FPVector impactLocation;
+        // FPVector impactNormalAlongMovingCollider;
+        // FPVector impactNormalAlongStaticCollider;
+        
+        ImpactResult(FPVector penDir, fp penMagnitude)
+        : isColliding(true), penetrationDirection(penDir), penetrationMagnitude(penMagnitude) {}
 
         static ImpactResult noCollision() {
             return ImpactResult(false);

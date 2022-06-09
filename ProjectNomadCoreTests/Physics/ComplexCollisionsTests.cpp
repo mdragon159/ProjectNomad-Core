@@ -36,7 +36,7 @@ namespace ComplexCollisionsTests {
         colliderA.setSphere(FPVector(fp{0}, fp{0}, fp{0}), fp{5});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        float x = toFloat(result.penetrationDepth.x);
+        // float x = toFloat(result.penetrationDepth.x);
         EXPECT_TRUE(result.isColliding);
     }
 
@@ -358,7 +358,9 @@ namespace ComplexCollisionsTests {
 
         ImpactResult result = complexCollisions.computeComplexCollision(colliderA, colliderB);
         EXPECT_TRUE(result.isColliding);
-        TestHelpers::expectNear(FPVector(fp{0.1f}, fp{0}, fp{0}), result.penetrationDepth, fp{0.1f});
+
+        FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+        TestHelpers::expectNear(FPVector(fp{0.1f}, fp{0}, fp{0}), penetrationDepth, fp{0.1f});
     }
 
     TEST_F(EPABoxBox, whenRotatedOBBs_whenNotIntersecting_statesNotColliding) {
@@ -381,7 +383,9 @@ namespace ComplexCollisionsTests {
 
         ImpactResult result = complexCollisions.computeComplexCollision(colliderA, colliderB);
         EXPECT_TRUE(result.isColliding);
-        TestHelpers::expectNear(FPVector(fp{0.3f}, fp{0.3f}, fp{0}), result.penetrationDepth, fp{0.01f});
+
+        FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+        TestHelpers::expectNear(FPVector(fp{0.3f}, fp{0.3f}, fp{0}), penetrationDepth, fp{0.01f});
     }
 
     #pragma endregion
@@ -431,7 +435,9 @@ namespace ComplexCollisionsTests {
 
         ImpactResult result = complexCollisions.computeComplexCollision(colliderA, colliderB);
         EXPECT_TRUE(result.isColliding);
-        TestHelpers::expectNear(FPVector(fp{1}, fp{0}, fp{0}), result.penetrationDepth, fp{0.01f});
+
+        FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+        TestHelpers::expectNear(FPVector(fp{1}, fp{0}, fp{0}), penetrationDepth, fp{0.01f});
 
     }
 
@@ -484,7 +490,9 @@ namespace ComplexCollisionsTests {
          
          ImpactResult result = complexCollisions.computeComplexCollision(colliderA, colliderB);
          EXPECT_TRUE(result.isColliding);
-         TestHelpers::expectNear(FPVector(fp{-1}, fp{0}, fp{0}), result.penetrationDepth, fp{0.01f});
+
+         FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+         TestHelpers::expectNear(FPVector(fp{-1}, fp{0}, fp{0}), penetrationDepth, fp{0.01f});
      }
 
      TEST_F(EPABoxSphere, givenNoRotationBox_givenSphereCenteredWithinBox_statesIsColliding) {
@@ -495,7 +503,8 @@ namespace ComplexCollisionsTests {
          EXPECT_TRUE(result.isColliding);
 
          // TODO: Currently not calculating penetration depth for within case, must do so in future!
-         EXPECT_EQ(FPVector::zero(), result.penetrationDepth);
+         FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+         EXPECT_EQ(FPVector::zero(), penetrationDepth);
      }
 
      TEST_F(EPABoxSphere, givenNoRotationBox_givenSphereWithinBoxButNotCentered_statesIsColliding) {
@@ -506,7 +515,8 @@ namespace ComplexCollisionsTests {
          EXPECT_TRUE(result.isColliding);
 
          // TODO: Currently not calculating penetration depth for within case, must do so in future!
-         EXPECT_EQ(FPVector::zero(), result.penetrationDepth);
+         FPVector penetrationDepth = result.penetrationDirection * result.penetrationMagnitude;
+         EXPECT_EQ(FPVector::zero(), penetrationDepth);
      }
 
     #pragma endregion

@@ -145,15 +145,15 @@ namespace ProjectNomad {
                 //        In reality, current resolution would teleport you on other side of object instead of where you came from
                 //        Need to fix... sometime in future. Current idea is to check whether pen depth would put you on other side of object,
                 //        but that also has its fun edge cases- likely need to sweep for high speeds anywhos. Tradeoffs for future!
-                FPVector penetrationDirection = collisionResult.penetrationDepth.normalized(); // TODO: Have result return axis itself directly?
                 // Normalizing for velocity correction case
-                fp velocityMagnitudeInPenDirection = physicsComp.velocity.dot(penetrationDirection);
+                FPVector penDirAndDepth = collisionResult.penetrationDirection * collisionResult.penetrationMagnitude;
+                fp velocityMagnitudeInPenDirection = physicsComp.velocity.dot(collisionResult.penetrationDirection);
                 bool didVelocityCauseCollision = false;
                 if (velocityMagnitudeInPenDirection > fp{0}) {
                     // Is penetration depth trying to move us in same direction as we were already going?
                     // If penetration depth is pointing us towards the collision (assuming velocity caused collision),
                     //  then subtract to get away from the collision
-                    newIntendedPos -= collisionResult.penetrationDepth;
+                    newIntendedPos -= penDirAndDepth;
                     futureCollider.center = newIntendedPos;
 
                     didVelocityCauseCollision = true;
@@ -161,7 +161,7 @@ namespace ProjectNomad {
                     // Is penetration depth trying to move us opposite from where player was trying to go?
                     // Add penetration depth since that should take the player away from the collision
                     // (again, assuming velocity caused collision)
-                    newIntendedPos += collisionResult.penetrationDepth;
+                    newIntendedPos += penDirAndDepth;
                     futureCollider.center = newIntendedPos;
 
                     didVelocityCauseCollision = true;
@@ -182,19 +182,19 @@ namespace ProjectNomad {
                     // Orrr... just say screw it and guess and check
 
                     FPVector playerToObjectVector = checkAgainstCollider.getCenter() - newIntendedPos;
-                    fp playerToObjectVsPenDepthDir = playerToObjectVector.dot(penetrationDirection);
+                    fp playerToObjectVsPenDepthDir = playerToObjectVector.dot(collisionResult.penetrationDirection);
                     if (playerToObjectVsPenDepthDir > fp{0}) {
                         // Pen depth pointing towards object, ie adding would not resolve collision
-                        newIntendedPos -= collisionResult.penetrationDepth;
+                        newIntendedPos -= penDirAndDepth;
                         futureCollider.center = newIntendedPos;
                     } else if (playerToObjectVsPenDepthDir < fp{0}) {
                         // Pen depth pointing away from collision object
-                        newIntendedPos += collisionResult.penetrationDepth;
+                        newIntendedPos += penDirAndDepth;
                         futureCollider.center = newIntendedPos;
                     } else {
                         // Praying this case doesn't happen out of laziness but reality will likely differ
                         // In future, could just do the guess and check method but for now pick one + log
-                        newIntendedPos += collisionResult.penetrationDepth;
+                        newIntendedPos += penDirAndDepth;
                         futureCollider.center = newIntendedPos;
 
                         // mSimContext.addDebugMessage(
