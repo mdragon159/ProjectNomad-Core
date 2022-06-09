@@ -11,6 +11,7 @@
 #include "Collider.h"
 #include "ColliderHelpers.h"
 #include "Simplex.h"
+#include "Math/VectorUtilities.h"
 
 namespace ProjectNomad {
     template <typename LoggerType>
@@ -26,8 +27,6 @@ namespace ProjectNomad {
         : logger(logger), simpleCollisions(simpleCollisions), colliderHelpers(logger, simpleCollisions) {} 
 
 #pragma region Get Hit Info Complex Collision Checks
-        // TODO: What happens if no collision? (Bad user input). Or does it even matter with how calculations are done?
-        
         ImpactResult isColliding(const Collider& A, const Collider& B) {
             if (A.isNotInitialized()) {
                 logger.logErrorMessage(
@@ -231,12 +230,12 @@ namespace ProjectNomad {
             
             // Compute distance between the median line segments
             // "Compute (squared) distance between the inner structures of the capsules" (from book)
-            fp s, t;
-            FPVector c1, c2;
+            fp intersectionTimeOnSegmentA, t;
+            FPVector closestPtOnSegmentA, closestPtOnSegmentB;
             fp distSquared = CollisionHelpers::getClosestPtsBetweenTwoSegments(
                 aLinePoints.start, aLinePoints.end,
                 bLinePoints.start, bLinePoints.end,
-                s, t, c1, c2
+                intersectionTimeOnSegmentA, t, closestPtOnSegmentA, closestPtOnSegmentB
             );
 
             // If (squared) distance smaller than (squared) sum of radii, they collide
@@ -405,6 +404,7 @@ namespace ProjectNomad {
                 intersectionPoint
             );
             
+            // TODO: Pen depth/impact info
             return didIntersect ? ImpactResult(FPVector::zero()) : ImpactResult::noCollision();
         }
 
@@ -475,30 +475,63 @@ namespace ProjectNomad {
                 return ImpactResult::noCollision();
             }
 
-            // TODO: Document base logic from Real-Time Collisions 4.5.1 "TestSphereCapsule" method. Doc should be similar to other methods
-            // TODO: Also rename vars
+            /// Note: Base logic taken from Real-Time Collisions 4.5.1 "TestSphereCapsule" method
 
             // Get median line of capsule as points
             auto capsulePoints = capsule.getCapsuleMedialLineExtremes();
 
-            // Compute (squared) distance between sphere center and capsule line segment
-            fp distSquared = CollisionHelpers::getSquaredDistBetweenPtAndSegment(capsulePoints, sphere.getCenter());
+            // Get closest point on line segment between sphere and capsule
+            // Need point instead of distance (getSquaredDistBetweenPtAndSegment) for penetration info later on
+            FPVector closestPtOnCapsuleLine;
+            fp throwaway;
+            CollisionHelpers::getClosestPtBetweenPtAndSegment(capsulePoints, sphere.center,
+                                                            throwaway, closestPtOnCapsuleLine);
             
+            // Compute distance between closest point on capsule line vs sphere center
+            // Using square to avoid potentially unnecessary square root
+            fp distSquared = FPVector::distanceSq(closestPtOnCapsuleLine, sphere.center);
+
             // If (squared) distance smaller than (squared) sum of radii, they collide
-            fp radius = sphere.getSphereRadius() + capsule.getCapsuleRadius();
-            bool isColliding = distSquared < radius * radius;
+            fp combinedRadius = sphere.getSphereRadius() + capsule.getCapsuleRadius();
+            bool isColliding = distSquared < combinedRadius * combinedRadius;
             
-            return isColliding ? ImpactResult(FPVector::zero()) : ImpactResult::noCollision();
+            if (!isColliding) {
+                return ImpactResult::noCollision();
+            }
+            // Now compute penetration correction info for assisting in resolving collision
+
+            /// TODO: Is pen direction supposed to be correction for A? Can't remember which direction. Add comment
+            FPVector penetrationDir;
+            // EDGE CASE: If sphere center == closest capsule point (ie, on capsule median line)...
+            // Choose any penetration direction perpendicular to capsule line as that's guaranteed to push colliders away
+            if (sphere.center == closestPtOnCapsuleLine) {
+                FPVector capsuleLineDir = FPVector::direction(capsulePoints.start, capsulePoints.end);
+                penetrationDir = VectorUtilities::getAnyPerpendicularVector(capsuleLineDir);
+            }
+            // Otherwise penetration direction = From sphere center towards closest point on capsule, as this is most
+            //                          direct method to push capsule/sphere out of collision
+            else {
+                penetrationDir = FPVector::direction(sphere.center, closestPtOnCapsuleLine);
+            }
+
+            // Penetration distance = distance between closest point on line vs sphere center minus sum of radii
+            //                          (ie, how far to push in order to have the two touch side by side)
+            fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
+            
+            return ImpactResult(penetrationDir * penetrationDepth);
         }
 
         // Extras below for ease of typing. Mostly due to ease of scanning for consistency in isColliding
         ImpactResult isCapsuleAndBoxColliding(const Collider& capsule, const Collider& box) {
+            // TODO: Flip intersection direction!!!
             return isBoxAndCapsuleColliding(box, capsule);
         }
         ImpactResult isSphereAndBoxColliding(const Collider& sphere, const Collider& box) {
+            // TODO: Flip intersection direction!!!
             return isBoxAndSphereColliding(box, sphere);
         }
         ImpactResult isSphereAndCapsuleColliding(const Collider& sphere, const Collider& capsule) {
+            // TODO: Flip intersection direction!!!
             return isCapsuleAndSphereColliding(capsule, sphere);
         }
         

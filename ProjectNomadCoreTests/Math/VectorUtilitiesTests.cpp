@@ -8,6 +8,27 @@
 using namespace ProjectNomad;
 
 namespace VectorUtilitiesTests {
+    TEST(getAnyPerpendicularVector, whenGivenRightVector_returnsForwardVector) {
+        FPVector input = FPVector::right();
+        FPVector result = VectorUtilities::getAnyPerpendicularVector(input);
+
+        TestHelpers::expectNear(FPVector::forward(), result, fp{0.1f});
+    }
+
+    TEST(getAnyPerpendicularVector, whenGivenUpVector_returnsBackwardVector) {
+        FPVector input = FPVector::up();
+        FPVector result = VectorUtilities::getAnyPerpendicularVector(input);
+
+        TestHelpers::expectNear(FPVector::backward(), result, fp{0.1f});
+    }
+
+    TEST(getAnyPerpendicularVector, whenGivenDownVector_returnsForwardVector) {
+        FPVector input = FPVector::down();
+        FPVector result = VectorUtilities::getAnyPerpendicularVector(input);
+
+        TestHelpers::expectNear(FPVector::forward(), result, fp{0.1f});
+    }
+    
     TEST(getParallelVectorProjection, whenGivenVectorParallelToDir_returnsInitialVector) {
         FPVector testVector(fp{0}, fp{250.5f}, fp{0});
         FPVector direction(fp{0}, fp{1}, fp{0});

@@ -364,9 +364,66 @@ namespace CollisionHelpersTests {
         ASSERT_EQ(FPVector(fp{0}, fp{0}, fp{10}), closestPointOnSecondSegment);
     }
 
+    TEST(getClosestPtBetweenPtAndSegment, whenPointIsStartOfLine_thenReturnsStartingPoint) {
+        Line segment(FPVector(fp{0}, fp{-5}, fp{0}), FPVector(fp{0}, fp{5}, fp{0}));
+        FPVector testPoint = FPVector{fp{0}, fp{-5}, fp{0}};
+
+        FPVector closestPtResult;
+        fp timeOfIntersection;
+        CollisionHelpers::getClosestPtBetweenPtAndSegment(segment, testPoint, timeOfIntersection, closestPtResult);
+
+        TestHelpers::expectNear(fp{0}, timeOfIntersection, fp{0.001f});
+        TestHelpers::expectNear(testPoint, closestPtResult, fp{0.01f});
+    }
+
+    TEST(getClosestPtBetweenPtAndSegment, whenPointIsEndOfLine_thenReturnsEndPoint) {
+        Line segment(FPVector(fp{0}, fp{-5}, fp{0}), FPVector(fp{0}, fp{5}, fp{0}));
+        FPVector testPoint = FPVector{fp{0}, fp{5}, fp{0}};
+
+        FPVector closestPtResult;
+        fp timeOfIntersection;
+        CollisionHelpers::getClosestPtBetweenPtAndSegment(segment, testPoint, timeOfIntersection, closestPtResult);
+
+        TestHelpers::expectNear(fp{1}, timeOfIntersection, fp{0.001f});
+        TestHelpers::expectNear(testPoint, closestPtResult, fp{0.01f});
+    }
+
+    TEST(getClosestPtBetweenPtAndSegment, whenPointIsBeforeStartOfLine_thenReturnsStartPoint) {
+        Line segment(FPVector(fp{0}, fp{-5}, fp{0}), FPVector(fp{0}, fp{5}, fp{0}));
+        FPVector testPoint = FPVector{fp{1}, fp{-20}, fp{-2}};
+
+        FPVector closestPtResult;
+        fp timeOfIntersection;
+        CollisionHelpers::getClosestPtBetweenPtAndSegment(segment, testPoint, timeOfIntersection, closestPtResult);
+
+        TestHelpers::expectNear(fp{0}, timeOfIntersection, fp{0.001f});
+        TestHelpers::expectNear(segment.start, closestPtResult, fp{0.01f});
+    }
+
+    TEST(getClosestPtBetweenPtAndSegment, whenPointIsPastEndOfLine_thenReturnsEndPoint) {
+        Line segment(FPVector(fp{0}, fp{-5}, fp{0}), FPVector(fp{0}, fp{5}, fp{0}));
+        FPVector testPoint = FPVector{fp{0}, fp{10}, fp{0}};
+
+        FPVector closestPtResult;
+        fp timeOfIntersection;
+        CollisionHelpers::getClosestPtBetweenPtAndSegment(segment, testPoint, timeOfIntersection, closestPtResult);
+
+        TestHelpers::expectNear(fp{1}, timeOfIntersection, fp{0.001f});
+        TestHelpers::expectNear(segment.end, closestPtResult, fp{0.01f});
+    }
+
+    TEST(getClosestPtBetweenPtAndSegment, whenPointIsToSideOfLineCenter_thenReturnsCenterPoint) {
+        Line segment(FPVector(fp{0}, fp{-5}, fp{0}), FPVector(fp{0}, fp{5}, fp{0}));
+        FPVector testPoint = FPVector{fp{0}, fp{0}, fp{5}};
+
+        FPVector closestPtResult;
+        fp timeOfIntersection;
+        CollisionHelpers::getClosestPtBetweenPtAndSegment(segment, testPoint, timeOfIntersection, closestPtResult);
+
+        TestHelpers::expectNear(fp{0.5f}, timeOfIntersection, fp{0.001f});
+        TestHelpers::expectNear(FPVector::zero(), closestPtResult, fp{0.01f});
+    }
+
     // TODO: getWorldVerticesFromOBB w/ more complex rotations and adjusted center points
     // TODO: More box axis intersection tests, especially with non-basic axes and rotated boxes
-
-    // TODO: ALL TESTS FOR...
-    //     static void getClosestPtBetweenPtAndSegment(FPVector segmentStart, FPVector segmentEnd, FPVector point,
 }

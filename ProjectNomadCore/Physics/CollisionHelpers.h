@@ -189,9 +189,10 @@ namespace ProjectNomad {
             return (c1 - c2).dot(c1 - c2);
         }
 
-        // static void getClosestPtBetweenPtAndSegment(const Line& segment, const FPVector& point, fp& t, FPVector& closestPoint) {
-        //     getClosestPtBetweenPtAndSegment(segment.mStart, segment.mEnd, point, t, closestPoint);
-        // }
+        static void getClosestPtBetweenPtAndSegment(const Line& segment, const FPVector& point, fp& timeOfIntersection,
+                                                    FPVector& closestPoint) {
+            getClosestPtBetweenPtAndSegment(segment.start, segment.end, point, timeOfIntersection, closestPoint);
+        }
 
         /// <summary>
         /// Given segment ab and point c, computes closest point d on ab.
@@ -202,23 +203,22 @@ namespace ProjectNomad {
         /// <param name="point">Point to compare with</param>
         /// <param name="segmentStart">Represents start point of line segment</param>
         /// <param name="segmentEnd">Represents end point of line segment</param>
-        /// <param name="t">t for the position of d, d(t)=a+t*(b - a). TODO: Rewrite this param description</param>
+        /// <param name="timeOfIntersection">Time of intersection where time is defined as follows: d(t)=a+t*(b - a)</param>
         /// <param name="closestPoint">Computed closest point between provided point and line segment</param>
-        // static void getClosestPtBetweenPtAndSegment(const FPVector& segmentStart, const FPVector& segmentEnd, const FPVector& point,
-        //                                             fp& t, FPVector& closestPoint) {
-        //
-        //     FPVector segmentVector = segmentEnd - segmentStart;
-        //
-        //     // Project c onto ab, computing parameterized position d(t)=a+t*(b � a)
-        //     // TODO: Rename t to a more descriptive var name
-        //     t = segmentVector.dot(point - segmentStart) / segmentVector.dot(segmentVector);
-        //
-        //     // If outside segment, clamp t (and therefore d) to the closest endpoint
-        //     if (t < 0) t = 0;
-        //     if (t > fp{1.0f}) t = 1;
-        //
-        //     // Compute projected position from the clamped t
-        //     closestPoint = segmentStart + t * segmentVector;
-        // }
+        static void getClosestPtBetweenPtAndSegment(const FPVector& segmentStart, const FPVector& segmentEnd, const FPVector& point,
+                                                    fp& timeOfIntersection, FPVector& closestPoint) {
+        
+            FPVector segmentDir = segmentEnd - segmentStart;
+        
+            // Project c onto ab, computing parameterized position d(t)=a+t*(b � a)
+            timeOfIntersection = segmentDir.dot(point - segmentStart) / segmentDir.dot(segmentDir);
+        
+            // If outside segment, clamp t (and therefore d) to the closest endpoint
+            if (timeOfIntersection < fp{0}) timeOfIntersection = fp{0};
+            if (timeOfIntersection > fp{1.0f}) timeOfIntersection = fp{1};
+        
+            // Compute projected position from the clamped t
+            closestPoint = segmentStart + timeOfIntersection * segmentDir;
+        }
     };
 }

@@ -7,6 +7,16 @@
 namespace ProjectNomad {
     class VectorUtilities {
     public:
+        static FPVector getAnyPerpendicularVector(const FPVector& normalizedInput) {
+            // Choose any arbitrary direction to cross with for a perpendicular vector EXCEPT a parallel vector
+            if (normalizedInput != FPVector::up() && normalizedInput != FPVector::down()) {
+                return normalizedInput.cross(FPVector::up());
+            }
+
+            // Since input is either up or down direction, choose any non-parallel direction to cross with
+            return normalizedInput.cross(FPVector::right());
+        }
+        
         /// <summary>
         /// Get the projection (length * direction) of a given vector in a given direction
         /// </summary>

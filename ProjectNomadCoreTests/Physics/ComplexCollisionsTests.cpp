@@ -22,6 +22,61 @@ namespace ComplexCollisionsTests {
         ComplexCollisionsTestsBase()
         : BaseSimTest(), simpleCollisions(testLogger), complexCollisions(testLogger, simpleCollisions) {}
     };
+
+#pragma region Direct Collision Tests
+
+#pragma region Capsule vs Sphere
+
+#pragma region isColliding: Capsule and Sphere
+
+    class ComplexCapsuleSphereCollisions : public ComplexCollisionsTestsBase {};
+
+    TEST_F(ComplexCapsuleSphereCollisions, whenCenteredOverlappingColliders_statesIsColliding) {
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderA.setSphere(FPVector(fp{0}, fp{0}, fp{0}), fp{5});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        float x = toFloat(result.penetrationDepth.x);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexCapsuleSphereCollisions, whenBarelyTouchingOnTopOfCapsule_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderB.setSphere(FPVector(fp{0}, fp{0}, fp{24.9f}), fp{5});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexCapsuleSphereCollisions, whenJustTouchingOnTopOfCapsule_notColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderB.setSphere(FPVector(fp{0}, fp{0}, fp{5}), fp{5});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexCapsuleSphereCollisions, whenBarelyTouchingSideOfCapsule_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderB.setSphere(FPVector(fp{0}, fp{14.5f}, fp{0}), fp{5});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexCapsuleSphereCollisions, whenJustTouchingSideOfCapsule_notColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderB.setSphere(FPVector(fp{0}, fp{15}, fp{0}), fp{5});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+#pragma endregion 
+    
+#pragma endregion 
+    
+#pragma endregion 
     
 #pragma region GJK Tests
     #pragma region Wrong type checks

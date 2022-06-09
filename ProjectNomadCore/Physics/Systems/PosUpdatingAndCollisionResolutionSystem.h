@@ -145,7 +145,7 @@ namespace ProjectNomad {
                 //        In reality, current resolution would teleport you on other side of object instead of where you came from
                 //        Need to fix... sometime in future. Current idea is to check whether pen depth would put you on other side of object,
                 //        but that also has its fun edge cases- likely need to sweep for high speeds anywhos. Tradeoffs for future!
-                FPVector penetrationDirection = collisionResult.penetrationDepth.normalized();
+                FPVector penetrationDirection = collisionResult.penetrationDepth.normalized(); // TODO: Have result return axis itself directly?
                 // Normalizing for velocity correction case
                 fp velocityMagnitudeInPenDirection = physicsComp.velocity.dot(penetrationDirection);
                 bool didVelocityCauseCollision = false;

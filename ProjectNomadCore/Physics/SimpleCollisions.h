@@ -550,7 +550,6 @@ namespace ProjectNomad {
         /// Note that if ray origin is within OBB, then this will signify when the ray hits the OBB on the way out.
         /// </param>
         /// <param name="pointOfIntersection">Location where intersection occurs</param>
-        // TODO: Get rid of SimContext param
         bool raycastWithBox(const Ray& ray,
                             const Collider& box,
                             fp& timeOfIntersection,
@@ -573,8 +572,7 @@ namespace ProjectNomad {
             // 3. Convert results to world space
             if (didIntersect) {
                 // Micro optimization, no need to compute if no intersection
-                pointOfIntersection = box.toWorldSpaceFromLocal(localPointOfIntersection);
-                // Reverse of earlier operations for localSpaceRay origin
+                pointOfIntersection = box.toWorldSpaceFromLocal(localPointOfIntersection); // Reverse of earlier operations for localSpaceRay origin
             }
 
             return didIntersect;

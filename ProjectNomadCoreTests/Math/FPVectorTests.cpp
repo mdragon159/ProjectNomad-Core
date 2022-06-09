@@ -242,6 +242,24 @@ namespace FPVectorTests {
         ASSERT_EQ(static_cast<float>(expected), static_cast<float>(FPVector::distance(secondVec, firstVec)));
     }
 
+    TEST(directionNotNormalized, whenPointsAreApart_returnsExpectedDistance) {
+        FPVector firstVec(fp{-5.5f}, fp{10}, fp{10});
+        FPVector secondVec(fp{-5.5f}, fp{1010}, fp{10});
+
+        FPVector expected = FPVector::right() * fp{1000};
+        ASSERT_EQ(expected, FPVector::directionNotNormalized(firstVec, secondVec));
+        ASSERT_EQ(expected * fp{-1}, FPVector::directionNotNormalized(secondVec, firstVec));
+    }
+
+    TEST(directionNotNormalized, whenPointsAreSame_returnsExpectedDistance) {
+        FPVector firstVec(fp{-5}, fp{22.5f}, fp{-100});
+        FPVector secondVec(fp{-5}, fp{22.5f}, fp{-100});
+
+        FPVector expected = FPVector::zero();
+        ASSERT_EQ(expected, FPVector::directionNotNormalized(firstVec, secondVec));
+        ASSERT_EQ(expected, FPVector::directionNotNormalized(secondVec, firstVec));
+    }
+
     TEST(direction, whenPointsAreApart_returnsExpectedDistance) {
         FPVector firstVec(fp{-5.5f}, fp{10}, fp{10});
         FPVector secondVec(fp{-5.5f}, fp{1010}, fp{10});

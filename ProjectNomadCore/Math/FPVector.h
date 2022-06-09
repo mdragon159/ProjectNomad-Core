@@ -44,25 +44,28 @@ namespace ProjectNomad {
             return {fp{0}, fp{0}, fp{-1}};
         }
 
-        static fp distanceSq(FPVector from, FPVector to) {
+        static fp distanceSq(const FPVector& from, const FPVector& to) {
             return (to - from).getLengthSquared();
         }
 
-        static fp distance(FPVector from, FPVector to) {
+        static fp distance(const FPVector& from, const FPVector& to) {
             return (to - from).getLength();
         }
 
-        static FPVector direction(FPVector from, FPVector to) {
-            return (to - from).normalized();
+        static FPVector directionNotNormalized(const FPVector& from, const FPVector& to) {
+            return to - from;
         }
 
-        fp getLength() const {
-            fp preSqrt = x * x + y * y + z * z;
-            return sqrt(preSqrt);
+        static FPVector direction(const FPVector& from, const FPVector& to) {
+            return directionNotNormalized(from, to).normalized();
         }
 
         fp getLengthSquared() const {
             return x * x + y * y + z * z;
+        }
+        
+        fp getLength() const {
+            return FPMath::sqrt(getLengthSquared());
         }
 
         FPVector operator-() const {
