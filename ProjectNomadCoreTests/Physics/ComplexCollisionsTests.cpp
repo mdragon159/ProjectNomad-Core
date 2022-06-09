@@ -36,8 +36,9 @@ namespace ComplexCollisionsTests {
         colliderA.setSphere(FPVector(fp{0}, fp{0}, fp{0}), fp{5});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        // float x = toFloat(result.penetrationDepth.x);
         EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-15}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::backward(), result.penetrationDirection, fp{0.01f});
     }
 
     TEST_F(ComplexCapsuleSphereCollisions, whenBarelyTouchingOnTopOfCapsule_statesIsColliding) {
@@ -46,6 +47,8 @@ namespace ComplexCollisionsTests {
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-0.1f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::down(), result.penetrationDirection, fp{0.01f});
     }
 
     TEST_F(ComplexCapsuleSphereCollisions, whenJustTouchingOnTopOfCapsule_notColliding) {
@@ -54,6 +57,7 @@ namespace ComplexCollisionsTests {
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         EXPECT_FALSE(result.isColliding);
+        // TODO: Test is failing atm, need to fix (here and for SimpleCollisionsTests)
     }
 
     TEST_F(ComplexCapsuleSphereCollisions, whenBarelyTouchingSideOfCapsule_statesIsColliding) {
@@ -62,6 +66,8 @@ namespace ComplexCollisionsTests {
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-0.5f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::left(), result.penetrationDirection, fp{0.01f});
     }
 
     TEST_F(ComplexCapsuleSphereCollisions, whenJustTouchingSideOfCapsule_notColliding) {
