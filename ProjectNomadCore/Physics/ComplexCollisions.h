@@ -239,11 +239,39 @@ namespace ProjectNomad {
             );
 
             // If (squared) distance smaller than (squared) sum of radii, they collide
-            fp radius = capA.getCapsuleRadius() + capB.getCapsuleRadius();
-            bool isColliding = distSquared < radius * radius;
+            fp combinedRadius = capA.getCapsuleRadius() + capB.getCapsuleRadius();
+            bool isColliding = distSquared < combinedRadius * combinedRadius;
 
-            // TODO: Calculate penetration info and such
-            return isColliding ? ImpactResult(FPVector::zero(), fp{0}) : ImpactResult::noCollision();
+            if (!isColliding) {
+                return ImpactResult::noCollision();
+            }
+            // Now compute penetration correction info for assisting in resolving collision
+
+            /// TODO: Is pen direction supposed to be correction for A? Can't remember which direction. Add comment
+            FPVector penetrationDir;
+            // Edge case: Closest points are the same point (eg, the capsule median lines overlap)
+            if (closestPtOnSegmentA == closestPtOnSegmentB) {
+                // Penetration axis = Perpendicular to both capsule lines
+                FPVector capsuleLineDirA = FPVector::direction(aLinePoints.start, aLinePoints.end);
+                FPVector capsuleLineDirB = FPVector::direction(bLinePoints.start, bLinePoints.end);
+                penetrationDir = capsuleLineDirB.cross(capsuleLineDirA); // TODO: Should cross be other way?
+                
+                // Edge case: Capsule lines are parallel, so use any perpendicular direction to the capsule lines
+                if (penetrationDir == FPVector::zero()) {
+                    // TODO: Questionable if this is the "best" direction. Work out if this is the correct approach
+                    penetrationDir = VectorUtilities::getAnyPerpendicularVector(capsuleLineDirA);
+                }
+            }
+            // Otherwise penetration direction = From one closest point to next
+            else {
+                penetrationDir = FPVector::direction(closestPtOnSegmentB, closestPtOnSegmentA);
+            }
+            
+            // Penetration distance = distance between closest points on median lines minus sum of radii
+            //                          (ie, how far to push in order to have the two touch side by side)
+            fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
+
+            return ImpactResult(penetrationDir, penetrationDepth);
         }
 
         ImpactResult isSphereAndSphereColliding(const Collider& sphereA, const Collider& sphereB) {

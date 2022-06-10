@@ -8,9 +8,6 @@
 using namespace ProjectNomad;
 
 namespace ComplexCollisionsTests {
-    // TOOD:
-    // Sphere-sphere
-
     class ComplexCollisionsTestsBase : public BaseSimTest {
     protected:
         SimpleCollisions<TestLogger> simpleCollisions;
@@ -25,8 +22,89 @@ namespace ComplexCollisionsTests {
 
 #pragma region Direct Collision Tests
 
-#pragma region Capsule vs Sphere
+#pragma region isColliding: Capsule and Capsule
 
+    class ComplexCapsuleCapsuleCollisions : public ComplexCollisionsTestsBase {};
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenIdenticalOverlappingColliders_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-20}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::backward(), result.penetrationDirection, fp{0.01f});
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenBarelyCollidingOnEnds_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{39.9f}), fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-0.1f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::up(), result.penetrationDirection, fp{0.01f});
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenJustTouchingOnEnds_notColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{40}), fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenNowhereClose_notColliding) {
+        colliderA.setCapsule(FPVector(fp{100}, fp{-30}, fp{40}), fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{-5}, fp{20.5f}, fp{100}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+        // TODO: Fix unit test (and corresponding test in SimpleCollisionsTests)
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenIdenticalSizedOverlappingColliders_withSingleRotation_statesIsColliding) {
+        FPQuat rotationAroundX = FPQuat::fromDegrees(FPVector(fp{1}, fp{0}, fp{0}), fp{90});
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), rotationAroundX, fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-20.f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::forward(), result.penetrationDirection, fp{0.01f});
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenBarelyCollidingOnOneEnd_withRotations_statesIsColliding) {
+        FPQuat rotationAroundX = FPQuat::fromDegrees(FPVector(fp{1}, fp{0}, fp{0}), fp{90});
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{29.9f}), rotationAroundX, fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{-0.1f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::up(), result.penetrationDirection, fp{0.01f});
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenJustTouchingOnOneEnd_withRotations_notColliding) {
+        FPQuat rotationAroundX = FPQuat::fromDegrees(FPVector(fp{1}, fp{0}, fp{0}), fp{90});
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{30}), rotationAroundX, fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+        // TODO: Fix this test and the SimpleCollisions one too
+    }
+
+    TEST_F(ComplexCapsuleCapsuleCollisions, whenNowhereClose_withRotations_notColliding) {
+        FPQuat rotationAroundX = FPQuat::fromDegrees(FPVector(fp{1}, fp{0}, fp{0}), fp{90});
+        colliderA.setCapsule(FPVector(fp{100}, fp{-30}, fp{40}), rotationAroundX, fp{10}, fp{20});
+        colliderB.setCapsule(FPVector(fp{-5}, fp{20.5f}, fp{100}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+    
+#pragma endregion
 #pragma region isColliding: Capsule and Sphere
 
     class ComplexCapsuleSphereCollisions : public ComplexCollisionsTestsBase {};
@@ -78,10 +156,8 @@ namespace ComplexCollisionsTests {
         EXPECT_FALSE(result.isColliding);
     }
 
-#pragma endregion 
-    
-#pragma endregion 
-    
+#pragma endregion
+
 #pragma endregion 
     
 #pragma region GJK Tests
