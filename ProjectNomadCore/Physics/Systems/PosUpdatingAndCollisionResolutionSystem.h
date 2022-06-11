@@ -5,6 +5,7 @@
 #include "Utilities/ILogger.h"
 #include "Physics/PhysicsManager.h"
 #include "GameCore/CoreConstants.h"
+#include "Physics/Utility/CollisionResolutionHelper.h"
 
 namespace ProjectNomad {
     template <typename LoggerType>
@@ -15,10 +16,11 @@ namespace ProjectNomad {
         
         LoggerType& logger;
         PhysicsManager<LoggerType>& physicsManager;
+        CollisionResolutionHelper<LoggerType> collisionResolutionHelper;
         
     public:
         PosUpdatingAndCollisionResolutionSystem(LoggerType& logger, PhysicsManager<LoggerType>& physicsManager)
-        : logger(logger), physicsManager(physicsManager) {}
+        : logger(logger), physicsManager(physicsManager), collisionResolutionHelper(logger) {}
         ~PosUpdatingAndCollisionResolutionSystem() override {}
         
         void update(entt::registry& registry) override {
@@ -100,7 +102,7 @@ namespace ProjectNomad {
             auto staticView = registry.view<StaticColliderComponent>();
             for (auto &&[entityId, staticColliderComp] : staticView.each()) {
                 bool collisionFound =
-                    checkAndResolveIndividualCollision(futureBoundingShape, staticColliderComp.collider, physicsComp, newIntendedPos);
+                    checkAndResolveIndividualCollision(futureBoundingShape, staticColliderComp.collider, physicsComp);
                 if (collisionFound) {
                     wasCollisionEverFound = true;
                 }
@@ -114,103 +116,31 @@ namespace ProjectNomad {
                 }
                 
                 bool collisionFound =
-                    checkAndResolveIndividualCollision(futureBoundingShape, otherColliderComp.collider,
-                        physicsComp, newIntendedPos);
+                    checkAndResolveIndividualCollision(futureBoundingShape, otherColliderComp.collider,physicsComp);
                 if (collisionFound) {
                     wasCollisionEverFound = true;
                 }
             }
 
+            newIntendedPos = futureBoundingShape.center;
             return wasCollisionEverFound;
         }
 
         bool checkAndResolveIndividualCollision(Collider& futureCollider,
                                                 const Collider& checkAgainstCollider,
-                                                PhysicsComponent& physicsComp,
-                                                FPVector& newIntendedPos) {
-
-            // TODO: Rewrite this entire cursed function once GJK/EPA/etc algorithms with additional resolution data are ready
+                                                PhysicsComponent& physicsComp) {
             
-            ImpactResult collisionResult = physicsManager.getComplexCollisions()
-                .isColliding(futureCollider, checkAgainstCollider);
-            if (collisionResult.isColliding) {               
-                // mSimContext->getSharedData()->mSimData.mDebugMessages.push(
-                //   DebugMessage::createTextMessage(
-                //     0.2f, OutputLocation::Screen, "Is colliding! Pen depth: " + collisionResult.mPenetrationDepth.toString()
-                //   )
-                // );
+            ImpactResult collisionResult = physicsManager.getComplexCollisions().isColliding(futureCollider, checkAgainstCollider);
+            if (collisionResult.isColliding) {
+                FPVector postCollisionPosition;
+                FPVector postCollisionVelocity;
+                collisionResolutionHelper.resolveCollision(
+                    collisionResult, futureCollider, physicsComp.velocity,
+                    postCollisionPosition, postCollisionVelocity
+                );
 
-                // Penetration depth is a simple displacement value. Need to determine whether to correct towards or away
-                // TODO: Current resolution method doesn't work well if tunneling mostly through an object already
-                //        In reality, current resolution would teleport you on other side of object instead of where you came from
-                //        Need to fix... sometime in future. Current idea is to check whether pen depth would put you on other side of object,
-                //        but that also has its fun edge cases- likely need to sweep for high speeds anywhos. Tradeoffs for future!
-                // Normalizing for velocity correction case
-                FPVector penDirAndDepth = collisionResult.penetrationDirection * collisionResult.penetrationMagnitude;
-                fp velocityMagnitudeInPenDirection = physicsComp.velocity.dot(collisionResult.penetrationDirection);
-                bool didVelocityCauseCollision = false;
-                if (velocityMagnitudeInPenDirection > fp{0}) {
-                    // Is penetration depth trying to move us in same direction as we were already going?
-                    // If penetration depth is pointing us towards the collision (assuming velocity caused collision),
-                    //  then subtract to get away from the collision
-                    newIntendedPos -= penDirAndDepth;
-                    futureCollider.center = newIntendedPos;
-
-                    didVelocityCauseCollision = true;
-                } else if (velocityMagnitudeInPenDirection < fp{0}) {
-                    // Is penetration depth trying to move us opposite from where player was trying to go?
-                    // Add penetration depth since that should take the player away from the collision
-                    // (again, assuming velocity caused collision)
-                    newIntendedPos += penDirAndDepth;
-                    futureCollider.center = newIntendedPos;
-
-                    didVelocityCauseCollision = true;
-                } else {
-                    // In this case, velocity and pen depth are perpendicular so can't rely on velocity to determine what to do
-                    // Note that sometimes pen depth will point towards the object, sometimes away
-                    // No simple pattern to rely on with underlying calculation
-                    // Thus, we need some other method to determine how to apply pen depth
-
-                    // Base rule is as follows: Add pen depth if it will not cause collision. Subtract if it will cause collision
-                    // We could just guess and check (eg, add -> check if colliding again -> if so, subtract instead) but that's expensive
-                    // Instead, idea is to try using where colliding object is relative to player in order to correct
-
-                    // TODO: This assumes simple similarly sized box-to-box. Likely will work with spheres and capsules, but 
-                    // be careful in future when adding other combos! 
-                    // Also will need to deal with size differences for easy tunneling... eventually
-                    // Likely can just use old player pos instead of new pos for direction comparison
-                    // Orrr... just say screw it and guess and check
-
-                    FPVector playerToObjectVector = checkAgainstCollider.getCenter() - newIntendedPos;
-                    fp playerToObjectVsPenDepthDir = playerToObjectVector.dot(collisionResult.penetrationDirection);
-                    if (playerToObjectVsPenDepthDir > fp{0}) {
-                        // Pen depth pointing towards object, ie adding would not resolve collision
-                        newIntendedPos -= penDirAndDepth;
-                        futureCollider.center = newIntendedPos;
-                    } else if (playerToObjectVsPenDepthDir < fp{0}) {
-                        // Pen depth pointing away from collision object
-                        newIntendedPos += penDirAndDepth;
-                        futureCollider.center = newIntendedPos;
-                    } else {
-                        // Praying this case doesn't happen out of laziness but reality will likely differ
-                        // In future, could just do the guess and check method but for now pick one + log
-                        newIntendedPos += penDirAndDepth;
-                        futureCollider.center = newIntendedPos;
-
-                        // mSimContext.addDebugMessage(
-                        //     DebugMessage::createTextMessage(
-                        //         10, OutputLocation::LogAndScreen,
-                        //         "UNEXPECTED: Fallback position collision resolution case failed!"
-                        //     )
-                        // );
-                    }
-                }
-
-                if (didVelocityCauseCollision) {
-                    // Zero out the velocity that's causing the collision
-                    FPVector velocityParallelToPenetration = velocityMagnitudeInPenDirection * collisionResult.penetrationDirection;
-                    physicsComp.velocity = physicsComp.velocity - velocityParallelToPenetration; // Perpendicular = Vector - Parallel
-                }
+                futureCollider.center = postCollisionPosition;
+                physicsComp.velocity = postCollisionVelocity;
 
                 return true;
             }
