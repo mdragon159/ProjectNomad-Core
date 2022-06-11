@@ -308,16 +308,27 @@ namespace ProjectNomad {
             return result;
         }
 
+        // TODO: Not vastly important due to small fixed size, but don't copy vector on return. Pass in a vector to fill with data
         std::vector<FPVector> getBoxNormalsInWorldCoordinates() const {
             std::vector<FPVector> results;
 
             // Use x/y/z axes and rotate as necessary to get world coordinate axes
             // In addition, no need currently for parallel normals (eg, -x and +x)
-            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector(fp{1}, fp{0}, fp{0})));
-            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector(fp{0}, fp{1}, fp{0})));
-            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector(fp{0}, fp{0}, fp{1})));
+            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector::forward()));
+            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector::right()));
+            results.push_back(toWorldSpaceForOriginCenteredValue(FPVector::up()));
 
             return results;
+        }
+
+        void getAllBoxFaceNormalsInLocalSpace(std::vector<FPVector>& results) const {
+            results.push_back(FPVector::forward());
+            results.push_back(FPVector::right());
+            results.push_back(FPVector::up());
+
+            results.push_back(FPVector::backward());
+            results.push_back(FPVector::left());
+            results.push_back(FPVector::down());
         }
 
         bool isWorldSpacePtWithinBox(const FPVector& point) const {
@@ -335,6 +346,101 @@ namespace ProjectNomad {
 
             // Within bounds of all three axes. Thus, point is definitely located within the obb
             return true;
+        }
+
+        FPVector getPushFaceNormalForPtInWorldSpace(const FPVector& worldPoint) const {
+            FPVector localSpaceResultDir = getPushFaceNormalForPtInLocalSpace(toLocalSpaceFromWorld(worldPoint));
+            return toWorldSpaceForOriginCenteredValue(localSpaceResultDir);
+        }
+
+        // Collision resolution purpose: Have a point in space within box and want to find which direction to push it,
+        //                                  such that it's the smallest direction to push the point out of the box
+        FPVector getPushFaceNormalForPtInLocalSpace(const FPVector& localPoint) const {
+            // Approach: Get which side of box center the point is on, then "project" that direction towards box face
+            //              to find best face to push point out to
+            //  1. Get direction from box center (origin in local space) to given point
+            //  2. Dot direction with all normals and choose one highest value
+
+            // Explicitly cover edge case just 'cuz arbitrarily want to define base case
+            // Note that this isn't strictly necessary as loop approach should elegantly "fail"
+            if (localPoint == FPVector::zero()) {
+                // Default to wanting to push point towards "front" of box
+                // Is this most appropriate behavior (eg, player gets stuck exactly in center of box)? Nah but dunno if care about that edge case much
+                return FPVector::forward();
+            }
+
+            // Get direction from box center (origin) to local point
+            // TODO: Normalization is MAYBE unnecessary, as this is all relative comparisons
+            FPVector toPointDir = localPoint.normalized();
+
+            // Get all normals to test with
+            // TODO: Perhaps check edges too in future, but don't think that sort of accuracy is worth atm
+            std::vector<FPVector> allFaceNormals;
+            getAllBoxFaceNormalsInLocalSpace(allFaceNormals);
+
+            // TODO: !!!!!!!!!!!
+            // Need to take into account extents! Boxes are NOT squares, so need to account for that!
+
+            // 1. Get all normals x distance to face plane
+            // 2. Get normal with smallest distance to face plane
+            // 3. Return normal with point when moved to face plane
+            
+            // Get normal which best points towards the provided input location
+            FPVector resultDirection;
+            fp bestDirectionSoFarValue = FPMath::maxLimit() * fp{-1};
+            for (const auto& curNormal : allFaceNormals) {
+                // Get value which represents how much this direction points towards provided input location
+                fp curPointDirValue = toPointDir.dot(curNormal);
+                
+                // Remember if best normal thus far
+                if (curPointDirValue > bestDirectionSoFarValue) {
+                    resultDirection = curNormal;
+                    bestDirectionSoFarValue = curPointDirValue;
+                }
+            }
+
+            return resultDirection;
+        }
+
+        void pushPtToBoxFaceInWorldSpace(const FPVector& inPoint, FPVector& outPushedPoint, FPVector& outPushDir) {
+            FPVector localSpaceInput = toLocalSpaceFromWorld(inPoint);
+
+            FPVector localResultPt;
+            FPVector localResultDir;
+            pushPtToBoxFaceInLocalSpace(localSpaceInput, localResultPt, localResultDir);
+
+            outPushedPoint = toWorldSpaceFromLocal(localResultPt);
+            outPushDir = toWorldSpaceForOriginCenteredValue(localResultDir);
+        }
+
+        // Collision resolution purpose: Have a point in space within box and want to find which direction to push it,
+        //                                  such that it's the smallest direction to push the point out of the box
+        void pushPtToBoxFaceInLocalSpace(const FPVector& inPoint, FPVector& outPushedPoint, FPVector& outPushDir) {
+            // Get best direction to push given point out to a face
+            outPushDir = getPushFaceNormalForPtInLocalSpace(inPoint);
+
+            // Figure out where the input point would be if it were actually pushed directly to a face
+            // TODO: Not a fan of buncha if statements but too lazy to figure out some clean math with max points for this 
+            outPushedPoint = inPoint;               // Pushing point to face in local space just means setting an axis to that axis's max distance
+            FPVector maxExtents = getBoxHalfSize(); // For clarity that half size in local space = maximum extents on each axis
+            if (outPushDir == FPVector::up()) {
+                outPushedPoint.z = maxExtents.z;
+            }
+            else if (outPushDir == FPVector::down()) {
+                outPushedPoint.z = maxExtents.z * fp{-1};
+            }
+            else if (outPushDir == FPVector::right()) {
+                outPushedPoint.y = maxExtents.y;
+            }
+            else if (outPushDir == FPVector::left()) {
+                outPushedPoint.y = maxExtents.y * fp{-1};
+            }
+            else if (outPushDir == FPVector::forward()) {
+                outPushedPoint.x = maxExtents.x;
+            }
+            else if (outPushDir == FPVector::backward()) {
+                outPushedPoint.x = maxExtents.x * fp{-1};
+            }
         }
 
 #pragma endregion

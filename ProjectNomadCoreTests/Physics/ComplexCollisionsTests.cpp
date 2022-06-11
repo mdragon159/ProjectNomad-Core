@@ -215,6 +215,52 @@ namespace ComplexCollisionsTests {
     }
 
 #pragma endregion
+#pragma region isColliding: Box and Sphere
+
+    class ComplexBoxSphereCollisions : public ComplexCollisionsTestsBase {};
+
+    TEST_F(ComplexBoxSphereCollisions, givenNoRotationBox_givenSphereDistantFromBox_statesNotColliding) {
+        colliderB.setBox(FPVector(fp{-1}, fp{-1}, fp{-1}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderA.setSphere(FPVector(fp{-5}, fp{5}, fp{10}), fp{5});
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+        // TODO: Fix test! SimpleCollisions doesn't fail!
+    }
+
+    TEST_F(ComplexBoxSphereCollisions, givenNoRotationBox_givenSphereTouchingBox_statesNotColliding) {
+        colliderA.setBox(FPVector(fp{1}, fp{0}, fp{0}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setSphere(FPVector(fp{-5}, fp{0}, fp{0}), fp{5});
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxSphereCollisions, givenNoRotationBox_givenSphereIntersectingBox_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setSphere(FPVector(fp{-5}, fp{0}, fp{0}), fp{5});
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxSphereCollisions, givenNoRotationBox_givenSphereCenteredWithinBox_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{2}, fp{2}, fp{2}));
+        colliderB.setSphere(FPVector(fp{0}, fp{0}, fp{0}), fp{1});
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxSphereCollisions, givenNoRotationBox_givenSphereWithinBoxButNotCentered_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{-1}, fp{-1}, fp{-1}), FPVector(fp{3}, fp{3}, fp{3}));
+        colliderB.setSphere(FPVector(fp{1}, fp{1}, fp{1}), fp{1});
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+#pragma endregion
 #pragma region isColliding: Capsule and Sphere
 
     class ComplexCapsuleSphereCollisions : public ComplexCollisionsTestsBase {};

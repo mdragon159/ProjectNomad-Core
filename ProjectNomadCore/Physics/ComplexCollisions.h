@@ -500,17 +500,26 @@ namespace ProjectNomad {
             // Finally do ordinary point distance vs sphere radius checking
             FPVector closestPointOffSetToSphere = localSphereCenter - closestBoxPointToSphere;
             fp sphereCenterToBoxDistance = closestPointOffSetToSphere.getLength();
+
+            // Edge case: Sphere center within box. Confirmed collision but need to calculate penetration info in a different way
             if (sphereCenterToBoxDistance == fp{0}) {
-                // Sphere center within box case
-                // TODO: One day calculate distance to nearest face for penetration depth!
-                return ImpactResult(FPVector::zero(), fp{0});
+                // Get best face to push sphere towards
+                FPVector bestFaceNormal = box.getPushFaceNormalForPtInWorldSpace(sphere.getCenter());
+
+                // Calculate distance necessary to push sphere out of box
+                // NOTE: Distance from sphere center to desired face PLUS sphere radius
+
+                // Finally return result
+                // Note that NOT flipping face normal as this is direction to actually push box (first/A input) out of penetrating the sphere
+                return ImpactResult(bestFaceNormal.flipped(), fp{1000});
             }
 
+            // ??
             fp intersectionDepth = sphere.getSphereRadius() - sphereCenterToBoxDistance;
             if (intersectionDepth > fp{0}) {
                 return ImpactResult(closestPointOffSetToSphere.normalized(), intersectionDepth);
             }
-
+            
             return ImpactResult::noCollision();
         }
 
