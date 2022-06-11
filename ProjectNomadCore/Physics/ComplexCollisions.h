@@ -30,14 +30,14 @@ namespace ProjectNomad {
         ImpactResult isColliding(const Collider& A, const Collider& B) {
             if (A.isNotInitialized()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isColliding",
+                    "CollisionsComplex::isColliding",
                     "Collider A was not initialized type"
                 );
                 return ImpactResult::noCollision();
             }
             if (B.isNotInitialized()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isColliding",
+                    "CollisionsComplex::isColliding",
                     "Collider B was not initialized type"
                 );
                 return ImpactResult::noCollision();
@@ -59,7 +59,7 @@ namespace ProjectNomad {
                     ImpactResult result = isBoxAndCapsuleColliding(B, A);
                     
                     // Flip penetration direction as flipped inputs in previous call
-                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    result.penetrationDirection.flip();
                     return result;
                 }
                 if (B.isCapsule()) {
@@ -71,17 +71,17 @@ namespace ProjectNomad {
             }
             if (A.isSphere()) {
                 if (B.isBox()) {
-                    ImpactResult result =  isBoxAndSphereColliding(A, B);
+                    ImpactResult result =  isBoxAndSphereColliding(B, A);
 
                     // Flip penetration direction as flipped inputs in previous call
-                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    result.penetrationDirection.flip();
                     return result;
                 }
                 if (B.isCapsule()) {
-                    ImpactResult result =  isCapsuleAndSphereColliding(A, B);
+                    ImpactResult result =  isCapsuleAndSphereColliding(B, A);
 
                     // Flip penetration direction as flipped inputs in previous call
-                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    result.penetrationDirection.flip();
                     return result;
                 }
                 if (B.isSphere()) {
@@ -90,7 +90,7 @@ namespace ProjectNomad {
             }
 
             logger.logErrorMessage(
-                "CollisionsSimple::isColliding",
+                "CollisionsComplex::isColliding",
                 "Did not find a matching function for colliders A and B of types: "
                             + A.getTypeAsString() + ", " + B.getTypeAsString() 
             );
@@ -100,14 +100,14 @@ namespace ProjectNomad {
         ImpactResult isBoxAndBoxColliding(const Collider& boxA, const Collider& boxB) {
             if (!boxA.isBox()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndBoxColliding",
+                    "CollisionsComplex::isBoxAndBoxColliding",
                     "Collider A was not a box but instead a " + boxA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!boxB.isBox()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndBoxColliding",
+                    "CollisionsComplex::isBoxAndBoxColliding",
                     "Collider B was not a box but instead a " + boxA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
@@ -237,14 +237,14 @@ namespace ProjectNomad {
         ImpactResult isCapsuleAndCapsuleColliding(const Collider& capA, const Collider& capB) {
             if (!capA.isCapsule()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isCapsuleAndCapsuleColliding",
+                    "CollisionsComplex::isCapsuleAndCapsuleColliding",
                     "Collider A was not a capsule but instead a " + capA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!capB.isCapsule()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isCapsuleAndCapsuleColliding",
+                    "CollisionsComplex::isCapsuleAndCapsuleColliding",
                     "Collider B was not a capsule but instead a " + capB.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
@@ -276,27 +276,28 @@ namespace ProjectNomad {
             }
 
             FPVector penetrationDir;
-            // Edge case: Closest points are the same point (eg, the capsule median lines overlap)
-            if (closestPtOnSegmentA == closestPtOnSegmentB) {
+            // Edge case: Closest points are the same point (ie, the capsule median lines overlap)
+            // Note: Use isNear to cover math error range/minor inaccuracies. Eg, calculated closest point may be 0.000001 off
+            if (closestPtOnSegmentA.isNear(closestPtOnSegmentB, fp{0.01f})) {
                 // Penetration axis = Perpendicular to both capsule lines
                 FPVector capsuleLineDirA = FPVector::direction(aLinePoints.start, aLinePoints.end);
                 FPVector capsuleLineDirB = FPVector::direction(bLinePoints.start, bLinePoints.end);
-                penetrationDir = capsuleLineDirB.cross(capsuleLineDirA); // TODO: Should cross be other way?
+                penetrationDir = capsuleLineDirA.cross(capsuleLineDirB); // TODO: Should cross be other way?
                 
                 // Edge case: Capsule lines are parallel, so use any perpendicular direction to the capsule lines
-                if (penetrationDir == FPVector::zero()) {
-                    // TODO: Questionable if this is the "best" direction. Work out if this is the correct approach
+                if (penetrationDir.isNear(FPVector::zero(), fp{0.01f})) {
+                    logger.logInfoMessage("isCapsuleAndCapsuleColliding", "HIT INNER EDGE CASE YAY");
                     penetrationDir = VectorUtilities::getAnyPerpendicularVector(capsuleLineDirA);
                 }
             }
             // Otherwise penetration direction = From one closest point to next
             else {
-                penetrationDir = FPVector::direction(closestPtOnSegmentB, closestPtOnSegmentA);
+                penetrationDir = FPVector::direction(closestPtOnSegmentA, closestPtOnSegmentB);
             }
             
             // Penetration distance = distance between closest points on median lines minus sum of radii
             //                          (ie, how far to push in order to have the two touch side by side)
-            fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
+            fp penetrationDepth = FPMath::abs(FPMath::sqrt(distSquared) - combinedRadius);
 
             return ImpactResult(penetrationDir, penetrationDepth);
         }
@@ -304,14 +305,14 @@ namespace ProjectNomad {
         ImpactResult isSphereAndSphereColliding(const Collider& sphereA, const Collider& sphereB) {
             if (!sphereA.isSphere()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isSphereAndSphereColliding",
+                    "CollisionsComplex::isSphereAndSphereColliding",
                     "Collider A was not a sphere but instead a " + sphereA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphereB.isSphere()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isSphereAndSphereColliding",
+                    "CollisionsComplex::isSphereAndSphereColliding",
                     "Collider B was not a sphere but instead a " + sphereB.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
@@ -334,14 +335,14 @@ namespace ProjectNomad {
         ImpactResult isBoxAndCapsuleColliding(const Collider& box, const Collider& capsule) {
             if (!box.isBox()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndCapsuleColliding",
+                    "CollisionsComplex::isBoxAndCapsuleColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!capsule.isCapsule()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndCapsuleColliding",
+                    "CollisionsComplex::isBoxAndCapsuleColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
@@ -465,14 +466,14 @@ namespace ProjectNomad {
         ImpactResult isBoxAndSphereColliding(const Collider& box, const Collider& sphere) {
             if (!box.isBox()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndSphereColliding",
+                    "CollisionsComplex::isBoxAndSphereColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphere.isSphere()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isBoxAndSphereColliding",
+                    "CollisionsComplex::isBoxAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
@@ -532,14 +533,14 @@ namespace ProjectNomad {
         ImpactResult isCapsuleAndSphereColliding(const Collider& capsule, const Collider& sphere) {
             if (!capsule.isCapsule()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isCapsuleAndSphereColliding",
+                    "CollisionsComplex::isCapsuleAndSphereColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphere.isSphere()) {
                 logger.logErrorMessage(
-                    "CollisionsSimple::isCapsuleAndSphereColliding",
+                    "CollisionsComplex::isCapsuleAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
