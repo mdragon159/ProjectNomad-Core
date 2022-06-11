@@ -208,7 +208,7 @@ namespace ProjectNomad {
 
                 if (didVelocityCauseCollision) {
                     // Zero out the velocity that's causing the collision
-                    FPVector velocityParallelToPenetration = velocityMagnitudeInPenDirection * penetrationDirection;
+                    FPVector velocityParallelToPenetration = velocityMagnitudeInPenDirection * collisionResult.penetrationDirection;
                     physicsComp.velocity = physicsComp.velocity - velocityParallelToPenetration; // Perpendicular = Vector - Parallel
                 }
 
