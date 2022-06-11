@@ -156,6 +156,12 @@ namespace ProjectNomad {
             return result;
         }
 
+        bool isNear(const FPVector& other, const fp& positiveErrorRange) {
+            return FPMath::isNear(x, other.x, positiveErrorRange)
+                && FPMath::isNear(y, other.y, positiveErrorRange)
+                && FPMath::isNear(z, other.z, positiveErrorRange);
+        }
+
         std::string toString() const {
             auto floatX = (float)x;
             auto floatY = (float)y;

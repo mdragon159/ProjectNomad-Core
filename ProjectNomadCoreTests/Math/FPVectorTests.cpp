@@ -308,6 +308,30 @@ namespace FPVectorTests {
         ASSERT_EQ(expected, test);
     }
 
+    TEST(isNear, whenBothVectorsAreSame_thenReturnsTrue) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second = first;
+
+        fp tolerance = fp{0.1f};
+        ASSERT_TRUE(first.isNear(second, tolerance));
+    }
+
+    TEST(isNear, whenVectorsDifferentAndWithinTolerance_thenReturnsTrue) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second(fp{0.95f}, fp{-1}, fp{0.1f});
+
+        fp tolerance = fp{0.1f};
+        ASSERT_TRUE(first.isNear(second, tolerance));
+    }
+
+    TEST(isNear, whenVectorsDifferentAndOutsideTolerance_thenReturnsFalse) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second(fp{0.95f}, fp{-1}, fp{0.5f});
+
+        fp tolerance = fp{0.1f};
+        ASSERT_FALSE(first.isNear(second, tolerance));
+    }
+
     TEST(ostreamOutput, outputsCorrectStringForSimpleFPQuat) {
         FPVector vector(fp{-0.25f}, fp{1000}, fp{2.2f});
 

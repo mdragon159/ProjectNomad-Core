@@ -274,9 +274,7 @@ namespace ProjectNomad {
             if (!isColliding) {
                 return ImpactResult::noCollision();
             }
-            // Now compute penetration correction info for assisting in resolving collision
 
-            /// TODO: Is pen direction supposed to be correction for A? Can't remember which direction. Add comment
             FPVector penetrationDir;
             // Edge case: Closest points are the same point (eg, the capsule median lines overlap)
             if (closestPtOnSegmentA == closestPtOnSegmentB) {
@@ -570,27 +568,31 @@ namespace ProjectNomad {
             if (!isColliding) {
                 return ImpactResult::noCollision();
             }
-            // Now compute penetration correction info for assisting in resolving collision
 
-            /// TODO: Is pen direction supposed to be correction for A? Can't remember which direction. Add comment
             FPVector penetrationDir;
             // EDGE CASE: If sphere center == closest capsule point (ie, on capsule median line)...
-            // Choose any penetration direction perpendicular to capsule line as that's guaranteed to push colliders away
-            if (sphere.center == closestPtOnCapsuleLine) {
+            // Note: Use isNear to cover math error range/minor inaccuracies. Eg, calculated closest point may be 0.000001 off
+            if (sphere.getCenter().isNear(closestPtOnCapsuleLine, fp{0.01f})) {
+                // Choose any penetration direction perpendicular to capsule line as that's guaranteed to push colliders away
                 FPVector capsuleLineDir = FPVector::direction(capsulePoints.start, capsulePoints.end);
                 penetrationDir = VectorUtilities::getAnyPerpendicularVector(capsuleLineDir);
             }
             // Otherwise penetration direction = From sphere center towards closest point on capsule, as this is most
             //                          direct method to push capsule/sphere out of collision
             else {
-                penetrationDir = FPVector::direction(sphere.center, closestPtOnCapsuleLine);
+                penetrationDir = FPVector::direction(closestPtOnCapsuleLine, sphere.getCenter());
             }
-
+            
             // Penetration distance = distance between closest point on line vs sphere center minus sum of radii
             //                          (ie, how far to push in order to have the two touch side by side)
-            fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
+            fp penetrationMagnitude = FPMath::abs(FPMath::sqrt(distSquared) - combinedRadius);
+
+            // logger.logInfoMessage("isCapsuleAndSphereColliding", "Sphere center: " + sphere.getCenter().toString()
+            //     + " | closestPtOnCapsuleLine: " + closestPtOnCapsuleLine.toString());
+            // logger.logInfoMessage("isCapsuleAndSphereColliding", "PenAxis: " + penetrationDir.toString()
+            //     + " | PenDepth: " + std::to_string(static_cast<float>(penetrationMagnitude)));
             
-            return ImpactResult(penetrationDir, penetrationDepth);
+            return ImpactResult(penetrationDir, penetrationMagnitude);
         }
         
 #pragma endregion
