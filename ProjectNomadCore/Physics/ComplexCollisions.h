@@ -503,18 +503,26 @@ namespace ProjectNomad {
 
             // Edge case: Sphere center within box. Confirmed collision but need to calculate penetration info in a different way
             if (sphereCenterToBoxDistance == fp{0}) {
-                // Get best face to push sphere towards
-                FPVector bestFaceNormal = box.getPushFaceNormalForPtInWorldSpace(sphere.getCenter());
+                // FUTURE: Something feels off with below method vs ordinary method
+                //          Why does ordinary case resolve successfully in an arbitrary (sphere) direction, while here
+                //              we have to adhere to box normals?
+                //          Feels like there should be a smoother + more accurate (and likely more efficient) answer
+                // Albeit maybe I'm overthinking this, as it's pretty smooth when moving a small sphere through a big box
+                
+                // Calculate direction and distance necessary to push sphere's center out of box and to the box's face
+                FPVector dirToPushSphereOutToBoxFace;
+                fp distanceToPushSphereCenterOutOfBox;
+                calculateSmallestPushToOutsideBox(box, localSphereCenter, dirToPushSphereOutToBoxFace, distanceToPushSphereCenterOutOfBox);
 
-                // Calculate distance necessary to push sphere out of box
-                // NOTE: Distance from sphere center to desired face PLUS sphere radius
-
+                // To clear collision, the sphere needs to be pushed further until its surface only just touches the box
+                fp penetrationDistance = distanceToPushSphereCenterOutOfBox + sphere.getSphereRadius();
+                
                 // Finally return result
-                // Note that NOT flipping face normal as this is direction to actually push box (first/A input) out of penetrating the sphere
-                return ImpactResult(bestFaceNormal.flipped(), fp{1000});
+                // Note that NOT flipping face normal as this follows penetration axis standard (ie, direction that first collider is penetrating into B)
+                return ImpactResult(dirToPushSphereOutToBoxFace, penetrationDistance);
             }
 
-            // ??
+            // Calculate how much sphere is intersecting into the box, if at all
             fp intersectionDepth = sphere.getSphereRadius() - sphereCenterToBoxDistance;
             if (intersectionDepth > fp{0}) {
                 return ImpactResult(closestPointOffSetToSphere.normalized(), intersectionDepth);
@@ -660,6 +668,60 @@ namespace ProjectNomad {
         }
         
     private:
+#pragma region Complex Collision Check Helpers
+
+        // Collision resolution purpose: Have a point in space within box and want to find which direction to push it,
+        //                                  such that it's the smallest direction to push the point out of the box
+        // NOTE: outPushToBoxFaceDistance is >= 0 (ie, is a magnitude and should not be negative)
+        void calculateSmallestPushToOutsideBox(const Collider& box, const FPVector& localSpacePoint,
+                                            FPVector& outPushToOutsideBoxDirInWorldSpace, fp& outPushToBoxFaceDistance) {
+            // Declare variables
+            fp smallestDistSqToPushSoFar = FPMath::maxLimit();
+            FPVector bestPushDirSoFar = FPVector::zero();   // At time of writing this is guaranteed to be set again, but best to be safe
+            FPVector boxHalfSize = box.getBoxHalfSize();    // Cache so don't have to recreate every time (given current implementation)
+
+            // Check each axis (pair of faces) for closest face distance to push point to
+            checkIfFaceAlongAxisIsClosestToPoint(boxHalfSize, FPVector::forward(), localSpacePoint, smallestDistSqToPushSoFar, bestPushDirSoFar);
+            checkIfFaceAlongAxisIsClosestToPoint(boxHalfSize, FPVector::right(), localSpacePoint, smallestDistSqToPushSoFar, bestPushDirSoFar);
+            checkIfFaceAlongAxisIsClosestToPoint(boxHalfSize, FPVector::up(), localSpacePoint, smallestDistSqToPushSoFar, bestPushDirSoFar);
+
+            // NOTE: No need to check edges, as edges will never be shorter distance than pushing out to a face
+            //       Easy check: Pythagoras. An edge is like the hypotenuse with faces like other parts of triangle/pyramid,
+            //                      and hypotenuse is always greater than the other parts
+            
+            // Set results
+            outPushToBoxFaceDistance = FPMath::sqrt(smallestDistSqToPushSoFar); // Magnitude so don't need to convert to world space
+            outPushToOutsideBoxDirInWorldSpace = box.toWorldSpaceForOriginCenteredValue(bestPushDirSoFar);
+        }
+
+        // curAxisDir = Up, Right, or Forward vectors as working in box local space
+        void checkIfFaceAlongAxisIsClosestToPoint(const FPVector& boxHalfSize, const FPVector& curAxisDir, const FPVector& pointToPush,
+                                                    fp& smallestDistSqSoFar, FPVector& bestPushDirSoFar) {
+            FPVector pointExtentInAxis = curAxisDir.dot(pointToPush);   // Eg, Up * (Px, Py, Pz) will result in (0, 0, Pz)
+            fp distanceSqToFace;
+
+            // First check if face along positive axis direction is the closest face to our point thus far
+            FPVector extentInPosFaceDir = curAxisDir.dot(boxHalfSize);  // Eg, Up * HalfSize will result in (0, 0, zMax)
+            distanceSqToFace = (extentInPosFaceDir - pointExtentInAxis).getLengthSquared();
+            if (distanceSqToFace < smallestDistSqSoFar) {
+                // Remember this face as the closest face thus far
+                smallestDistSqSoFar = distanceSqToFace;
+                bestPushDirSoFar = curAxisDir;
+            }
+            
+            // Next check if face along negative axis direction is the closest face to our point thus far
+            // Note that can't optimize this out as one direction may be closer than before but then other direction is even closer
+            FPVector negAxisDir = curAxisDir.flipped();
+            FPVector extentInNegFaceDir = negAxisDir.dot(boxHalfSize);  // Eg, Down * HalfSize will result in (0, 0, -zMax)
+            distanceSqToFace = (extentInNegFaceDir - pointExtentInAxis).getLengthSquared();
+            if (distanceSqToFace < smallestDistSqSoFar) {
+                // Remember this face as the closest face thus far
+                smallestDistSqSoFar = distanceSqToFace;
+                bestPushDirSoFar = negAxisDir;
+            }
+        }
+        
+#pragma endregion 
 #pragma region GJK Internal
         
         /// <summary>

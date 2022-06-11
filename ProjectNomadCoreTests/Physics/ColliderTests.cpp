@@ -428,58 +428,6 @@ namespace ColliderTests {
         ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{1}, fp{0}, fp{1})));
         ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{1.4f}, fp{1.9f}, fp{1.9f})));
     }
-
-    TEST(getPushFaceNormalForPtInWorldSpace, whenPointIsInBoxCenter_thenDefaultsToBoxForwardDir) {
-        Collider collider;
-        FPVector boxCenter = FPVector(fp{1}, fp{1}, fp{1});
-        FPQuat rotation = FPQuat::fromDegrees({fp{0}, fp{0}, fp{1}}, fp{90});
-        collider.setBox(boxCenter, rotation, FPVector(fp{0.5f}, fp{1.5f}, fp{300}));
-
-        FPVector testPoint = boxCenter;
-
-        FPVector resultDir = collider.getPushFaceNormalForPtInWorldSpace(testPoint);
-        TestHelpers::expectNear(FPVector::right(), resultDir, fp{0.01f});
-    }
-
-    TEST(getPushFaceNormalForPtInWorldSpace, whenPointIsAboveBoxCenter_thenReturnUpDir) {
-        Collider collider;
-        FPVector boxCenter = FPVector(fp{1}, fp{1}, fp{1});
-        FPQuat rotation = FPQuat::fromDegrees({fp{0}, fp{0}, fp{1}}, fp{90});
-        collider.setBox(boxCenter, rotation, FPVector(fp{0.5f}, fp{1.5f}, fp{300}));
-
-        FPVector testPoint = boxCenter + fp{10} * FPVector::up() + fp{1} * FPVector::right();
-
-        FPVector resultDir = collider.getPushFaceNormalForPtInWorldSpace(testPoint);
-        TestHelpers::expectNear(FPVector::up(), resultDir, fp{0.01f});
-    }
-
-    TEST(getPushFaceNormalForPtInWorldSpace, whenPointIsInFrontOfBoxCenter_thenReturnForwardDir) {
-        Collider collider;
-        FPVector boxCenter = FPVector(fp{1}, fp{1}, fp{1});
-        FPQuat rotation = FPQuat::fromDegrees({fp{0}, fp{0}, fp{1}}, fp{90});
-        collider.setBox(boxCenter, rotation, FPVector(fp{0.5f}, fp{1.5f}, fp{300}));
-
-        FPVector testPoint = boxCenter + fp{10} * FPVector::forward() + fp{1} * FPVector::up();
-
-        FPVector resultDir = collider.getPushFaceNormalForPtInWorldSpace(testPoint);
-        TestHelpers::expectNear(FPVector::forward(), resultDir, fp{0.01f});
-    }
-
-    // TEST(pushPtToBoxFaceInWorldSpace, whenPointIsInBoxCenter_thenDefaultsToPointOnBoxForwardFace) {
-    //     Collider collider;
-    //     FPVector boxCenter = FPVector(fp{1}, fp{1}, fp{1});
-    //     FPQuat rotation = FPQuat::fromDegrees({fp{0}, fp{0}, fp{1}}, fp{90});
-    //     collider.setBox(boxCenter, rotation, FPVector(fp{0.5f}, fp{1.5f}, fp{300}));
-    //
-    //     FPVector testPoint = boxCenter;
-    //
-    //     FPVector resultDir;
-    //     FPVector resultPoint;
-    //     collider.pushPtToBoxFaceInLocalSpace(testPoint, resultPoint, resultDir);
-    //     
-    //     TestHelpers::expectNear(FPVector::right(), resultDir, fp{0.01f});
-    //     TestHelpers::expectNear(FPVector(fp{}, fp{}, fp{}), resultPoint, fp{0.01f});
-    // }
     
 #pragma endregion
 #pragma region Capsule Specific Functionality
