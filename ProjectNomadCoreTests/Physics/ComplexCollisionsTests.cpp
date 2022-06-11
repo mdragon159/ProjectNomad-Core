@@ -22,6 +22,60 @@ namespace ComplexCollisionsTests {
 
 #pragma region Direct Collision Tests
 
+#pragma region isColliding: Box and Box
+
+    class ComplexBoxBoxCollisions : public ComplexCollisionsTestsBase {};
+
+    TEST_F(ComplexBoxBoxCollisions, whenBoxesAreDistant_statesNotColliding) {
+        colliderA.setBox(FPVector(fp{-1}, fp{-1}, fp{-1}), FPVector(fp{0.5f}, fp{0.5f}, fp{0.5f}));
+        colliderB.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{0.5f}, fp{0.5f}, fp{0.5f}));
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+        // TODO: Penetration depth x axis verification (esp since relying on direction being correct)
+    }
+
+    TEST_F(ComplexBoxBoxCollisions, whenTouching_statesNotColliding) {
+        colliderA.setBox(FPVector(fp{-1}, fp{-1}, fp{-1}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxBoxCollisions, whenIntersecting_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{-0.9f}, fp{-0.9f}, fp{-0.9f}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxBoxCollisions, whenRotatedOBBs_whenNotIntersecting_statesNotColliding) {
+        colliderA.setBox(FPVector(fp{-0.9f}, fp{-0.9f}, fp{-0.9f}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setBox(
+            FPVector(fp{1}, fp{1}, fp{1}),
+            FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            FPVector(fp{1}, fp{1}, fp{1})
+        );
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxBoxCollisions, whenRotatedOBBs_whenIntersecting_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{-0.9f}, fp{-0.9f}, fp{-0.9f}), FPVector(fp{1}, fp{1}, fp{1}));
+        colliderB.setBox(
+        FPVector(fp{0.5f}, fp{0.5f}, fp{0.5f}),
+        FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            FPVector(fp{1}, fp{1}, fp{1})
+        );
+        
+        auto result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result.isColliding);
+    }
+    
+#pragma endregion
 #pragma region isColliding: Capsule and Capsule
 
     class ComplexCapsuleCapsuleCollisions : public ComplexCollisionsTestsBase {};
@@ -105,7 +159,7 @@ namespace ComplexCollisionsTests {
     }
     
 #pragma endregion
-    #pragma region isColliding: Box and Capsule
+#pragma region isColliding: Box and Capsule
 
     class ComplexBoxCapsuleCollisions : public ComplexCollisionsTestsBase {};
 

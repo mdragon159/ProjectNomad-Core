@@ -134,6 +134,14 @@ namespace ProjectNomad {
             *this = normalized();
         }
 
+        FPVector flipped() const {
+            return *this * fp{-1};
+        }
+
+        void flip() {
+            *this = flipped();
+        }
+
         fp dot(const FPVector& other) const {
             return x * other.x + y * other.y + z * other.z;
         }

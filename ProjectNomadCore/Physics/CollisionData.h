@@ -17,7 +17,10 @@ namespace ProjectNomad {
 
     struct ImpactResult {
         bool isColliding;
+
+        // Axis of penetration pointing in direction from collider "A" towards collider "B"
         FPVector penetrationDirection = FPVector::zero();
+        // How far collider "A" is penetrating into collider "B" along the penetration direction. Should NOT be negative
         fp penetrationMagnitude = fp{0};
 
         // Some well meaning but not currently used parameters below inspired by another physics (UE-PhysX code?)

@@ -2,7 +2,6 @@
 
 #include "GameCore/CoreComponents.h"
 #include "Utilities/ILogger.h"
-#include "GameCore/CoreConstants.h"
 #include "Physics/CollisionData.h"
 
 namespace ProjectNomad {
@@ -90,6 +89,34 @@ namespace ProjectNomad {
                 postCollisionVelocity = collisionCausingVelocity - velocityParallelToPenetration; // Perpendicular = Vector - Parallel
             }
             else {
+                postCollisionVelocity = collisionCausingVelocity; // No change in velocity
+            }
+        }
+
+        void resolveCollisionTest(const ImpactResult& collisionResult,
+                                const Collider& collisionCausingCollider,
+                                const FPVector& collisionCausingVelocity,
+                                FPVector& postCollisionPosition,
+                                FPVector& postCollisionVelocity) {
+            // Penetration dir x depth represents how much collider is penetrating in collision,
+            //          and opposite direction x magnitude represents needed movement to fix.
+            FPVector penDirAndDepth = collisionResult.penetrationDirection * collisionResult.penetrationMagnitude;
+
+            // Adjust position based on result
+            // TODO: Current resolution method doesn't work well if tunneling mostly through an object already. But is that actually a concern?
+            postCollisionPosition = collisionCausingCollider.getCenter() - penDirAndDepth; // Subtract penetration to get rid of it
+
+            // Remove velocity in penetration direction if necessary
+            fp velocityMagnitudeInPenDirection = collisionCausingVelocity.dot(collisionResult.penetrationDirection);
+            if (velocityMagnitudeInPenDirection > fp{0}) {
+                logger.logInfoMessage("resolveCollision", "Removing some velocity!");
+                
+                // Zero out the velocity that's causing the collision
+                FPVector velocityParallelToPenetration = velocityMagnitudeInPenDirection * collisionResult.penetrationDirection;
+                postCollisionVelocity = collisionCausingVelocity - velocityParallelToPenetration; // Perpendicular = Vector - Parallel
+            }
+            else {
+                // logger.logInfoMessage("resolveCollision", "Nope");
                 postCollisionVelocity = collisionCausingVelocity; // No change in velocity
             }
         }

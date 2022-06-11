@@ -293,6 +293,21 @@ namespace FPVectorTests {
         ASSERT_EQ(static_cast<float>(FPMath::minLimit()), static_cast<float>(test[-1]));
     }
 
+    TEST(flipped, flipsSignOfAllValues) {
+        FPVector input(fp{1}, fp{-1}, fp{0});
+        FPVector result = input.flipped();
+
+        ASSERT_EQ(input * fp{-1}, result);
+    }
+
+    TEST(flip, flipsSignOfAllValues) {
+        FPVector test(fp{1}, fp{-1}, fp{0});
+        FPVector expected = test * fp{-1};
+
+        test.flip();
+        ASSERT_EQ(expected, test);
+    }
+
     TEST(ostreamOutput, outputsCorrectStringForSimpleFPQuat) {
         FPVector vector(fp{-0.25f}, fp{1000}, fp{2.2f});
 

@@ -69,7 +69,7 @@ namespace ProjectNomad {
             // Intention: Collision resolution with one object may result in colliding with another object
             // Thus, keep retrying collision resolution until no collision (or until hit limit)
             uint8_t totalCollisionsSoFar = 0;
-            while(true) {
+            while(true) { // TODO: Determine if this is actually important AND useful. (Eg, actually works well in cases where colliding with multiple objects)
                 bool wasCollisionFound = checkForAndResolveCollisions(registry, selfId, collider, physicsComp, newIntendedPos);
                 if (!wasCollisionFound) {
                     break;
@@ -77,7 +77,7 @@ namespace ProjectNomad {
                 
                 totalCollisionsSoFar++;
                 if (totalCollisionsSoFar >= MAX_COLLISION_RESOLUTIONS_PER_FRAME) {
-                    // mSimContext.addScreenAndLogMessage(2.f, "WARNING: Hit max collisions per frame");
+                    logger.addScreenAndLogMessage(fp{2}, "WARNING: Hit max collisions per frame");
                     break;
                 }
             }
@@ -134,7 +134,7 @@ namespace ProjectNomad {
             if (collisionResult.isColliding) {
                 FPVector postCollisionPosition;
                 FPVector postCollisionVelocity;
-                collisionResolutionHelper.resolveCollision(
+                collisionResolutionHelper.resolveCollisionTest(
                     collisionResult, futureCollider, physicsComp.velocity,
                     postCollisionPosition, postCollisionVelocity
                 );

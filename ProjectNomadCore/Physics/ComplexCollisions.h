@@ -56,7 +56,11 @@ namespace ProjectNomad {
             }
             if (A.isCapsule()) {
                 if (B.isBox()) {
-                    return isCapsuleAndBoxColliding(A, B);
+                    ImpactResult result = isBoxAndCapsuleColliding(B, A);
+                    
+                    // Flip penetration direction as flipped inputs in previous call
+                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    return result;
                 }
                 if (B.isCapsule()) {
                     return isCapsuleAndCapsuleColliding(A, B);
@@ -67,10 +71,18 @@ namespace ProjectNomad {
             }
             if (A.isSphere()) {
                 if (B.isBox()) {
-                    return isSphereAndBoxColliding(A, B);
+                    ImpactResult result =  isBoxAndSphereColliding(A, B);
+
+                    // Flip penetration direction as flipped inputs in previous call
+                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    return result;
                 }
                 if (B.isCapsule()) {
-                    return isSphereAndCapsuleColliding(A, B);
+                    ImpactResult result =  isCapsuleAndSphereColliding(A, B);
+
+                    // Flip penetration direction as flipped inputs in previous call
+                    result.penetrationDirection = result.penetrationDirection * fp{-1};
+                    return result;
                 }
                 if (B.isSphere()) {
                     return isSphereAndSphereColliding(A, B);
@@ -138,7 +150,7 @@ namespace ProjectNomad {
                 }
             }
             for (const FPVector& bNormal : bNormals) {
-                if (!simpleCollisions.isIntersectingAlongAxisAndUpdatePenDepthVars(aVertices, bVertices, bNormal, smallestPenDepth,
+                if (!simpleCollisions.isIntersectingAlongAxisAndUpdatePenDepthVars(aVertices, bVertices, bNormal,smallestPenDepth,
                                                                   penDepthAxis)) {
                     return ImpactResult::noCollision();
                 }
@@ -201,6 +213,23 @@ namespace ProjectNomad {
                 return ImpactResult::noCollision();
             }
 
+            // Depth is supposed to be a sign-less magnitude. Thus flip penetration data if depth is currently negative
+            if (smallestPenDepth < fp{0}) {
+                smallestPenDepth *= fp{-1};
+                penDepthAxis.flip();
+            }
+
+            // TODO: Flip penetration axis or not? Chosen standard is to be from boxA and face TOWARDS boxB (ie, towards the penetration itself)
+            // Maybe view how others have approached this?
+
+            /// Assure penetration axis is pointing in correct direction, ie it depicts direction that collider A is penetrating into collider B
+            // Get direction from A to B center
+            FPVector aToBDir = FPVector::direction(boxA.center, boxB.center);
+            // Check if pen depth is NOT in "same" direction (ie, negative). Not caring about perpendicular (0) case, even if it's impossible
+            if (penDepthAxis.dot(aToBDir) < fp{0}) {
+                penDepthAxis.flip();
+            }
+            
             // We could find no separating axis, so definitely intersecting
             return ImpactResult(penDepthAxis, smallestPenDepth);
         }
@@ -545,20 +574,6 @@ namespace ProjectNomad {
             fp penetrationDepth = FPMath::sqrt(distSquared) - combinedRadius;
             
             return ImpactResult(penetrationDir, penetrationDepth);
-        }
-
-        // Extras below for ease of typing. Mostly due to ease of scanning for consistency in isColliding
-        ImpactResult isCapsuleAndBoxColliding(const Collider& capsule, const Collider& box) {
-            // TODO: Flip intersection direction!!!
-            return isBoxAndCapsuleColliding(box, capsule);
-        }
-        ImpactResult isSphereAndBoxColliding(const Collider& sphere, const Collider& box) {
-            // TODO: Flip intersection direction!!!
-            return isBoxAndSphereColliding(box, sphere);
-        }
-        ImpactResult isSphereAndCapsuleColliding(const Collider& sphere, const Collider& capsule) {
-            // TODO: Flip intersection direction!!!
-            return isCapsuleAndSphereColliding(capsule, sphere);
         }
         
 #pragma endregion
