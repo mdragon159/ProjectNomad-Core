@@ -402,31 +402,75 @@ namespace ColliderTests {
         ASSERT_TRUE(std::find(result.begin(), result.end(), originalZAxis) != result.end());
     }
 
-    TEST(isWorldSpacePtWithinBox, whenNoRotationBox_returnsExpectedResults) {
+    TEST(isWorldSpacePtWithinBoxIncludingOnSurface, whenNoRotationBox_givenPointInsideBox_returnsTrue) {
         Collider collider;
         collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
 
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{0}, fp{0}, fp{0})));
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{1}, fp{1}, fp{1})));
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{1.5f}, fp{0.5f}, fp{0})));
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{2}, fp{2}, fp{2})));
-
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{-1}, fp{0}, fp{0})));
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{-1}, fp{-1}, fp{-1})));
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{2.1f}, fp{2}, fp{2})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1}, fp{1}, fp{1})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1.5f}, fp{0.5f}, fp{0.75f})));
     }
 
-    TEST(isWorldSpacePtWithinBox, whenRotatedBox_returnsExpectedResults) {
+    TEST(isWorldSpacePtWithinBoxIncludingOnSurface, whenNoRotationBox_givenPointOnSurface_returnsTrue) {
+        Collider collider;
+        collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{0}, fp{0}, fp{0})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{2}, fp{2}, fp{2})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1}, fp{2}, fp{2})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{0}, fp{0}, fp{1.5f})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1.5f}, fp{0.5f}, fp{0})));
+    }
+
+    TEST(isWorldSpacePtWithinBoxIncludingOnSurface, whenNoRotationBox_givenPointOutsideBox_returnsFalse) {
+        Collider collider;
+        collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{-1}, fp{2}, fp{2})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{-1}, fp{0}, fp{0})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{-1}, fp{-1}, fp{-1})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{2.1f}, fp{2}, fp{2})));
+    }
+
+    TEST(isWorldSpacePtWithinBoxIncludingOnSurface, whenRotatedBox_returnsExpectedResults) {
         FPQuat rotation = FPQuat::fromDegrees({fp{0}, fp{0}, fp{1}}, fp{90});
         Collider collider;
         collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), rotation, FPVector(fp{0.5f}, fp{1}, fp{1}));
 
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{1}, fp{1}, fp{2})));
-        ASSERT_TRUE(collider.isWorldSpacePtWithinBox(FPVector(fp{1.9f}, fp{1.4f}, fp{1.9f})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1}, fp{1}, fp{2})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1.9f}, fp{1.4f}, fp{1.9f})));
 
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{0}, fp{0}, fp{0})));
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{1}, fp{0}, fp{1})));
-        ASSERT_FALSE(collider.isWorldSpacePtWithinBox(FPVector(fp{1.4f}, fp{1.9f}, fp{1.9f})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{0}, fp{0}, fp{0})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1}, fp{0}, fp{1})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxIncludingOnSurface(FPVector(fp{1.4f}, fp{1.9f}, fp{1.9f})));
+    }
+
+    TEST(isWorldSpacePtWithinBoxExcludingOnSurface, whenNoRotationBox_givenPointInsideBox_returnsTrue) {
+        Collider collider;
+        collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{1}, fp{1}, fp{1})));
+        EXPECT_TRUE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{1.5f}, fp{0.5f}, fp{0.75f})));
+    }
+
+    TEST(isWorldSpacePtWithinBoxExcludingOnSurface, whenNoRotationBox_givenPointOnSurface_returnsFalse) {
+        Collider collider;
+        collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{0}, fp{0}, fp{0})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{2}, fp{2}, fp{2})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{1}, fp{2}, fp{2})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{0}, fp{0}, fp{1.5f})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{1.5f}, fp{0.5f}, fp{0})));
+    }
+
+    TEST(isWorldSpacePtWithinBoxExcludingOnSurface, whenNoRotationBox_givenPointOutsideBox_returnsFalse) {
+        Collider collider;
+        collider.setBox(FPVector(fp{1}, fp{1}, fp{1}), FPVector(fp{1}, fp{1}, fp{1}));
+
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{-1}, fp{2}, fp{2})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{-1}, fp{0}, fp{0})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{-1}, fp{-1}, fp{-1})));
+        EXPECT_FALSE(collider.isWorldSpacePtWithinBoxExcludingOnSurface(FPVector(fp{2.1f}, fp{2}, fp{2})));
     }
     
 #pragma endregion

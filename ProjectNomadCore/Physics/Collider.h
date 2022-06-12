@@ -321,12 +321,12 @@ namespace ProjectNomad {
             return results;
         }
 
-        bool isWorldSpacePtWithinBox(const FPVector& point) const {
+        bool isWorldSpacePtWithinBoxIncludingOnSurface(const FPVector& point) const {
             FPVector localSpacePt = toLocalSpaceFromWorld(point);
-            return isLocalSpacePtWithinBox(localSpacePt);
+            return isLocalSpacePtWithinBoxIncludingOnSurface(localSpacePt);
         }
 
-        bool isLocalSpacePtWithinBox(const FPVector& localPoint) const {
+        bool isLocalSpacePtWithinBoxIncludingOnSurface(const FPVector& localPoint) const {
             FPVector halfSize = getBoxHalfSize();
 
             // If outside bounds of an axis, then know for sure not located in the obb
@@ -335,6 +335,36 @@ namespace ProjectNomad {
             if (localPoint.z < -halfSize.z || localPoint.z > halfSize.z) return false;
 
             // Within bounds of all three axes. Thus, point is definitely located within the obb
+            return true;
+        }
+
+        bool isWorldSpacePtWithinBoxExcludingOnSurface(const FPVector& point) const {
+            FPVector localSpacePt = toLocalSpaceFromWorld(point);
+            return isLocalSpacePtWithinBoxExcludingOnSurface(localSpacePt);
+        }
+
+        bool isLocalSpacePtWithinBoxExcludingOnSurface(const FPVector& localPoint) const {
+            // Check if outside box (including surface) entirely
+            if (!isLocalSpacePtWithinBoxIncludingOnSurface(localPoint)) {
+                return false;
+            }
+            
+            // Check if point on surface
+            // Note that this is defined by any coordinate being on (+/-) max extent for that axis
+            //      (and already checked that all coordinates are within range of box axes)
+            // Easy to see if map out coordinates for each of the 6 faces of a box
+            FPVector halfSize = getBoxHalfSize();
+            if (localPoint.x == -halfSize.x || localPoint.x == halfSize.x) {
+                return false;
+            }
+            if (localPoint.y == -halfSize.y || localPoint.y == halfSize.y) {
+                return false;
+            }
+            if (localPoint.z == -halfSize.z || localPoint.z == halfSize.z) {
+                return false;
+            }
+
+            // Confirmed not entirely outside box nor on surface of box. Thus only other possibility is that it MUST be inside box
             return true;
         }
 

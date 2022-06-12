@@ -279,6 +279,12 @@ namespace ProjectNomad {
             // Edge case: Closest points are the same point (ie, the capsule median lines overlap)
             // Note: Use isNear to cover math error range/minor inaccuracies. Eg, calculated closest point may be 0.000001 off
             if (closestPtOnSegmentA.isNear(closestPtOnSegmentB, fp{0.01f})) {
+                // TODO: AH WAIT THIS IS INCORRECT UNDER SOME SCENARIOS ATM
+                // Say colliders super fat but short plus they're parallel. Then one slides on top of another so their
+                //      median lines overlap. The problem is that making them side by side is WAY TOO BIG compared to just
+                //      moving them vertically.
+                //      Need to decide whether should move perpendicular to median lines or along em...?
+                
                 // Penetration axis = Perpendicular to both capsule lines
                 FPVector capsuleLineDirA = FPVector::direction(aLinePoints.start, aLinePoints.end);
                 FPVector capsuleLineDirB = FPVector::direction(bLinePoints.start, bLinePoints.end);
@@ -286,7 +292,6 @@ namespace ProjectNomad {
                 
                 // Edge case: Capsule lines are parallel, so use any perpendicular direction to the capsule lines
                 if (penetrationDir.isNear(FPVector::zero(), fp{0.01f})) {
-                    logger.logInfoMessage("isCapsuleAndCapsuleColliding", "HIT INNER EDGE CASE YAY");
                     penetrationDir = VectorUtilities::getAnyPerpendicularVector(capsuleLineDirA);
                 }
             }
@@ -368,9 +373,21 @@ namespace ProjectNomad {
             // Thus, check if beginning point is within box. If so, capsule is located within box and thus collision
             //      Note that we don't need to check other end since raycast starts from this point; if second point is
             //      located within the box, then raycast will return an intersection
-            if (checkAgainstBox.isLocalSpacePtWithinBox(boxSpaceCapsulePointA)) {
-                return ImpactResult(FPVector::zero(), fp{0}); // TODO: Pen depth/impact info
+            // NOTE: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
+            if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
+                // Vars to calculate:
+                // - capsuleAToBDir (current endpoint to rest of line direction)
+                
+                // 1. Find best push dir + distance for first endpoint (A)
+                // 2. Check if other endpoint (B) is in box
+                // 3. If YES, then..
+                //      a. Find best push dir + distance for second endpoint (B)
+                //      b. Return which one is best push 
+                // 4. Otherwise, return best push dir + distance for first endpoint (A)
+                
+                return ImpactResult(FPVector::forward(), fp{1000}); // TODO: Pen depth/impact info
             }
+            // TODO: Else check if other endpoint (B) is inside expanded box. If so, then do simple best push dir + distance calculation
             
             // Intersect ray against expanded box. Exit with no intersection if ray misses box, else get intersection point and time as result
             // NOTE: Pretty certain didn't need to convert to box space for this test (since raycast does that)
@@ -381,11 +398,12 @@ namespace ProjectNomad {
             Ray intersectionTestRay = Ray::fromPoints(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
             bool didRaycastIntersectCheckBox = simpleCollisions.raycastWithBox(intersectionTestRay, checkAgainstBox,
                                                     timeOfIntersection, intersectionPoint);
-            if (!didRaycastIntersectCheckBox) { // If raycast actually hit...
+            // If raycast did not hit at all then definitely no collision
+            if (!didRaycastIntersectCheckBox) {
                 return ImpactResult::noCollision();
             }
-            // If intersection greater than medial line length, then no intersection for sure
-            if (timeOfIntersection > capsule.getMedialHalfLineLength()) {
+            // Raycast false negative if finally hit box at or beyond capsule extents
+            if (timeOfIntersection >= capsule.getMedialHalfLineLength() + capsule.getCapsuleRadius()) {
                 return ImpactResult::noCollision();
             }
 
@@ -438,7 +456,7 @@ namespace ProjectNomad {
                 timeOfIntersection = tMin;
 
                 // TODO: Pen depth/impact info
-                return ImpactResult(FPVector::zero(), fp{0}); // Intersection at time t == tmin /
+                return ImpactResult(FPVector::forward(), fp{1000}); // Intersection at time t == tmin /
             }
 
             // TODO: How to adjust below code to NOT count simply touching as collision?
@@ -446,7 +464,7 @@ namespace ProjectNomad {
             // If only one bit set in m, then intersection point is in a face region
             if ((m & (m - 1)) == 0) {
                 // Do nothing. Time t from intersection with expanded box is correct intersection time
-                return ImpactResult(FPVector::zero(), fp{0}); // TODO: Pen depth/impact info
+                return ImpactResult(FPVector::forward(), fp{1000}); // TODO: Pen depth/impact info
             }
             
             // p is in an edge region. Intersect against the capsule at the edge
@@ -460,7 +478,7 @@ namespace ProjectNomad {
             );
             
             // TODO: Pen depth/impact info
-            return didIntersect ? ImpactResult(FPVector::zero(), fp{0}) : ImpactResult::noCollision();
+            return didIntersect ? ImpactResult(FPVector::forward(), fp{1000}) : ImpactResult::noCollision();
         }
 
         ImpactResult isBoxAndSphereColliding(const Collider& box, const Collider& sphere) {

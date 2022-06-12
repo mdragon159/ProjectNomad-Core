@@ -300,7 +300,8 @@ namespace ProjectNomad {
             // Thus, check if beginning point is within box. If so, capsule is located within box and thus collision
             //      Note that we don't need to check other end since raycast starts from this point; if second point is
             //      located within the box, then raycast will return an intersection
-            if (checkAgainstBox.isLocalSpacePtWithinBox(boxSpaceCapsulePointA)) {
+            // NOTE: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
+            if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
                 return true;
             }
             
@@ -313,11 +314,14 @@ namespace ProjectNomad {
             Ray intersectionTestRay = Ray::fromPoints(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
             bool didRaycastIntersectCheckBox = raycastWithBox(intersectionTestRay, checkAgainstBox,
                                                     timeOfIntersection, intersectionPoint);
-            if (!didRaycastIntersectCheckBox) { // If raycast actually hit...
+            // If raycast did not hit at all then definitely no collision
+            if (!didRaycastIntersectCheckBox) {
                 return false;
             }
-            // If intersection greater than medial line length, then no intersection for sure
-            if (timeOfIntersection > capsule.getMedialHalfLineLength()) {
+            // Raycast false negative if finally hit box at or beyond capsule extents
+            float time = static_cast<float>(timeOfIntersection);
+            float compare = static_cast<float>(capsule.getMedialHalfLineLength() + capsule.getCapsuleRadius());
+            if (timeOfIntersection >= capsule.getMedialHalfLineLength() + capsule.getCapsuleRadius()) {
                 return false;
             }
 
@@ -569,9 +573,8 @@ namespace ProjectNomad {
             FPVector localPointOfIntersection;
             bool didIntersect = raycastForAABB(localSpaceRay, box, timeOfIntersection, localPointOfIntersection);
 
-            // 3. Convert results to world space
+            // 3. Convert results to world space if necessary
             if (didIntersect) {
-                // Micro optimization, no need to compute if no intersection
                 pointOfIntersection = box.toWorldSpaceFromLocal(localPointOfIntersection); // Reverse of earlier operations for localSpaceRay origin
             }
 

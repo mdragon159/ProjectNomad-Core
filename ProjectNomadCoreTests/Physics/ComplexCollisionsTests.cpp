@@ -206,6 +206,22 @@ namespace ComplexCollisionsTests {
         EXPECT_FALSE(result.isColliding);
     }
 
+    TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromBack_notColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{-14}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromFront_notColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{14}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result.isColliding);
+    }
+
     TEST_F(ComplexBoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});

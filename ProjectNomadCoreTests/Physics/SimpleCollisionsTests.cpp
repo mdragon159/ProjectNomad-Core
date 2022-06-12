@@ -344,6 +344,22 @@ namespace SimpleCollisionsTests {
         EXPECT_FALSE(result);
     }
 
+    TEST_F(BoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromBack_notColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{-14}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(BoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromFront_notColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{14}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result);
+    }
+
     TEST_F(BoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});
@@ -521,6 +537,21 @@ namespace SimpleCollisionsTests {
 
     // Edge
     // Face (not directly)
+
+    TEST_F(RaycastWithBoxTests, givenSimpleVerticalCenteredRayInsideBox_returnsIntersectionResults) {
+        FPVector center(fp{-1}, fp{-1}, fp{-1});
+        Ray ray(center, FPVector(fp{0}, fp{0}, fp{1}).normalized());
+        colliderA.setBox(center, FPVector(fp{3}, fp{3}, fp{4}));
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        EXPECT_TRUE(doesIntersect);
+        TestHelpers::expectNear(fp{4}, timeOfIntersection, fp{0.01f});
+        TestHelpers::expectNear(FPVector(fp{-1}, fp{-1}, fp{3}), pointOfIntersection, fp{0.1f});
+    }
     
     TEST_F(RaycastWithBoxTests, givenCenteredRayInsideBox_givenRayHitsVertex_returnsIntersectionResults) {
         FPVector center(fp{-1}, fp{-1}, fp{-1});
@@ -533,7 +564,7 @@ namespace SimpleCollisionsTests {
             simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
         
         EXPECT_TRUE(doesIntersect);
-        TestHelpers::expectNear(fp{5.196f}, timeOfIntersection, fp{0.1f}); // TODO: Prettty sure this is wrong
+        TestHelpers::expectNear(fp{5.196f}, timeOfIntersection, fp{0.1f});
         TestHelpers::expectNear(FPVector(fp{2}, fp{2}, fp{2}), pointOfIntersection, fp{0.1f});
     }
 
@@ -548,7 +579,7 @@ namespace SimpleCollisionsTests {
             simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
         
         EXPECT_TRUE(doesIntersect);
-        TestHelpers::expectNear(fp{4.25}, timeOfIntersection, fp{0.1f}); // TODO: Prettty sure this is wrong
+        TestHelpers::expectNear(fp{4.25}, timeOfIntersection, fp{0.1f});
         TestHelpers::expectNear(FPVector(fp{-1}, fp{2}, fp{2}), pointOfIntersection, fp{0.1f});
     }
 
@@ -563,7 +594,7 @@ namespace SimpleCollisionsTests {
             simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
         
         EXPECT_TRUE(doesIntersect);
-        TestHelpers::expectNear(fp{4.5}, timeOfIntersection, fp{0.1f}); // TODO: Prettty sure this is wrong
+        TestHelpers::expectNear(fp{4.5}, timeOfIntersection, fp{0.1f});
         TestHelpers::expectNear(FPVector(fp{0.5f}, fp{2}, fp{2}), pointOfIntersection, fp{0.1f});
     }
 
