@@ -353,42 +353,21 @@ namespace ProjectNomad {
                 return ImpactResult::noCollision();
             }
 
-            // TODO: Document base logic from Real-Time Collisions 5.5.7. Doc should be similar to other methods
-            // TODO: Also rename vars
+            // Base logic is from Real-Time Collisions 5.5.7
 
             // Compute line points for capsule
             auto worldSpaceCapsulePoints = capsule.getCapsuleMedialLineExtremes();
-
             // Convert line points from world space to local space so can continue with Capsule vs AABB approach
             FPVector boxSpaceCapsulePointA = box.toLocalSpaceFromWorld(worldSpaceCapsulePoints.start);
             FPVector boxSpaceCapsulePointB = box.toLocalSpaceFromWorld(worldSpaceCapsulePoints.end);
-
+            Line boxSpaceCapsuleMedialSegment(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
+            
             // Compute the AABB resulting from expanding box faces by capsule radius
             Collider checkAgainstBox(box);
             checkAgainstBox.setCenter(FPVector::zero());  // Doing everything in box local space, so center should be at origin
             checkAgainstBox.setRotation(FPQuat::identity()); // Unnecessary but like being clear that this is an AABB (no rotation)
             checkAgainstBox.setBoxHalfSize(box.getBoxHalfSize() + FPVector(capsule.getCapsuleRadius()));
 
-            // Edge case: Raycast (next step) implementation doesn't check if starts in box
-            // Thus, check if beginning point is within box. If so, capsule is located within box and thus collision
-            //      Note that we don't need to check other end since raycast starts from this point; if second point is
-            //      located within the box, then raycast will return an intersection
-            // NOTE: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
-            if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
-                // Vars to calculate:
-                // - capsuleAToBDir (current endpoint to rest of line direction)
-                
-                // 1. Find best push dir + distance for first endpoint (A)
-                // 2. Check if other endpoint (B) is in box
-                // 3. If YES, then..
-                //      a. Find best push dir + distance for second endpoint (B)
-                //      b. Return which one is best push 
-                // 4. Otherwise, return best push dir + distance for first endpoint (A)
-                
-                return ImpactResult(FPVector::forward(), fp{1000}); // TODO: Pen depth/impact info
-            }
-            // TODO: Else check if other endpoint (B) is inside expanded box. If so, then do simple best push dir + distance calculation
-            
             // Intersect ray against expanded box. Exit with no intersection if ray misses box, else get intersection point and time as result
             // NOTE: Pretty certain didn't need to convert to box space for this test (since raycast does that)
             //          Minor optimization: Do this raycast test *before* converting to box local space
@@ -402,73 +381,119 @@ namespace ProjectNomad {
             if (!didRaycastIntersectCheckBox) {
                 return ImpactResult::noCollision();
             }
-            // Raycast false negative if finally hit box at or beyond capsule extents
-            if (timeOfIntersection >= capsule.getMedialHalfLineLength() + capsule.getCapsuleRadius()) {
-                return ImpactResult::noCollision();
+
+            // Check that raycast hit box in a timely manner but FIRST check for a relevant edge case 
+            // Edge case: If capsule endpoints are entirely inside box then normal approach won't work. Thus explicitly
+            //              check one of the endpoints to cover this case
+            // Note: This is only necessary compared to Real-Time Collision approach as raycast implementation doesn't
+            //              check if point is already within box
+            // Note: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
+            if (!checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
+                // Given start of raycast was NOT in box, then raycast should have intersected with surface of box
+                // before the distance of the capsule medial line (ie, we're converting this to a linetest)
+                if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
+                    return ImpactResult::noCollision();
+                }
             }
 
-            // Convert check against box to min and max extents, as original algorithm is based on that representation
-            FPVector minBoxExtents = -checkAgainstBox.getBoxHalfSize();
-            FPVector maxBoxExtents = checkAgainstBox.getBoxHalfSize();
 
-            // Compute which min and max faces of box the intersection point lies outside of
-            // Note, u and v cannot have the same bits set and they must have at least one bit set among them
-            uint32_t u = 0, v = 0;
-            if (intersectionPoint.x < minBoxExtents.x) u |= 1;
-            if (intersectionPoint.x > maxBoxExtents.x) v |= 1;
-            if (intersectionPoint.y < minBoxExtents.y) u |= 2;
-            if (intersectionPoint.y > maxBoxExtents.y) v |= 2;
-            if (intersectionPoint.z < minBoxExtents.z) u |= 4;
-            if (intersectionPoint.z > maxBoxExtents.z) v |= 4;
 
-            // "Or" all set bits together into a bit mask (note: here u + v == u | v)
-            uint32_t m = u + v;
+            
+            /*// Edge case: If capsule is entirely inside box then normal approach won't work. Thus explicitly check one
+            //              of the endpoints to cover this case
+            // Note: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
+            if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
+                // Now that we've confirmed a collision, we need to calculate penetration info
 
-            // Define line segment representing capsule's medial line segment, in obb space
-            Line boxSpaceCapsuleMedialSegment(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
+                // APPROACH:
+                // 1. Calculate bestPushDir and bestPushDist for A point
+                // 2. If lovsl 
 
-            // If all 3 bits set (m == 7) then intersection point is in a vertex region
-            if (m == 7) {
+                return ImpactResult(FPVector::forward(), fp{1000}); // TODO: Pen depth/impact info
+            }
+            // If end of line is in box itself then there's certainly a collision as well.
+            // Note that this case is covered in normal raycast approach BUT we're checking this explicitly for
+            //      the penetration info calculation approach
+            else if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointB)) {
+                //
+            }
+            // NOTE: Given we checked above two cases (endpoints within box), if there IS an intersection then it'll be a case
+            //      where some part of middle of capsule is intersecting the box. This'll be a useful assumption for latter
+            //      penetration info calculation.*/
+
+
+
+
+
+            // Compute which min and max faces of box the intersection point lies outside of.
+            // Note, the two vars cannot have the same bits set and they must have at least one bit set among them (TODO: ???)
+            uint32_t lessThanMinExtentChecks = 0, greaterThanMaxExtentChecks = 0;
+            FPVector minBoxExtents = -box.getBoxHalfSize();
+            FPVector maxBoxExtents = box.getBoxHalfSize();
+            if (intersectionPoint.x < minBoxExtents.x) lessThanMinExtentChecks |= 1;
+            else if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
+            if (intersectionPoint.y < minBoxExtents.y) lessThanMinExtentChecks |= 2;
+            else if (intersectionPoint.y > maxBoxExtents.y) greaterThanMaxExtentChecks |= 2;
+            if (intersectionPoint.z < minBoxExtents.z) lessThanMinExtentChecks |= 4;
+            else if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
+
+            // "Or" all set bits together into a bit mask (note: effectively here u + v == u | v as same bit can't be set in both variables)
+            uint32_t mask = lessThanMinExtentChecks + greaterThanMaxExtentChecks;
+
+            // If all 3 bits set (m == 7) then intersection point (if any) is in a vertex region
+            if (mask == 7) {
+                bool didIntersect;
+                FPVector unused;
+                
                 // Must now intersect capsule line segment against the capsules of the three
                 // edges meeting at the vertex and return the best time, if one or more hit
                 fp tMin = FPMath::maxLimit();
 
-                FPVector unused;
-                Line testCapsuleMedianLine(simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, v), unused);
+                // Note that endpoint of test line will be changed for each test
+                Line testCapsuleMedianLine(simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, greaterThanMaxExtentChecks), unused);
 
-                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, v ^ 1);
-                bool didIntersect = simpleCollisions.linetestWithCapsule(boxSpaceCapsuleMedialSegment, testCapsuleMedianLine,
+                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, greaterThanMaxExtentChecks ^ 1);
+                didIntersect = simpleCollisions.linetestWithCapsule(boxSpaceCapsuleMedialSegment, testCapsuleMedianLine,
                                                 capsule.getCapsuleRadius(), timeOfIntersection, unused);
-                if (didIntersect) tMin = FPMath::min(timeOfIntersection, tMin);
+                if (didIntersect) {
+                    tMin = FPMath::min(timeOfIntersection, tMin);
+                }
 
-                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, v ^ 2);
+                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, greaterThanMaxExtentChecks ^ 2);
                 didIntersect = simpleCollisions.linetestWithCapsule(boxSpaceCapsuleMedialSegment, testCapsuleMedianLine,
                                             capsule.getCapsuleRadius(), timeOfIntersection, unused);
-                if (didIntersect) tMin = FPMath::min(timeOfIntersection, tMin);
+                if (didIntersect) {
+                    tMin = FPMath::min(timeOfIntersection, tMin);
+                }
 
-                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, v ^ 4);
+                testCapsuleMedianLine.end = simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, greaterThanMaxExtentChecks ^ 4);
                 didIntersect = simpleCollisions.linetestWithCapsule(boxSpaceCapsuleMedialSegment, testCapsuleMedianLine,
                                             capsule.getCapsuleRadius(), timeOfIntersection, unused);
-                if (didIntersect) tMin = FPMath::min(timeOfIntersection, tMin);
+                if (didIntersect) {
+                    tMin = FPMath::min(timeOfIntersection, tMin);
+                }
 
-                if (tMin == fp{FLT_MAX}) return ImpactResult::noCollision(); // No intersection
+                // If didn't find a single intersection, then confirmed that there was no intersection
+                if (tMin == FPMath::maxLimit()) {
+                    return ImpactResult::noCollision();
+                }
                 
                 timeOfIntersection = tMin;
-
                 // TODO: Pen depth/impact info
-                return ImpactResult(FPVector::forward(), fp{1000}); // Intersection at time t == tmin /
+                return ImpactResult(FPVector::forward(), fp{1000}); // Intersection at time t == tmin
             }
-
-            // TODO: How to adjust below code to NOT count simply touching as collision?
             
             // If only one bit set in m, then intersection point is in a face region
-            if ((m & (m - 1)) == 0) {
+            if ((mask & (mask - 1)) == 0) {
                 // Do nothing. Time t from intersection with expanded box is correct intersection time
                 return ImpactResult(FPVector::forward(), fp{1000}); // TODO: Pen depth/impact info
             }
             
             // p is in an edge region. Intersect against the capsule at the edge
-            Line testCapsuleMedianLine(simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, u ^ 7), simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, v));
+            Line testCapsuleMedianLine(
+                simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, lessThanMinExtentChecks ^ 7),
+                simpleCollisions.getCorner(minBoxExtents, maxBoxExtents, greaterThanMaxExtentChecks)
+            );
             bool didIntersect = simpleCollisions.linetestWithCapsule(
                 boxSpaceCapsuleMedialSegment,
                 testCapsuleMedianLine,

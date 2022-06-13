@@ -169,7 +169,7 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_TRUE(result.isColliding);
+        ASSERT_TRUE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenCenteredOverlappingColliders_whenMedianLineCrossesExpandedBox_statesIsColliding) {
@@ -178,7 +178,7 @@ namespace ComplexCollisionsTests {
         colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{100});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_TRUE(result.isColliding);
+        ASSERT_TRUE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenBarelyIntersectingOnOneEndOfCapsule_statesIsColliding) {
@@ -186,16 +186,15 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{23.9f}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_TRUE(result.isColliding);
+        ASSERT_TRUE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnOneEndOfCapsule_fromAbove_notColliding) {
-        // TODO: Fix test, identified bug(s) earlier! Here and in SimpleCollisionsTest
         colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{24}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result.isColliding);
+        ASSERT_FALSE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnOneEndOfCapsule_fromBelow_notColliding) {
@@ -203,7 +202,7 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{-24}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result.isColliding);
+        ASSERT_FALSE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromBack_notColliding) {
@@ -211,7 +210,7 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{-14}, fp{0}, fp{0}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result.isColliding);
+        ASSERT_FALSE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromFront_notColliding) {
@@ -219,7 +218,17 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{14}, fp{0}, fp{0}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result.isColliding);
+        ASSERT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenBoxToSideOfCapsuleEndSphere_givenBoxOutsideSphereButWithinExtendedBox_notColliding) {
+        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
+        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{-77}, fp{281}), FPVector(fp{50}));
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_FALSE(result.isColliding);
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenDistant_notColliding) {
@@ -227,7 +236,7 @@ namespace ComplexCollisionsTests {
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result.isColliding);
+        ASSERT_FALSE(result.isColliding);
     }
 
 #pragma endregion

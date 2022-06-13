@@ -328,7 +328,6 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(BoxCapsuleCollisions, whenTouchingOnOneEndOfCapsule_fromAbove_notColliding) {
-        // TODO: Fix test, identified bug(s) earlier!
         colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{24}), fp{10}, fp{20});
         
@@ -355,6 +354,16 @@ namespace SimpleCollisionsTests {
     TEST_F(BoxCapsuleCollisions, whenTouchingOnSideOfCapsule_fromFront_notColliding) {
         colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{14}, fp{0}, fp{0}), fp{10}, fp{20});
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_FALSE(result);
+    }
+
+    TEST_F(BoxCapsuleCollisions, whenBoxToSideOfCapsuleEndSphere_givenBoxOutsideSphereButWithinExtendedBox_notColliding) {
+        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
+        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{-77}, fp{281}), FPVector(fp{50}));
         
         bool result = simpleCollisions.isColliding(colliderA, colliderB);
         EXPECT_FALSE(result);
