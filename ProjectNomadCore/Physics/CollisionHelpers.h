@@ -13,7 +13,7 @@ namespace ProjectNomad {
     class CollisionHelpers {
     public:
         static fp getEpsilon() {
-            return fp{0.00001f};
+            return fp{0.001f};
         }
 
         /// <summary>

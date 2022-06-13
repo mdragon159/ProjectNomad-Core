@@ -716,19 +716,18 @@ namespace ProjectNomad {
     
     private:
         /// <summary>
-        /// Checks if and when a ray intersects an AABB. 
-        /// ie, does raycasting using AABB logic. Just assumes relativeRay is in OBB local space.
+        /// Checks if and when a ray intersects an AABB (which is effectively local space check against OBB).
         /// Note: Based on Real-Time Collision Detection, Section 5.3.3
         /// </summary>
         /// <param name="relativeRay">
-        /// Assumes in OBB space already (and thus using same AABB algorithm).
+        /// Assumes in OBB box local space already (and thus using same AABB algorithm).
         /// Origin should be relative to OBB's center (ie, OBB's center is treated as center of world and then rotated).
         /// Direction should also be converted to OBB local space.
         /// </param>
-        /// <param name="box">OBB defining box to test with. Treating OBB center as (0, 0, 0)</param>
+        /// <param name="box">Box to test with./param>
         /// <param name="timeOfIntersection">
-        /// If intersection occurs, this will be time which ray first intersects with OBB.
-        /// Note that if ray origin is within OBB, then this will signify when the ray hits the OBB on the way out.
+        /// If intersection occurs, this will be time which ray first intersects with the box.
+        /// Note that if ray origin is within the box, then this will signify when the ray hits the OBB on the way out.
         /// </param>
         /// <param name="pointOfIntersection">Location where intersection occurs</param>
         /// <returns>True if intersection occurs, false otherwise.</returns>
@@ -744,43 +743,94 @@ namespace ProjectNomad {
                 return false;
             }
             
-            fp tmin = FPMath::minLimit();
-            fp tmax = FPMath::maxLimit(); // Set to max distance ray can travel (for segment)
+            fp timeOfEarliestHitSoFar = FPMath::minLimit(); // Set to negative max to get first hit/intersection
+            fp timeOfLatestHitSoFar = FPMath::maxLimit(); // Set to max distance ray can travel (for segment), so get last hit on line
 
             FPVector boxMin = -box.getBoxHalfSize();
             FPVector boxMax = box.getBoxHalfSize();
 
-            // For all three slabs
+            // Do checks for all three slabs (axis extents)...
             for (int i = 0; i < 3; i++) {
-                if (FPMath::abs(relativeRay.direction[i]) < CollisionHelpers::getEpsilon()) {
-                    // Ray is parallel to slab. No hit if origin not within slab
-                    if (relativeRay.origin[i] < boxMin[i] || relativeRay.origin[i] > boxMax[i]) return false;
-                } else {
-                    // Compute intersection t value of ray with near and far plane of slab
-                    // TODO: Better rename vars and add more comments
-                    fp dirFraction = fp{1} / relativeRay.direction[i];
-                    fp t1 = (boxMin[i] - relativeRay.origin[i]) * dirFraction;
-                    fp t2 = (boxMax[i] - relativeRay.origin[i]) * dirFraction;
+                // If ray is not moving on this axis...
+                if (FPMath::isNear(FPMath::abs(relativeRay.direction[i]), fp{0}, fp{0.0001f})) {
+                    // No hit if origin not within slab (axis extents) already
+                    if (relativeRay.origin[i] < boxMin[i] || relativeRay.origin[i] > boxMax[i]) {
+                        return false;
+                    }
+                }
+                // Otherwise - since ray is moving on this axis - check that ray does enter the slab (axis extents)...
+                else {
+                    // Optimization: Denominator portion computed only once. Also note never dividing by 0 due to earlier if statement check
+                    fp directionFraction = fp{1} / relativeRay.direction[i];
+                    
+                    // Compute intersection time value of ray with either (near and far relative to ray) plane of axis slab
+                    // NOTE: Ray is defined by following equation: x = d*t + b, where d = direction on axis and b = starting value
+                    //       Thus, to solve for t given a specific coordinate value, we'd do t = (x - b)/d
+                    fp timeOfNearPlaneIntersection = (boxMin[i] - relativeRay.origin[i]) * directionFraction;
+                    fp timeOfFarPlaneIntersection = (boxMax[i] - relativeRay.origin[i]) * directionFraction;
 
-                    // Make t1 be intersection with near plane, t2 with far plane
-                    if (t1 > t2) FPMath::swap(t1, t2);
+                    // Make sure variable name-expectations are correct for latter check
+                    if (timeOfNearPlaneIntersection > timeOfFarPlaneIntersection) {
+                        FPMath::swap(timeOfNearPlaneIntersection, timeOfFarPlaneIntersection);
+                    }
 
                     // Compute the intersection of slab intersection intervals
-                    // TODO: What the heck does that^ comment mean??? Second line was "wrong" as well
-                    if (t1 > tmin) tmin = t1;
-                    if (t2 < tmax) tmax = t2;
+                    // (ie, update our earliest and latest hits across all axes thus far)
+                    if (timeOfNearPlaneIntersection > timeOfEarliestHitSoFar) timeOfEarliestHitSoFar = timeOfNearPlaneIntersection;
+                    if (timeOfFarPlaneIntersection < timeOfLatestHitSoFar) timeOfLatestHitSoFar = timeOfFarPlaneIntersection;
 
                     // Exit with no collision as soon as slab intersection becomes empty
-                    if (tmin > tmax) return false;
+                    // (This covers both case where ray does not enter slab at all and case where ray doesn't enter all
+                    //      slabs/axis extents at the same time)
+                    if (timeOfEarliestHitSoFar > timeOfLatestHitSoFar) return false;
                 }
             }
 
-            // If tmax is less than zero, the ray is intersecting box in negative direction
+            // If timeOfLatestHitSoFar is less than zero, the ray is intersecting box in negative direction
             //  ie, entire AABB is behind origin of ray and thus no intersection
-            if (tmax < fp{0}) return false;
+            // NOTE: Added equality check (<= vs <) as don't want to consider ray that only starts on surface of box to be an intersection
+            //          (and checking an "epsilon'/close to 0 value instead of 0 to catch possible minor math inaccuracies)
+            if (timeOfLatestHitSoFar <= fp{0.001f}) return false;
 
-            // Ray intersects all 3 slabs. Return point and intersection time
-            timeOfIntersection = tmin < fp{0} ? tmax : tmin;
+            bool doesRayStartInBox = timeOfEarliestHitSoFar < fp{0}; // If "earliest" intersection is negative then ray started in origin
+            
+            // Check for raycast only touching box surface
+            if (!doesRayStartInBox) { // If ray inside box then has to exit box so no need to check further in that case
+                // Approach:
+                // Already covered cases where only touching surface of box once and - by process of elimination - we know
+                //      that the ray touches the box more than once on its surface (eg, from one side to other of box).
+                //      Thus need to check if intersection "segment" actually goes into the box.
+                // Easy way to do so is to get the beginning and end of the "segment", and then check if both points are
+                //      on different faces.
+                // (Tried to do an approach with line direction and perpendicular vector with another raycast intersection
+                //      test, but that seemed to be too expensive)
+
+                // Calculate initial and final intersection locations. Note that position = direction * time + origin (eg, x = a*t + b)
+                FPVector initialPointOfIntersection = relativeRay.direction * timeOfEarliestHitSoFar + relativeRay.origin;
+                FPVector finalPointOfIntersection = relativeRay.direction * timeOfLatestHitSoFar + relativeRay.origin;
+
+                // Get faces that each point touches (if any)
+                std::vector<FPVector> initialPointFaces;
+                std::vector<FPVector> finalPointFaces;
+                box.getFacesThatLocalSpacePointTouches(initialPointOfIntersection, initialPointFaces);
+                box.getFacesThatLocalSpacePointTouches(finalPointOfIntersection, finalPointFaces);
+
+                // If intersection segment only touches surface and does not go into box, then there should be at least one
+                //  face that both beginning and end of segment touch. (Easy to see after drawing rays across a box on paper for a while)
+                // SIDE NOTE: Could perhaps do some sort of optimized intersection method (with or without HashSet), but
+                //              this is at work 3x3 = 9 loop iterations. Don't find this worth further optimizing atm
+                for (const auto& initialPointFace : initialPointFaces) {
+                    for (const auto& finalPointFace : finalPointFaces) {
+                        if (initialPointFace == finalPointFace) {
+                            return false; // Confirmed segment only touches surface of box!
+                        }
+                    }
+                }
+            }
+            
+            // As confirmed ray intersects all 3 slabs (axis extents) and not only on surface, we can confirm that there
+            //  really was an intersection
+            timeOfIntersection = doesRayStartInBox ? timeOfLatestHitSoFar : timeOfEarliestHitSoFar;
             pointOfIntersection = relativeRay.origin + relativeRay.direction * timeOfIntersection;
             return true;
         }

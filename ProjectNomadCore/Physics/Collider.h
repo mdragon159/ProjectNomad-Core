@@ -368,6 +368,53 @@ namespace ProjectNomad {
             return true;
         }
 
+        /// <summary>
+        /// Checks the "faces" a point is touching. This may include more than one "face" if point is on an edge (2 faces)
+        /// or vertex (3 faces).
+        /// SIDE NOTE: The entire point of this is to see if multiple points lie on the same "face", ie if the points create
+        //              a line segment which crosses into the box OR if just on surface. Thus not relying on typical
+        //              definition of "face" but rather exactly what faces are being touched, if any.
+        /// </summary>
+        /// <param name="localPoint">
+        /// Point to check against. This is assumed to already be known to NOT be outside box.
+        /// (ie, the point is either on surface of box or within box)
+        /// </param>
+        /// <param name="resultFaces">Results ("faces" that point touches) are added to this vector</param>
+        void getFacesThatLocalSpacePointTouches(const FPVector& localPoint, std::vector<FPVector>& resultFaces) const {
+            FPVector maxExtents = getBoxHalfSize();
+            FPVector minExtents = -maxExtents;
+
+            // Approach is very simple:
+            // Input point is known to be already on surface of or within box (due to input requirements).
+            // Thus, if a coordinate reaches the extents of that axis, then it touches that corresponding face.
+            // For example: If point is on top forward right vertex (+x, +y, +z),
+            //              then it's touching front (+x), right (+y), AND +z faces!
+
+            // Side note, I stumbled on this solution after writing out the hard way via if statements. Was very obvious
+            //      what the "optimal" solutions was after all that work, which seems to be a very common pattern...
+            
+            if (FPMath::isNear(localPoint.x, maxExtents.x, fp{0.001f})) {
+                resultFaces.push_back(FPVector::forward());
+            }
+            else if (FPMath::isNear(localPoint.x, minExtents.x, fp{0.001f})) {
+                resultFaces.push_back(FPVector::backward());
+            }
+
+            if (FPMath::isNear(localPoint.y, maxExtents.y, fp{0.001f})) {
+                resultFaces.push_back(FPVector::right());
+            }
+            else if (FPMath::isNear(localPoint.y, minExtents.y, fp{0.001f})) {
+                resultFaces.push_back(FPVector::left());
+            }
+
+            if (FPMath::isNear(localPoint.z, maxExtents.z, fp{0.001f})) {
+                resultFaces.push_back(FPVector::up());
+            }
+            else if (FPMath::isNear(localPoint.z, minExtents.z, fp{0.001f})) {
+                resultFaces.push_back(FPVector::down());
+            }
+        }
+
 #pragma endregion
 #pragma region Capsule Specific Functionality
 

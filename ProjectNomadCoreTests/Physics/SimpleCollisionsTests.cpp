@@ -516,6 +516,8 @@ namespace SimpleCollisionsTests {
         EXPECT_FALSE(doesIntersect);
     }
 
+    // TODO: Unit test when ray crosses sphere surface. Current chosen standard is simply touching surface should NOT count as intersection
+
 #pragma endregion
 #pragma region Raycast vs Box
 
@@ -534,9 +536,6 @@ namespace SimpleCollisionsTests {
         EXPECT_EQ(fp{2}, timeOfIntersection);
         EXPECT_EQ(FPVector(fp{0}, fp{2}, fp{0}), pointOfIntersection);
     }
-
-    // Edge
-    // Face (not directly)
 
     TEST_F(RaycastWithBoxTests, givenSimpleVerticalCenteredRayInsideBox_returnsIntersectionResults) {
         FPVector center(fp{-1}, fp{-1}, fp{-1});
@@ -611,7 +610,7 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(RaycastWithBoxTests, givenSimpleRayOutsideBox_givenRayDoesIntersect_returnsIntersection) {
-        Ray ray(FPVector(fp{2}, fp{3}, fp{2}), FPVector(fp{0}, fp{-1}, fp{0}));
+        Ray ray(FPVector(fp{1}, fp{3}, fp{1}), FPVector(fp{0}, fp{-1}, fp{0}));
         colliderA.setBox(FPVector(fp{-1}, fp{-1}, fp{-1}), FPVector(fp{3}, fp{3}, fp{3}));
 
         fp timeOfIntersection;
@@ -619,9 +618,9 @@ namespace SimpleCollisionsTests {
         bool doesIntersect =
             simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
         
-        EXPECT_TRUE(doesIntersect);
+        ASSERT_TRUE(doesIntersect);
         EXPECT_EQ(fp{1}, timeOfIntersection);
-        EXPECT_EQ(FPVector(fp{2}, fp{2}, fp{2}), pointOfIntersection);
+        EXPECT_EQ(FPVector(fp{1}, fp{2}, fp{1}), pointOfIntersection);
     }
 
     TEST_F(RaycastWithBoxTests, givenRotatedBox_givenSimpleRayInBox_returnsIntersectionResults) {
@@ -678,9 +677,64 @@ namespace SimpleCollisionsTests {
         TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
     }
 
+    TEST_F(RaycastWithBoxTests, givenRayOnFaceOfBox_givenRayGoesInsideBox_returnsIntersection) {
+        Ray ray(FPVector(fp{0}, fp{0}, fp{2}), FPVector(fp{0}, fp{0}, fp{-1}));
+        colliderA.setBox(FPVector(FPVector::zero()), FPVector(fp{2}, fp{2}, fp{2}));
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        EXPECT_TRUE(doesIntersect);
+        EXPECT_EQ(fp{0}, timeOfIntersection);
+        FPVector expectedPointOfIntersection(fp{0}, fp{0}, fp{2});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(RaycastWithBoxTests, givenRayOnFaceOfBox_givenRayGoesAwayFromBox_returnsNoIntersection) {
+        Ray ray(FPVector(fp{0}, fp{0}, fp{2}), FPVector(fp{0}, fp{0}, fp{1}));
+        colliderA.setBox(FPVector(FPVector::zero()), FPVector(fp{2}, fp{2}, fp{2}));
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        EXPECT_FALSE(doesIntersect);
+    }
+
+    TEST_F(RaycastWithBoxTests, givenRayOutsideBox_givenRayCrossesFaceOfBoxButDoesNotGoIntoBox_returnsNoIntersection) {
+        Ray ray(FPVector(fp{-4}, fp{0}, fp{2}), FPVector(fp{1}, fp{0}, fp{0}));
+        colliderA.setBox(FPVector(FPVector::zero()), FPVector(fp{2}, fp{2}, fp{2}));
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        EXPECT_FALSE(doesIntersect);
+    }
+
+    TEST_F(RaycastWithBoxTests, givenRayOutsideBox_givenRayCrossesVertexOfBoxButDoesNotGoIntoBox_returnsNoIntersection) {
+        Ray ray(FPVector(fp{1}, fp{2}, fp{3}), FPVector(fp{1}, fp{0}, fp{-1}).normalized());
+        colliderA.setBox(FPVector(FPVector::zero()), FPVector(fp{2}, fp{2}, fp{2}));
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.raycastWithBox(ray, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        EXPECT_FALSE(doesIntersect);
+    }
+
+    // Ray crossing face but not going into box should not count
+    // Ray crossing vertex but not going into box should not count
     
 #pragma endregion
 #pragma region Linetest vs Box
+
+    // TODO: Unit test when ray crosses box surface. Current chosen standard is simply touching surface should NOT count as intersection
 
     class LinetestWithBoxTests : public SimpleCollisionsFixtureBase {};
 
@@ -772,6 +826,8 @@ namespace SimpleCollisionsTests {
 
 #pragma endregion
 #pragma region Linetest vs Capsule
+
+    // TODO: Unit test when ray crosses capsule surface. Current chosen standard is simply touching surface should NOT count as intersection
 
     class LinetestWithCapsuleTests : public SimpleCollisionsFixtureBase {};
 
