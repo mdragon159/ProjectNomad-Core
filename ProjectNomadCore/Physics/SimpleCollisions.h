@@ -294,7 +294,7 @@ namespace ProjectNomad {
             checkAgainstBox.setCenter(FPVector::zero());  // Doing everything in box local space, so center should be at origin
             checkAgainstBox.setRotation(FPQuat::identity()); // Unnecessary but like being clear that this is an AABB (no rotation)
             checkAgainstBox.setBoxHalfSize(box.getBoxHalfSize() + FPVector(capsule.getCapsuleRadius()));
-
+            
             // Intersect ray against expanded box. Exit with no intersection if ray misses box, else get intersection point and time as result
             //          Side note: Pretty certain didn't need to convert to box space for this test (since raycast does that)
             //          Future minor optimization: Do this raycast test *before* converting to box local space
@@ -308,26 +308,28 @@ namespace ProjectNomad {
             if (!didRaycastIntersectCheckBox) {
                 return false;
             }
-
-            // Check that raycast hit box in a timely manner but FIRST check for a relevant edge case 
-            // Edge case: If capsule endpoints are entirely inside box then normal approach won't work. Thus explicitly
-            //              check one of the endpoints to cover this case
-            // Note: This is only necessary compared to Real-Time Collision approach as raycast implementation doesn't
-            //              check if point is already within box
-            // Note: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
-            if (!checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
-                // Given start of raycast was NOT in box, then raycast should have intersected with surface of box
-                // before the distance of the capsule medial line (ie, we're converting this to a linetest)
-                if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
+            // Verify that raycast intersection point is within range of the capsule median line
+            // (ie, turn this into a linetest)
+            if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
+                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box,
+                if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
+                    // Default to final capsule median line point for further calculations
+                    // Side note: Not sure whether to pick initial or final point, but given there's a min operation
+                    //              operation with time later on, it's safest to use the maximum time
+                    timeOfIntersection = fp{1}; // Latter linetest considers 1 = 100% of line length. Yes this is inconsistent with raycast
+                    intersectionPoint = boxSpaceCapsulePointB;
+                }
+                // Otherwise the box is certainly too far for an intersection
+                else {
                     return false;
                 }
             }
             
-            // Compute which min and max faces of box the intersection point lies outside of
+            // Compute which min and max faces of box the intersection point lies outside of.
             // Note, u and v cannot have the same bits set and they must have at least one bit set among them
             uint32_t lessThanMinExtentChecks = 0, greaterThanMaxExtentChecks = 0;
-            FPVector minBoxExtents = -box.getBoxHalfSize();
             FPVector maxBoxExtents = box.getBoxHalfSize();
+            FPVector minBoxExtents = -maxBoxExtents;
             if (intersectionPoint.x < minBoxExtents.x) lessThanMinExtentChecks |= 1;
             if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
             if (intersectionPoint.y < minBoxExtents.y) lessThanMinExtentChecks |= 2;
@@ -335,10 +337,10 @@ namespace ProjectNomad {
             if (intersectionPoint.z < minBoxExtents.z) lessThanMinExtentChecks |= 4;
             if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
             
-            // "Or" all set bits together into a bit mask (note: here u + v == u | v)
+            // "Or" all set bits together into a bit mask (note: effectively here u + v == u | v as same bit can't be set in both variables)
             uint32_t mask = lessThanMinExtentChecks + greaterThanMaxExtentChecks;
 
-            // If all 3 bits set (m == 7) then intersection point is in a vertex region
+            // If all 3 bits set (m == 7) then intersection point (if any) is in a vertex region
             if (mask == 7) {
                 bool didIntersect;
                 FPVector unused;
@@ -535,7 +537,6 @@ namespace ProjectNomad {
             // Construct the sides a triangle using the radius of the circle at the projected point 
             //  from the last step.The sides of this triangle are radius, b, and f. We work with
             //  squared units
-            fp bSq = distBetweenCentersSq - (a * a); // TODO: Rename vars
             fp bSq = distBetweenCentersSq - a * a; // TODO: Rename vars
             fp f = sqrt(radiusSq - bSq);
 
@@ -774,9 +775,9 @@ namespace ProjectNomad {
             // Based on Real-Time Collision Detection book, section 5.5.7 (method called "Corner")
             FPVector result;
             
-            result.x = ((n & 1) ? maxBoxExtents.x : minBoxExtents.x);
-            result.y = ((n & 1) ? maxBoxExtents.y : minBoxExtents.y);
-            result.z = ((n & 1) ? maxBoxExtents.z : minBoxExtents.z);
+            result.x = (n & 1) ? maxBoxExtents.x : minBoxExtents.x;
+            result.y = (n & 1) ? maxBoxExtents.y : minBoxExtents.y;
+            result.z = (n & 1) ? maxBoxExtents.z : minBoxExtents.z;
             
             return result;
         }

@@ -379,6 +379,16 @@ namespace SimpleCollisionsTests {
         EXPECT_TRUE(result);
     }
 
+    TEST_F(BoxCapsuleCollisions, whenTinyBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
+        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
+        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{21}, fp{184}), FPVector(fp{5}));
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result);
+    }
+
     TEST_F(BoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});

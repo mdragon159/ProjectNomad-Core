@@ -381,17 +381,19 @@ namespace ProjectNomad {
             if (!didRaycastIntersectCheckBox) {
                 return ImpactResult::noCollision();
             }
-
-            // Check that raycast hit box in a timely manner but FIRST check for a relevant edge case 
-            // Edge case: If capsule endpoints are entirely inside box then normal approach won't work. Thus explicitly
-            //              check one of the endpoints to cover this case
-            // Note: This is only necessary compared to Real-Time Collision approach as raycast implementation doesn't
-            //              check if point is already within box
-            // Note: Excluding on surface as design decision for surface touches not to count as collisions (eg, due to collision resolution not meaning much then)
-            if (!checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
-                // Given start of raycast was NOT in box, then raycast should have intersected with surface of box
-                // before the distance of the capsule medial line (ie, we're converting this to a linetest)
-                if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
+            // Verify that raycast intersection point is within range of the capsule median line
+            // (ie, turn this into a linetest)
+            if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
+                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box,
+                if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
+                    // Default to final capsule median line point for further calculations
+                    // Side note: Not sure whether to pick initial or final point, but given there's a min operation
+                    //              operation with time later on, it's safest to use the maximum time
+                    timeOfIntersection = fp{1}; // Latter linetest considers 1 = 100% of line length. Yes this is inconsistent with raycast
+                    intersectionPoint = boxSpaceCapsulePointB;
+                }
+                // Otherwise the box is certainly too far for an intersection
+                else {
                     return ImpactResult::noCollision();
                 }
             }
@@ -426,7 +428,7 @@ namespace ProjectNomad {
 
 
             // Compute which min and max faces of box the intersection point lies outside of.
-            // Note, the two vars cannot have the same bits set and they must have at least one bit set among them (TODO: ???)
+            // Note, the two vars cannot have the same bits set and they must have at least one bit set among them
             uint32_t lessThanMinExtentChecks = 0, greaterThanMaxExtentChecks = 0;
             FPVector minBoxExtents = -box.getBoxHalfSize();
             FPVector maxBoxExtents = box.getBoxHalfSize();
