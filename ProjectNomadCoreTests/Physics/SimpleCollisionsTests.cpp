@@ -370,8 +370,6 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(BoxCapsuleCollisions, whenBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
-        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
-        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
         colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{120}, fp{52}, fp{204}), FPVector(fp{50}));
         
@@ -380,10 +378,24 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(BoxCapsuleCollisions, whenTinyBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
-        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
-        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
         colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{120}, fp{21}, fp{184}), FPVector(fp{5}));
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(BoxCapsuleCollisions, whenLargeBoxTouchingTopHemisphereOfCapsule_givenBoxNotTouchingMedianLine_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{121}, fp{-58}, fp{102}), FPVector(fp{50}));
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result);
+    }
+
+    TEST_F(BoxCapsuleCollisions, whenLargeBoxTouchingRightSideOfCapsule_givenNotTouchingMedialLineAndCapsuleHigherThanRadius_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{-51}, fp{26}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
         
         bool result = simpleCollisions.isColliding(colliderA, colliderB);
         EXPECT_TRUE(result);

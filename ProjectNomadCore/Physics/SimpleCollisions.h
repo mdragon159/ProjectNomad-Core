@@ -311,11 +311,12 @@ namespace ProjectNomad {
             // Verify that raycast intersection point is within range of the capsule median line
             // (ie, turn this into a linetest)
             if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
-                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box,
+                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box.
+                //              Raycast usage will not catch this case so check for it explicitly 
                 if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
                     // Default to final capsule median line point for further calculations
                     // Side note: Not sure whether to pick initial or final point, but given there's a min operation
-                    //              operation with time later on, it's safest to use the maximum time
+                    //              operation with time later on, it's safest to use the maximum time. No idea if matters
                     timeOfIntersection = fp{1}; // Latter linetest considers 1 = 100% of line length. Yes this is inconsistent with raycast
                     intersectionPoint = boxSpaceCapsulePointB;
                 }
@@ -400,14 +401,6 @@ namespace ProjectNomad {
                 timeOfIntersection,
                 intersectionPoint
             );
-
-            float bAX = (float) boxSpaceCapsuleMedialSegment.start.x;
-            float bAY = (float) boxSpaceCapsuleMedialSegment.start.y;
-            float bAZ = (float) boxSpaceCapsuleMedialSegment.start.z;
-            float bBX = (float) boxSpaceCapsuleMedialSegment.end.x;
-            float bBY = (float) boxSpaceCapsuleMedialSegment.end.y;
-            float bBZ = (float) boxSpaceCapsuleMedialSegment.end.z;
-            
             
             return didIntersect;
         }
@@ -775,9 +768,9 @@ namespace ProjectNomad {
             // Based on Real-Time Collision Detection book, section 5.5.7 (method called "Corner")
             FPVector result;
             
-            result.x = (n & 1) ? maxBoxExtents.x : minBoxExtents.x;
-            result.y = (n & 1) ? maxBoxExtents.y : minBoxExtents.y;
-            result.z = (n & 1) ? maxBoxExtents.z : minBoxExtents.z;
+            result.x = n & 1 ? maxBoxExtents.x : minBoxExtents.x;
+            result.y = n & 2 ? maxBoxExtents.y : minBoxExtents.y;
+            result.z = n & 4 ? maxBoxExtents.z : minBoxExtents.z;
             
             return result;
         }
@@ -822,7 +815,7 @@ namespace ProjectNomad {
             // Do checks for all three slabs (axis extents)...
             for (int i = 0; i < 3; i++) {
                 // If ray is not moving on this axis...
-                if (FPMath::isNear(FPMath::abs(relativeRay.direction[i]), fp{0}, fp{0.0001f})) {
+                if (FPMath::isNear(relativeRay.direction[i], fp{0}, fp{0.0001f})) {
                     // No hit if origin not within slab (axis extents) already
                     if (relativeRay.origin[i] < boxMin[i] || relativeRay.origin[i] > boxMax[i]) {
                         return false;
@@ -846,8 +839,8 @@ namespace ProjectNomad {
 
                     // Compute the intersection of slab intersection intervals
                     // (ie, update our earliest and latest hits across all axes thus far)
-                    if (timeOfNearPlaneIntersection > timeOfEarliestHitSoFar) timeOfEarliestHitSoFar = timeOfNearPlaneIntersection;
-                    if (timeOfFarPlaneIntersection < timeOfLatestHitSoFar) timeOfLatestHitSoFar = timeOfFarPlaneIntersection;
+                    timeOfEarliestHitSoFar = FPMath::max(timeOfEarliestHitSoFar, timeOfNearPlaneIntersection);
+                    timeOfLatestHitSoFar = FPMath::min(timeOfLatestHitSoFar, timeOfFarPlaneIntersection);
 
                     // Exit with no collision as soon as slab intersection becomes empty
                     // (This covers both case where ray does not enter slab at all and case where ray doesn't enter all

@@ -232,8 +232,6 @@ namespace ComplexCollisionsTests {
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
-        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
-        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
         colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{120}, fp{52}, fp{204}), FPVector(fp{50}));
         
@@ -242,10 +240,24 @@ namespace ComplexCollisionsTests {
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTinyBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
-        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
-        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
         colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{120}, fp{21}, fp{184}), FPVector(fp{5}));
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenLargeBoxTouchingTopHemisphereOfCapsule_givenBoxNotTouchingMedianLine_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{50}, fp{262}), FPVector(fp{50}));
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenLargeBoxTouchingRightSideOfCapsule_givenNotTouchingMedialLineAndCapsuleHigherThanRadius_statesIsColliding) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{-51}, fp{26}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         ASSERT_TRUE(result.isColliding);

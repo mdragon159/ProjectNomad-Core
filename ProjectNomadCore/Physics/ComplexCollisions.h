@@ -384,11 +384,12 @@ namespace ProjectNomad {
             // Verify that raycast intersection point is within range of the capsule median line
             // (ie, turn this into a linetest)
             if (timeOfIntersection >= capsule.getMedialHalfLineLength() * 2) {
-                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box,
+                // Edge case: Median line is within the expanded box but doesn't intersect with the surface of the box.
+                //              Raycast usage will not catch this case so check for it explicitly 
                 if (checkAgainstBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsulePointA)) {
                     // Default to final capsule median line point for further calculations
                     // Side note: Not sure whether to pick initial or final point, but given there's a min operation
-                    //              operation with time later on, it's safest to use the maximum time
+                    //              operation with time later on, it's safest to use the maximum time. No idea if matters
                     timeOfIntersection = fp{1}; // Latter linetest considers 1 = 100% of line length. Yes this is inconsistent with raycast
                     intersectionPoint = boxSpaceCapsulePointB;
                 }
