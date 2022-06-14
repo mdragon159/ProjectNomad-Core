@@ -431,11 +431,11 @@ namespace ProjectNomad {
             FPVector minBoxExtents = -box.getBoxHalfSize();
             FPVector maxBoxExtents = box.getBoxHalfSize();
             if (intersectionPoint.x < minBoxExtents.x) lessThanMinExtentChecks |= 1;
-            else if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
+            if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
             if (intersectionPoint.y < minBoxExtents.y) lessThanMinExtentChecks |= 2;
-            else if (intersectionPoint.y > maxBoxExtents.y) greaterThanMaxExtentChecks |= 2;
+            if (intersectionPoint.y > maxBoxExtents.y) greaterThanMaxExtentChecks |= 2;
             if (intersectionPoint.z < minBoxExtents.z) lessThanMinExtentChecks |= 4;
-            else if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
+            if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
 
             // "Or" all set bits together into a bit mask (note: effectively here u + v == u | v as same bit can't be set in both variables)
             uint32_t mask = lessThanMinExtentChecks + greaterThanMaxExtentChecks;

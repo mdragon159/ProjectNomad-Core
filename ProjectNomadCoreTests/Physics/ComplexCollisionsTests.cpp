@@ -231,6 +231,16 @@ namespace ComplexCollisionsTests {
         ASSERT_FALSE(result.isColliding);
     }
 
+    TEST_F(ComplexBoxCapsuleCollisions, whenBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
+        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
+        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{52}, fp{204}), FPVector(fp{50}));
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result.isColliding);
+    }
+
     TEST_F(ComplexBoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});

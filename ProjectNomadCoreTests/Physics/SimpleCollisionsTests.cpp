@@ -369,6 +369,16 @@ namespace SimpleCollisionsTests {
         EXPECT_FALSE(result);
     }
 
+    TEST_F(BoxCapsuleCollisions, whenBoxToSideOfCapsule_givenCapsuleMedianLineNotInsideBoxButColliding_statesIsColliding) {
+        // Set up case from manual testing in interactable tool where box is clearly not touching top of capsule's sphere,
+        //  but would be touching a box which covers the capsule (ie, not treating ends of capsule as spheres)
+        colliderA.setCapsule(FPVector(fp{120}, fp{-4}, fp{182}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{120}, fp{52}, fp{204}), FPVector(fp{50}));
+        
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        EXPECT_TRUE(result);
+    }
+
     TEST_F(BoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});
@@ -835,15 +845,13 @@ namespace SimpleCollisionsTests {
 
 #pragma endregion
 #pragma region Linetest vs Capsule
-
-    // TODO: Unit test when ray crosses capsule surface. Current chosen standard is simply touching surface should NOT count as intersection
-
+    
     class LinetestWithCapsuleTests : public SimpleCollisionsFixtureBase {};
 
     TEST_F(LinetestWithCapsuleTests, givenLineIntersectsPerpendicularlyWithMedianLine_thenIntersectionReturned) {
         Line line(FPVector(fp{-10}, fp{0}, fp{0}), FPVector(fp{10}, fp{0}, fp{0}));
         colliderA.setCapsule(
-            FPVector(fp{1}, fp{1}, fp{1}),
+            FPVector(fp{0}, fp{0}, fp{0}),
             // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
             fp{5}, fp{10}
         );
@@ -853,9 +861,104 @@ namespace SimpleCollisionsTests {
         bool doesIntersect =
             simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
         
-        EXPECT_TRUE(doesIntersect);
+        ASSERT_TRUE(doesIntersect);
         EXPECT_EQ(fp{0.25f}, timeOfIntersection);
         FPVector expectedPointOfIntersection(fp{-5}, fp{0}, fp{0});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(LinetestWithCapsuleTests, whenTestLinePerpendicularToCap_givenLineDoesNotIntersectMedialLineButHitsTopOfSphereCap_thenCollisionReturned) {
+        Line line(FPVector(fp{-10}, fp{0}, fp{10}), FPVector(fp{10}, fp{0}, fp{10}));
+        colliderA.setCapsule(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            fp{5}, fp{10}
+        );
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        ASSERT_TRUE(doesIntersect);
+        EXPECT_EQ(fp{0.5f}, timeOfIntersection);
+        FPVector expectedPointOfIntersection(fp{0}, fp{0}, fp{10});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(LinetestWithCapsuleTests, whenTestLinePerpendicularToCap_givenLineDoesNotIntersectMedialLineButHitsMidwayOfSphereCap_thenCollisionReturned) {
+        Line line(FPVector(fp{-10}, fp{0}, fp{8}), FPVector(fp{10}, fp{0}, fp{8}));
+        colliderA.setCapsule(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            fp{5}, fp{10}
+        );
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        ASSERT_TRUE(doesIntersect);
+        TestHelpers::expectNear(fp{0.3f}, timeOfIntersection, fp{0.01f});
+        FPVector expectedPointOfIntersection(fp{-4}, fp{0}, fp{8});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(LinetestWithCapsuleTests, whenTestLineInsideCapsule_givenTestLineIntersectsCapsuleLineButRadiusHuge_thenIntersectionReturned) {
+        Line line(FPVector(fp{-10}, fp{0}, fp{0}), FPVector(fp{10}, fp{0}, fp{0}));
+        colliderA.setCapsule(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            fp{100}, fp{1000}
+        );
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        ASSERT_TRUE(doesIntersect);
+        EXPECT_EQ(fp{0}, timeOfIntersection);
+        FPVector expectedPointOfIntersection(fp{-10}, fp{0}, fp{0});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(LinetestWithCapsuleTests, whenTestLineInsideCapsule_givenTestLineParallelCapsuleLineAndRadiusHuge_thenIntersectionReturned) {
+        Line line(FPVector(fp{1}, fp{1}, fp{10}), FPVector(fp{1}, fp{1}, fp{-10}));
+        colliderA.setCapsule(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            fp{100}, fp{1000}
+        );
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        ASSERT_TRUE(doesIntersect);
+        EXPECT_EQ(fp{0}, timeOfIntersection);
+        FPVector expectedPointOfIntersection(fp{1}, fp{1}, fp{10});
+        TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
+    }
+
+    TEST_F(LinetestWithCapsuleTests, whenTestLineInsideCapsule_givenTestLineParallelCapsuleLineAndCrossesCapsuleExterior_thenIntersectionReturned) {
+        Line line(FPVector(fp{1}, fp{1}, fp{0}), FPVector(fp{1}, fp{1}, fp{200}));
+        colliderA.setCapsule(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            // FPQuat::fromDegrees(FPVector(fp{0}, fp{0}, fp{1}), fp{45}),
+            fp{100}, fp{1000}
+        );
+
+        fp timeOfIntersection;
+        FPVector pointOfIntersection;
+        bool doesIntersect =
+            simpleCollisions.linetestWithCapsule(line, colliderA, timeOfIntersection, pointOfIntersection);
+        
+        ASSERT_TRUE(doesIntersect);
+        TestHelpers::expectNear(fp{0.5f}, timeOfIntersection, fp{0.01f});
+        FPVector expectedPointOfIntersection(fp{1}, fp{1}, fp{100});
         TestHelpers::expectNear(expectedPointOfIntersection, pointOfIntersection, fp{0.01f});
     }
 

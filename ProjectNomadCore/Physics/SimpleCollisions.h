@@ -329,11 +329,11 @@ namespace ProjectNomad {
             FPVector minBoxExtents = -box.getBoxHalfSize();
             FPVector maxBoxExtents = box.getBoxHalfSize();
             if (intersectionPoint.x < minBoxExtents.x) lessThanMinExtentChecks |= 1;
-            else if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
+            if (intersectionPoint.x > maxBoxExtents.x) greaterThanMaxExtentChecks |= 1;
             if (intersectionPoint.y < minBoxExtents.y) lessThanMinExtentChecks |= 2;
-            else if (intersectionPoint.y > maxBoxExtents.y) greaterThanMaxExtentChecks |= 2;
+            if (intersectionPoint.y > maxBoxExtents.y) greaterThanMaxExtentChecks |= 2;
             if (intersectionPoint.z < minBoxExtents.z) lessThanMinExtentChecks |= 4;
-            else if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
+            if (intersectionPoint.z > maxBoxExtents.z) greaterThanMaxExtentChecks |= 4;
             
             // "Or" all set bits together into a bit mask (note: here u + v == u | v)
             uint32_t mask = lessThanMinExtentChecks + greaterThanMaxExtentChecks;
@@ -398,6 +398,14 @@ namespace ProjectNomad {
                 timeOfIntersection,
                 intersectionPoint
             );
+
+            float bAX = (float) boxSpaceCapsuleMedialSegment.start.x;
+            float bAY = (float) boxSpaceCapsuleMedialSegment.start.y;
+            float bAZ = (float) boxSpaceCapsuleMedialSegment.start.z;
+            float bBX = (float) boxSpaceCapsuleMedialSegment.end.x;
+            float bBY = (float) boxSpaceCapsuleMedialSegment.end.y;
+            float bBZ = (float) boxSpaceCapsuleMedialSegment.end.z;
+            
             
             return didIntersect;
         }
@@ -528,13 +536,14 @@ namespace ProjectNomad {
             //  from the last step.The sides of this triangle are radius, b, and f. We work with
             //  squared units
             fp bSq = distBetweenCentersSq - (a * a); // TODO: Rename vars
+            fp bSq = distBetweenCentersSq - a * a; // TODO: Rename vars
             fp f = sqrt(radiusSq - bSq);
 
             // Compare the length of the squared radius against the hypotenuse of the triangle from 
             //  the last step
 
             // Case: No collision has happened
-            if (radiusSq - (distBetweenCentersSq - (a * a)) < fp{0}) {
+            if (radiusSq - (distBetweenCentersSq - a * a) < fp{0}) {
                 return false; // -1 = no intersection
             }
             // Case: Ray starts inside the sphere
@@ -660,7 +669,7 @@ namespace ProjectNomad {
             // Comparing line vs capsule is just like comparing two capsules with one of fp{0} radius
             // IN SHORT, if line gets within capsule's radius of the capsule's center line, then we know there's an intersection
 
-            // Find distance (squared) between the line and the median line of the capsule
+            // Find distance (squared) between the test line and the median line of the capsule
             fp timeOfIntersectionForCapsuleLine;
             FPVector closestPointForCapsuleLine;
             fp distSquared = CollisionHelpers::getClosestPtsBetweenTwoSegments(
@@ -670,9 +679,64 @@ namespace ProjectNomad {
             );
 
             // If (squared) distance smaller than (squared) radius, the line and capsule collide
-            return distSquared <= capsuleRadius * capsuleRadius;
+            bool isColliding = distSquared <= capsuleRadius * capsuleRadius;
+            if (!isColliding) {
+                return false;
+            }
 
-            // TODO: Further calculate time of intersection and point of intersection when intersection is confirmed
+            /// Need to correct time of intersection and point of intersection as this was a test with only lines thus far
+            // Case 1: Linetest segment overlaps with capsule medial line
+            if (FPMath::isNear(distSquared, fp{0}, fp{0.01f})) {
+                // Easy case! Capsule point is really the center of a sphere (due to definition of a capsule + medial line)
+                // Thus the real intersection point is capsuleRadius away from the given point
+                // TODO: Further optimize this, as feels like a waste with sqrt and division
+                fp lineLength = line.getLength();
+                fp adjustmentLengthChange = capsuleRadius / lineLength; // Eg, if capsule radius is 1 and length is 10, then we need to move 10% along length of line
+                timeOfIntersection = timeOfIntersection - adjustmentLengthChange;
+
+                // Edge case: If radius is massive then test line may actually be inside the capsule itself
+                if (timeOfIntersection < fp{0}) {
+                    // For this case, default to intersection happening at beginning of test line as it's within the capsule itself
+                    timeOfIntersection = fp{0};
+                    pointOfIntersection = line.start;
+                }
+                else {
+                    // Can either recalculate intersection via going along line OR via adjusting from current point of intersection
+                    // Either way should work equally well, so decided to work backwards from given point of intersection
+                    FPVector linetestReverseDir = FPVector::directionNotNormalized(line.end, line.start) / lineLength;
+                    pointOfIntersection = pointOfIntersection + linetestReverseDir * capsuleRadius;
+                }
+            }
+            else {
+                // Approach: Given we confirmed a collision but test line is NOT intersecting capsule median line,
+                //              then it must be intersecting the capsule at some "sphere" point.
+                //          ie, the test line is intersecting with some sphere centered on the median line, and we
+                //              already know that point as it's closestPointForCapsuleLine!
+                //          Thus we can simply do a linetest against the relevant sphere to get exact hit data
+
+                // Create capsule-based sphere that we're confident the line is actually hitting
+                Collider capsuleSphereAtClosestPoint;
+                capsuleSphereAtClosestPoint.setSphere(closestPointForCapsuleLine, capsuleRadius);
+
+                // Do actual raycast check. Note that not checking bool result as this SHOULD intersect no matter what
+                fp lineLength = line.getLength();
+                FPVector testlineDir = FPVector::directionNotNormalized(line.start, line.end) / lineLength;
+                Ray testRay(line.start, testlineDir);
+                raycastWithSphere(testRay, capsuleSphereAtClosestPoint, timeOfIntersection, pointOfIntersection);
+
+                // Currently "time" represents distance along line that collision occurred. Need to convert distance to
+                //      linetest definition of time
+                timeOfIntersection = timeOfIntersection / lineLength;
+                // Edge case: If intersection time is outside normal percentage range (0 <= t <= 1) then line is within
+                //              capsule + doesn't intersect with medial line + doesn't intersect outer edges of capsule
+                if (timeOfIntersection < fp{0} || timeOfIntersection > fp{1}) {
+                    // For this case, default to intersection happening at beginning of test line as it's within the capsule itself
+                    timeOfIntersection = fp{0};
+                    pointOfIntersection = line.start;
+                }
+            }
+
+            return true; 
         }
 
 #pragma endregion
