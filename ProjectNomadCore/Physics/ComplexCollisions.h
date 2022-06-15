@@ -507,11 +507,6 @@ namespace ProjectNomad {
             // Penetration distance = distance between closest point on line vs sphere center minus sum of radii
             //                          (ie, how far to push in order to have the two touch side by side)
             fp penetrationMagnitude = FPMath::abs(FPMath::sqrt(distSquared) - combinedRadius);
-
-            // logger.logInfoMessage("isCapsuleAndSphereColliding", "Sphere center: " + sphere.getCenter().toString()
-            //     + " | closestPtOnCapsuleLine: " + closestPtOnCapsuleLine.toString());
-            // logger.logInfoMessage("isCapsuleAndSphereColliding", "PenAxis: " + penetrationDir.toString()
-            //     + " | PenDepth: " + std::to_string(static_cast<float>(penetrationMagnitude)));
             
             return ImpactResult(penetrationDir, penetrationMagnitude);
         }
@@ -831,59 +826,64 @@ namespace ProjectNomad {
                 return ImpactResult::noCollision();
             }
 
-            // TODO: Input intersection point is unreliable!
-            //          Double check time too!
-            // DEBUG VARS
-            float fTimeInitial = (float) timeOfInitialIntersection;
-            float fIPointX = (float) pointOfInitialIntersection.x;
-            float fIPointY = (float) pointOfInitialIntersection.y;
-            float fIPointZ = (float) pointOfInitialIntersection.z;
-
             // Check if either capsule medial line endpoints are within the expanded box.
             //      Specifically checking expanded box as it includes capsule radius (eg, catch case where capsule median
             //      line is right outside original box but intersecting due to the width of the capsule itself)
-            // TODO: Check if inaccuracies are concerning from expanded box corners vs normal box
+            // TODO: Check if there are any inaccuracies stemming from expanded box corners vs normal box
             bool isCapsuleLineStartInExpandedBox = expandedCheckBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsuleMedialLine.start);
             bool isCapsuleLineEndInExpandedBox = expandedCheckBox.isLocalSpacePtWithinBoxExcludingOnSurface(boxSpaceCapsuleMedialLine.end);
 
-            // Choose approach depending on number of endpoints within box
-            FPVector penetrationDirInWordSpace = FPVector::up();
-            fp penetrationMagnitude = fp{1000};
+            /// Choose approach depending on number of endpoints within box
+            //  Note that standard is for pen direction to point from one object INTO other object,
+            //      and specifically from box's perspective (as box-capsule method has box as first 
+            FPVector boxPenetrationDirInWorldSpace = FPVector::zero();
+            fp penetrationMagnitude = fp{0};
+            FPVector capsuleLineDir = boxSpaceCapsuleMedialLine.getDirection();
             if (isCapsuleLineStartInExpandedBox && isCapsuleLineEndInExpandedBox) {
-                // Approach: ??? Options:
-                // 1. Move one endpoints towards other endpoint and out of box
-                // 2. Same as above but flipped
-                // 3. Perpendicularly move line out of box shortest distance (see last else)
-                // 4. Pick approach with shortest distance
-            }
-            else if (isCapsuleLineStartInExpandedBox) {
-                // TODO: Check if inaccuracies are concerning from expanded box corners vs normal box
-                
-                // Simple approach: Move endpoint to closest face while ignoring faces opposite of line direction
-                FPVector lineDir = boxSpaceCapsuleMedialLine.getDirection();
+                // Approach: We have 2 options for getting capsule out of box with smallest possible movement:
+                // 1. Parallel to line direction: Move first medial line endpoints towards other endpoint and out of box
+                // 2. Opposite line direction: Move second endpoint towards first endpoint and out of box
+                // Calculate both and choose the one with smallest movement
+
+                // Thus, the approach here is to solve for all three approaches then choose one with smallest distance
+                // Approach 1: Try moving start endpoint to closest face in general line direction
+                FPVector fromStartPenetrationDirInWorldSpace;
+                fp fromStartPenetrationMagnitude;
                 calculateSmallestPushToOutsideBox(
-                    expandedCheckBox, boxSpaceCapsuleMedialLine.start, penetrationDirInWordSpace, penetrationMagnitude,
-                    true, lineDir
+                    expandedCheckBox, boxSpaceCapsuleMedialLine.start, fromStartPenetrationDirInWorldSpace, fromStartPenetrationMagnitude,
+                    true, capsuleLineDir
                 );
 
-                float fCapStartX = (float) boxSpaceCapsuleMedialLine.start.x;
-                float fCapStartY = (float) boxSpaceCapsuleMedialLine.start.y;
-                float fCapStartZ = (float) boxSpaceCapsuleMedialLine.start.z;
-                
-                float fPenMagnitude = (float) penetrationMagnitude;
-                float fPenDirX = (float) penetrationDirInWordSpace.x;
-                float fPenDirY = (float) penetrationDirInWordSpace.y;
-                float fPenDirZ = (float) penetrationDirInWordSpace.z;
-                float a = 2;
+                // Approach 2: Try moving end endpoint to closest face in opposite line direction
+                FPVector fromEndPenetrationDirInWorldSpace;
+                fp fromEndPenetrationMagnitude;
+                calculateSmallestPushToOutsideBox(
+                    expandedCheckBox, boxSpaceCapsuleMedialLine.end, fromEndPenetrationDirInWorldSpace, fromEndPenetrationMagnitude,
+                    true, capsuleLineDir.flipped()
+                );
+
+                // Finally choose the push method with the smallest distance
+                if (fromEndPenetrationMagnitude < fromStartPenetrationMagnitude) {
+                    penetrationMagnitude = fromEndPenetrationMagnitude;
+                    boxPenetrationDirInWorldSpace = fromEndPenetrationDirInWorldSpace;
+                }
+                else {
+                    penetrationMagnitude = fromStartPenetrationMagnitude;
+                    boxPenetrationDirInWorldSpace = fromStartPenetrationDirInWorldSpace;
+                }
+            }
+            else if (isCapsuleLineStartInExpandedBox) {
+                // Simple approach: Move endpoint to closest face while ignoring faces opposite of line direction
+                calculateSmallestPushToOutsideBox(
+                    expandedCheckBox, boxSpaceCapsuleMedialLine.start, boxPenetrationDirInWorldSpace, penetrationMagnitude,
+                    true, capsuleLineDir
+                );
             }
             else if (isCapsuleLineEndInExpandedBox) {
-                // TODO: Check if inaccuracies are concerning from expanded box corners vs normal box
-                
                 // Simple approach: Move endpoint to closest face while ignoring faces opposite of line direction
-                FPVector lineDir = boxSpaceCapsuleMedialLine.getDirection().flipped();
                 calculateSmallestPushToOutsideBox(
-                    expandedCheckBox, boxSpaceCapsuleMedialLine.end, penetrationDirInWordSpace, penetrationMagnitude,
-                    true, lineDir
+                    expandedCheckBox, boxSpaceCapsuleMedialLine.end, boxPenetrationDirInWorldSpace, penetrationMagnitude,
+                    true, capsuleLineDir.flipped()
                 );
             }
             // Otherwise no medial line endpoint within box... 
@@ -898,11 +898,10 @@ namespace ProjectNomad {
                 // 3. Get perpendicular-to-line direction that closest matches the closest face
                 // 4. Calculate distance via raycast method
 
-                fp throwaway;
-
                 /// 1. Get middle point of intersection
                 // Get intersection point when line is reversed
                 FPVector pointOfLastIntersection;
+                fp throwaway;
                 Line reversedMedialLine(boxSpaceCapsuleMedialLine.end, boxSpaceCapsuleMedialLine.start);
                 getBoxCapsuleIntersection(
                     box, expandedCheckBox, reversedMedialLine, capsule.getCapsuleRadius(), capsule.getMedialHalfLineLength(),
@@ -911,48 +910,50 @@ namespace ProjectNomad {
                 // Finally calculate middle of intersection
                 FPVector middleIntersectionPoint = (pointOfInitialIntersection + pointOfLastIntersection) / fp{2};
 
-                /// 2. Find closest face to move middle point out of box
-                FPVector smallestPushToFaceDir;
-                calculateSmallestPushToOutsideBox(
-                    expandedCheckBox, boxSpaceCapsuleMedialLine.start, smallestPushToFaceDir, throwaway
+                /// Steps 2-4 will be handled by following method:
+                getBestPushInfoOutOfBoxForMiddlePointOfBoxSpaceLine(
+                    expandedCheckBox, middleIntersectionPoint, capsuleLineDir, boxPenetrationDirInWorldSpace, penetrationMagnitude
                 );
-
-                /// 3. Get perpendicular-to-line direction that closest matches the closest-face direction
-                // Based on following: https://math.stackexchange.com/a/410549/815287
-                FPVector lineDir = boxSpaceCapsuleMedialLine.getDirection();
-                FPVector bestMovementDir = smallestPushToFaceDir.cross(lineDir).cross(lineDir);
-
-                /// 4. Calculate distance via raycast method
-                // As this is all in local space, we will directly use the AABB method for raycast testing
-                Ray testRay(middleIntersectionPoint, bestMovementDir);
-                FPVector raycastIntersectionPoint;
-                fp raycastIntersectionTime;
-                simpleCollisions.raycastForAABB(testRay, expandedCheckBox, raycastIntersectionTime, raycastIntersectionPoint);
-
-                // Finally set the well-earned results!
-                penetrationMagnitude = raycastIntersectionTime; // Raycast "time" is actually equivalent to distance
-                penetrationDirInWordSpace = expandedCheckBox.toWorldSpaceForOriginCenteredValue(bestMovementDir);
-
-                // DEBUG VARS
-                float fTimeLast = (float) timeOfLastIntersection;
-                float fLPointX = (float) pointOfLastIntersection.x;
-                float fLPointY = (float) pointOfLastIntersection.y;
-                float fLPointZ = (float) pointOfLastIntersection.z;
-                
-                float fMPointX = (float) middleIntersectionPoint.x;
-                float fMPointY = (float) middleIntersectionPoint.y;
-                float fMPointZ = (float) middleIntersectionPoint.z;
-
-                float fPenMagnitude = (float) penetrationMagnitude;
-                float fPenDirX = (float) penetrationDirInWordSpace.x;
-                float fPenDirY = (float) penetrationDirInWordSpace.y;
-                float fPenDirZ = (float) penetrationDirInWordSpace.z;
-                float a = 2;
             }
+            
+            return ImpactResult(boxPenetrationDirInWorldSpace, penetrationMagnitude);
+        }
 
-            // TODO: Convert pen dir to world space
-            //       Also make sure adding radius back to final direction!
-            return ImpactResult(penetrationDirInWordSpace, penetrationMagnitude);
+        /// <summary>Calculate which direction to push an intersecting line out of a box with minimum distance</summary>
+        /// <param name="box">Box to push line out of</param>
+        /// <param name="middleIntersectionPoint">
+        /// Middle of intersection of line. Note that this isn't necessarily the middle point of an ENTIRE line segment but
+        /// the merely middle of the segment of the line which intersects the box. 
+        /// </param>
+        /// <param name="lineDir">Normalized direction of the line</param>
+        /// <param name="bestDirToPushLineOutOfBox">Output variable, direction to push middle point out of box</param>
+        /// <param name="penetrationMagnitude">Output variable, how much to push middleIntersectionPoint along output direction</param>
+        void getBestPushInfoOutOfBoxForMiddlePointOfBoxSpaceLine(const Collider& box,
+                                                                const FPVector& middleIntersectionPoint,
+                                                                const FPVector& lineDir,
+                                                                FPVector& bestDirToPushLineOutOfBox,
+                                                                fp& penetrationMagnitude) {
+            // Find closest face to move middle point out of box
+            FPVector smallestPushToFaceDir;
+            fp throwaway;
+            calculateSmallestPushToOutsideBox(
+                box, middleIntersectionPoint, smallestPushToFaceDir, throwaway
+            );
+
+            // Get perpendicular-to-line direction that closest matches the closest-face direction
+            // Based on following: https://math.stackexchange.com/a/410549/815287
+            FPVector bestMovementDir = smallestPushToFaceDir.cross(lineDir).cross(lineDir);
+
+            /// Calculate distance via raycast method
+            // As this is all in local space, we will directly use the AABB method for raycast testing
+            Ray testRay(middleIntersectionPoint, bestMovementDir);
+            FPVector raycastIntersectionPoint;
+            fp raycastIntersectionTime;
+            simpleCollisions.raycastForAABB(testRay, box, raycastIntersectionTime, raycastIntersectionPoint);
+
+            // Finally set the well-earned results
+            bestDirToPushLineOutOfBox = box.toWorldSpaceForOriginCenteredValue(bestMovementDir);
+            penetrationMagnitude = raycastIntersectionTime; // Raycast "time" is actually equivalent to distance
         }
         
 #pragma endregion 
