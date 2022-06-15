@@ -2,11 +2,17 @@
 #include "TestHelpers.h"
 
 void TestHelpers::assertNear(fp expected, fp actual, fp range) {
-    ASSERT_NEAR(static_cast<float>(expected), static_cast<float>(actual), static_cast<float>(range));
+    float fExpected = static_cast<float>(expected);
+    float fActual = static_cast<float>(actual);
+    float fRange = static_cast<float>(range);
+    ASSERT_NEAR(fExpected, fActual, fRange);
 }
 
 void TestHelpers::expectNear(fp expected, fp actual, fp range) {
-    EXPECT_NEAR(static_cast<float>(expected), static_cast<float>(actual), static_cast<float>(range));
+    float fExpected = static_cast<float>(expected);
+    float fActual = static_cast<float>(actual);
+    float fRange = static_cast<float>(range);
+    EXPECT_NEAR(fExpected, fActual, fRange);
 }
 
 void TestHelpers::assertNear(FPVector expected, FPVector actual, fp range) {

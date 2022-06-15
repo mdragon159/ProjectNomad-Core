@@ -775,9 +775,6 @@ namespace ProjectNomad {
             return result;
         }
 
-#pragma endregion 
-    
-    private:
         /// <summary>
         /// Checks if and when a ray intersects an AABB (which is effectively local space check against OBB).
         /// Note: Based on Real-Time Collision Detection, Section 5.3.3
@@ -787,7 +784,7 @@ namespace ProjectNomad {
         /// Origin should be relative to OBB's center (ie, OBB's center is treated as center of world and then rotated).
         /// Direction should also be converted to OBB local space.
         /// </param>
-        /// <param name="box">Box to test with./param>
+        /// <param name="box">Box to test with.</param>
         /// <param name="timeOfIntersection">
         /// If intersection occurs, this will be time which ray first intersects with the box.
         /// Note that if ray origin is within the box, then this will signify when the ray hits the OBB on the way out.
@@ -897,5 +894,7 @@ namespace ProjectNomad {
             pointOfIntersection = relativeRay.origin + relativeRay.direction * timeOfIntersection;
             return true;
         }
+
+#pragma endregion 
     };
 }

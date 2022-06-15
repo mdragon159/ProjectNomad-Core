@@ -172,21 +172,53 @@ namespace ComplexCollisionsTests {
         ASSERT_TRUE(result.isColliding);
     }
 
+    // TODO DEBUG NOTE: Below test is good for capsule-endpoints-not-in-box case
     TEST_F(ComplexBoxCapsuleCollisions, whenCenteredOverlappingColliders_whenMedianLineCrossesExpandedBox_statesIsColliding) {
-        // Case where median line is inside expanded box (box half size increased by radius)
         colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{10}, fp{100});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         ASSERT_TRUE(result.isColliding);
+
+        TestHelpers::expectNear(fp{14}, result.penetrationMagnitude, fp{0.01f});
+        // Note that direction can be anything that's on xy plane
+        TestHelpers::expectNear(result.penetrationDirection.getLength(), fp{1}, fp{0.01f});
+        bool isPenDirPerpendicularToVertical = FPMath::isNear(
+            result.penetrationDirection.dot(FPVector::up()), fp{0}, fp{0.01f}
+        );
+        EXPECT_TRUE(isPenDirPerpendicularToVertical);
     }
 
-    TEST_F(ComplexBoxCapsuleCollisions, whenBarelyIntersectingOnOneEndOfCapsule_statesIsColliding) {
-        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
-        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{23.9f}), fp{10}, fp{20});
+    TEST_F(ComplexBoxCapsuleCollisions, whenCenteredOverlappingColliders_whenCapsuleEntirelyWithinLargeBox_statesIsColliding) {
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}, fp{50}, fp{50}));
+        colliderA.setCapsule(FPVector(fp{0}, fp{0}, fp{0}), fp{5}, fp{20});
         
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         ASSERT_TRUE(result.isColliding);
+    }
+
+    // TODO DEBUG NOTE: Good unit test for one-endpoint-in-box case
+    TEST_F(ComplexBoxCapsuleCollisions, whenSomewhatIntersectingOnOneEndOfCapsule_whenCapsuleAbove_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{18}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        
+        ASSERT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{6}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::up(), result.penetrationDirection, fp{0.01f});
+    }
+
+    // TODO DEBUG NOTE: Good unit test for OTHER one-endpoint-in-box case
+    TEST_F(ComplexBoxCapsuleCollisions, whenBarelyIntersectingOnOneEndOfCapsule_whenCapsuleBelow_statesIsColliding) {
+        colliderA.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{4}, fp{4}, fp{4}));
+        colliderB.setCapsule(FPVector(fp{0}, fp{0}, fp{-23.9f}), fp{10}, fp{20});
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        
+        ASSERT_TRUE(result.isColliding);
+        TestHelpers::expectNear(fp{0.1f}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::down(), result.penetrationDirection, fp{0.01f});
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenTouchingOnOneEndOfCapsule_fromAbove_notColliding) {
@@ -255,6 +287,7 @@ namespace ComplexCollisionsTests {
         ASSERT_TRUE(result.isColliding);
     }
 
+    // TODO DEBUG NOTE: Good test for both-capsule-points-in-expanded-box case
     TEST_F(ComplexBoxCapsuleCollisions, whenLargeBoxTouchingRightSideOfCapsule_givenNotTouchingMedialLineAndCapsuleHigherThanRadius_statesIsColliding) {
         colliderA.setCapsule(FPVector(fp{0}, fp{-51}, fp{26}), fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
