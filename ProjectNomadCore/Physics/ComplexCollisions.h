@@ -679,7 +679,7 @@ namespace ProjectNomad {
             //          Minor optimization: Do this raycast test *before* converting to box local space
             //          HOWEVER, may not work due to following math (and if not possible, then update these comments so don't go down this path again)
             Ray intersectionTestRay = Ray::fromPoints(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
-            bool didRaycastIntersectCheckBox = simpleCollisions.raycastWithBox(
+            bool didRaycastIntersectCheckBox = simpleCollisions.raycastForAABB(
                 intersectionTestRay, expandedCheckBox,timeOfIntersection, pointOfIntersection
             );
             // If raycast did not hit at all then definitely no collision

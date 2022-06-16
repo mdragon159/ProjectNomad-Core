@@ -109,7 +109,7 @@ namespace ProjectNomad {
             // Remove velocity in penetration direction if necessary
             fp velocityMagnitudeInPenDirection = collisionCausingVelocity.dot(collisionResult.penetrationDirection);
             if (velocityMagnitudeInPenDirection > fp{0}) {
-                logger.logInfoMessage("resolveCollision", "Removing some velocity!");
+                // logger.logInfoMessage("resolveCollision", "Removing some velocity!");
                 
                 // Zero out the velocity that's causing the collision
                 FPVector velocityParallelToPenetration = velocityMagnitudeInPenDirection * collisionResult.penetrationDirection;

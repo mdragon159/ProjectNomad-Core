@@ -315,6 +315,33 @@ namespace ComplexCollisionsTests {
         TestHelpers::expectNear(fp{24}, result.penetrationMagnitude, fp{0.01f});
         TestHelpers::expectNear(FPVector::right(), result.penetrationDirection, fp{0.01f});
     }
+    
+    TEST_F(ComplexBoxCapsuleCollisions, whenCapsuleTouchingFrontSurfaceOfLargeBox_statesNotColliding) {
+        // This test has the median line running parallel to box face and only touching the face,
+        //      which we've chosen to not consider as a collision
+        colliderA.setCapsule(FPVector(fp{-75}, fp{-8}, fp{54}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
+        
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_FALSE(result.isColliding);
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenRotatedCapsuleIntersectsBoxCorner_statesIsCollidingWithProperPenInfo) {
+        // Case found pretty quickly when finally testing rotation. Currently causes capsule to correct to OTHER corner of box
+        // Definitely confirmed intersection visually this time
+        FPQuat capsuleRotation = FPQuat::fromDegrees(FPVector::left(), fp{30});
+        colliderA.setCapsule(FPVector(fp{75}, fp{8}, fp{54}), capsuleRotation, fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
+
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result.isColliding);
+        
+        TestHelpers::expectNear(fp{1}, result.penetrationMagnitude, fp{0.01f});
+
+        // Too lazy to do the math on this side atm
+        // FPQuat expectedPenetrationDir = FPQuat::fromDegrees(FPVector::left(), fp{30});
+        // TestHelpers::expectNear(FPVector::right(), result.penetrationDirection, fp{0.01f});
+    }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));

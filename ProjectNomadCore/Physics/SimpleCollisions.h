@@ -302,7 +302,7 @@ namespace ProjectNomad {
             fp timeOfIntersection;
             FPVector intersectionPoint;
             Ray intersectionTestRay = Ray::fromPoints(boxSpaceCapsulePointA, boxSpaceCapsulePointB);
-            bool didRaycastIntersectCheckBox = raycastWithBox(intersectionTestRay, checkAgainstBox,
+            bool didRaycastIntersectCheckBox = raycastForAABB(intersectionTestRay, checkAgainstBox,
                                                     timeOfIntersection, intersectionPoint);
             // If raycast did not hit at all then definitely no collision
             if (!didRaycastIntersectCheckBox) {
@@ -852,8 +852,11 @@ namespace ProjectNomad {
             //          (and checking an "epsilon'/close to 0 value instead of 0 to catch possible minor math inaccuracies)
             if (timeOfLatestHitSoFar <= fp{0.001f}) return false;
 
-            bool doesRayStartInBox = timeOfEarliestHitSoFar < fp{0}; // If "earliest" intersection is negative then ray started in origin
-            
+            // TODO: Cheaper way to check for starting point in box that's accurate?
+            //       Tried doing timeOfEarliestHitSoFar < 0 but false positive when point is on face
+            //       See ComplexBoxCapsuleCollisions unit test whenCapsuleJustBarelyTouchingFrontOfLargeBox_statesIsCollidingWithProperPenInfo
+            bool doesRayStartInBox = box.isLocalSpacePtWithinBoxExcludingOnSurface(relativeRay.origin);
+             
             // Check for raycast only touching box surface
             if (!doesRayStartInBox) { // If ray inside box then has to exit box so no need to check further in that case
                 // Approach:

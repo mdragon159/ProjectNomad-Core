@@ -77,7 +77,7 @@ namespace ProjectNomad {
                 
                 totalCollisionsSoFar++;
                 if (totalCollisionsSoFar >= MAX_COLLISION_RESOLUTIONS_PER_FRAME) {
-                    logger.addScreenAndLogMessage(fp{2}, "WARNING: Hit max collisions per frame");
+                    // logger.addScreenAndLogMessage(fp{2}, "WARNING: Hit max collisions per frame");
                     break;
                 }
             }

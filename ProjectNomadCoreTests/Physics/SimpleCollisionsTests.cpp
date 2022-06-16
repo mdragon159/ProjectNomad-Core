@@ -401,12 +401,31 @@ namespace SimpleCollisionsTests {
         EXPECT_TRUE(result);
     }
 
+    TEST_F(BoxCapsuleCollisions, whenCapsuleTouchingFrontSurfaceOfLargeBox_statesNotColliding) {
+        // This test has the median line running parallel to box face and only touching the face,
+        //      which we've chosen to not consider as a collision
+        colliderA.setCapsule(FPVector(fp{-75}, fp{-8}, fp{54}), fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
+
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        ASSERT_FALSE(result);
+    }
+
+    TEST_F(BoxCapsuleCollisions, whenRotatedCapsuleIntersectsBoxCorner_statesIsColliding) {
+        FPQuat capsuleRotation = FPQuat::fromDegrees(FPVector::left(), fp{30});
+        colliderA.setCapsule(FPVector(fp{75}, fp{8}, fp{54}), capsuleRotation, fp{25}, fp{50});
+        colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
+
+        bool result = simpleCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result);
+    }
+
     TEST_F(BoxCapsuleCollisions, whenDistant_notColliding) {
         colliderA.setBox(FPVector(fp{200}, fp{33.3f}, fp{-5}), FPVector(fp{4}, fp{4}, fp{4}));
         colliderB.setCapsule(FPVector(fp{5}, fp{-10}, fp{24}), fp{10}, fp{20});
         
         bool result = simpleCollisions.isColliding(colliderA, colliderB);
-        EXPECT_FALSE(result);
+        ASSERT_FALSE(result);
     }
 
 #pragma endregion
