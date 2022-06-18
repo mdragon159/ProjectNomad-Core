@@ -291,8 +291,6 @@ namespace ProjectNomad {
 
             // Compute the AABB resulting from expanding box faces by capsule radius
             Collider checkAgainstBox(box);
-            checkAgainstBox.setCenter(FPVector::zero());  // Doing everything in box local space, so center should be at origin
-            checkAgainstBox.setRotation(FPQuat::identity()); // Unnecessary but like being clear that this is an AABB (no rotation)
             checkAgainstBox.setBoxHalfSize(box.getBoxHalfSize() + FPVector(capsule.getCapsuleRadius()));
             
             // Intersect ray against expanded box. Exit with no intersection if ray misses box, else get intersection point and time as result

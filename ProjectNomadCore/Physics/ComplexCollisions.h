@@ -364,8 +364,6 @@ namespace ProjectNomad {
 
             // Compute the AABB resulting from expanding box faces by capsule radius
             Collider expandedCheckBox(box);
-            expandedCheckBox.setCenter(FPVector::zero());  // Doing everything in box local space, so center should be at origin
-            expandedCheckBox.setRotation(FPQuat::identity()); // Unnecessary but like being clear that this is an AABB (no rotation)
             expandedCheckBox.setBoxHalfSize(box.getBoxHalfSize() + FPVector(capsule.getCapsuleRadius()));
             
             fp timeOfIntersection;
@@ -942,7 +940,7 @@ namespace ProjectNomad {
 
             // Get perpendicular-to-line direction that closest matches the closest-face direction
             // Based on following: https://math.stackexchange.com/a/410549/815287
-            FPVector bestMovementDir = smallestPushToFaceDir.cross(lineDir).cross(lineDir);
+            FPVector bestMovementDir = lineDir.cross(smallestPushToFaceDir).cross(lineDir); // Warning: smallestPushToFaceDir x lineDir x lineDir will return opposite direction
 
             /// Calculate distance via raycast method
             // As this is all in local space, we will directly use the AABB method for raycast testing

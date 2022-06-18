@@ -325,10 +325,9 @@ namespace ComplexCollisionsTests {
         ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
         ASSERT_FALSE(result.isColliding);
     }
-
+    
     TEST_F(ComplexBoxCapsuleCollisions, whenRotatedCapsuleIntersectsBoxCorner_statesIsCollidingWithProperPenInfo) {
-        // Case found pretty quickly when finally testing rotation. Currently causes capsule to correct to OTHER corner of box
-        // Definitely confirmed intersection visually this time
+        // Direction is correct but penetration magnitude is quite off (~5x)
         FPQuat capsuleRotation = FPQuat::fromDegrees(FPVector::left(), fp{30});
         colliderA.setCapsule(FPVector(fp{75}, fp{8}, fp{54}), capsuleRotation, fp{25}, fp{50});
         colliderB.setBox(FPVector(fp{0}, fp{0}, fp{0}), FPVector(fp{50}));
@@ -341,6 +340,21 @@ namespace ComplexCollisionsTests {
         // Too lazy to do the math on this side atm
         // FPQuat expectedPenetrationDir = FPQuat::fromDegrees(FPVector::left(), fp{30});
         // TestHelpers::expectNear(FPVector::right(), result.penetrationDirection, fp{0.01f});
+    }
+
+    TEST_F(ComplexBoxCapsuleCollisions, whenCapsulePenetratingUpsideDownBox_thenPenetrationDirectionIsNotReversed) {
+        colliderA.setCapsule(FPVector(fp{0}, fp{20}, fp{150}), fp{25}, fp{50});
+        colliderB.setBox(
+            FPVector(fp{0}, fp{0}, fp{0}),
+            FPQuat::fromDegrees(FPVector::forward(), fp{180}),
+            FPVector(fp{100}, fp{100}, fp{200})
+        );
+
+        ImpactResult result = complexCollisions.isColliding(colliderA, colliderB);
+        ASSERT_TRUE(result.isColliding);
+        
+        TestHelpers::expectNear(fp{100}, result.penetrationMagnitude, fp{0.01f});
+        TestHelpers::expectNear(FPVector::down(), result.penetrationDirection, fp{0.01f});
     }
 
     TEST_F(ComplexBoxCapsuleCollisions, whenDistant_notColliding) {
