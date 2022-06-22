@@ -42,25 +42,25 @@ namespace ProjectNomad {
             setBoxHalfSize(halfSize);
         }
 
-        void setCapsule(FPVector newCenter, fp radius, fp halfHeight) {
-            setCapsule(newCenter, FPQuat::identity(), radius, halfHeight);
+        void setCapsule(FPVector newCenter, fp newRadius, fp halfHeight) {
+            setCapsule(newCenter, FPQuat::identity(), newRadius, halfHeight);
         }
 
-        void setCapsule(FPVector newCenter, FPQuat newRotation, fp radius, fp halfHeight) {
+        void setCapsule(FPVector newCenter, FPQuat newRotation, fp newRadius, fp halfHeight) {
             colliderType = ColliderType::Capsule;
             setCenter(newCenter);
             setRotation(newRotation);
 
-            setCapsuleRadius(radius);
+            setCapsuleRadius(newRadius);
             setCapsuleHalfHeight(halfHeight);
         }
 
-        void setSphere(FPVector newCenter, fp radius) {
+        void setSphere(FPVector newCenter, fp newRadius) {
             colliderType = ColliderType::Sphere;
             setCenter(newCenter);
             // No need to set rotation as rotation is useless for sphere
 
-            setSphereRadius(radius);
+            setSphereRadius(newRadius);
         }
 
 #pragma endregion
