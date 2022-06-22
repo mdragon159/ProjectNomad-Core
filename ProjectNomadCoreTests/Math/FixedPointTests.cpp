@@ -1,7 +1,5 @@
 #include "pch.h"
 
-#include <cereal/archives/binary.hpp>
-
 #include "Math/FixedPoint.h"
 #include "TestHelpers/TestHelpers.h"
 
@@ -45,22 +43,22 @@ namespace FixedPointTests {
         EXPECT_NEAR(base * base, toFloat(test * test), 0.001);
     }
 
-    TEST(serialization, serializesThenDeserializesSuccessfully) {
-        float base = 45000.12345f;
-        fp fpFromBase = fp{base};
-        
-        std::stringstream ss;
-        {
-            cereal::BinaryOutputArchive outputArchive(ss);
-            outputArchive(fpFromBase);
-        }
-
-        fp result;
-        {
-            cereal::BinaryInputArchive inputArchive(ss);
-            inputArchive(result);
-        }
-
-        EXPECT_NEAR(base, toFloat(result), 0.01f);
-    }
+    // TEST(serialization, serializesThenDeserializesSuccessfully) {
+    //     float base = 45000.12345f;
+    //     fp fpFromBase = fp{base};
+    //     
+    //     std::stringstream ss;
+    //     {
+    //         cereal::BinaryOutputArchive outputArchive(ss);
+    //         outputArchive(fpFromBase);
+    //     }
+    //
+    //     fp result;
+    //     {
+    //         cereal::BinaryInputArchive inputArchive(ss);
+    //         inputArchive(result);
+    //     }
+    //
+    //     EXPECT_NEAR(base, toFloat(result), 0.01f);
+    // }
 }
