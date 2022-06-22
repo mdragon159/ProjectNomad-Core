@@ -22,6 +22,8 @@ namespace ColliderTests {
     TEST_F(Collider_GetFurthestPointTests, whenNotInitializedCollider_returnsZeroVector) {
         FPVector result = toTest.getFurthestPoint(collider, FPVector::forward());
         ASSERT_EQ(FPVector::zero(), result);
+
+        TestHelpers::verifyErrorsLogged(testLogger);
     }
 
     TEST_F(Collider_GetFurthestPointTests, sphere_whenProvidedAnyDirection_thenReturnsPointOnSurfaceInDirection) {
@@ -37,8 +39,11 @@ namespace ColliderTests {
         collider.setBox(center, halfSize);
         
         FPVector result = toTest.getFurthestPoint(collider, FPVector::up());
-        
-        ASSERT_EQ(FPVector(fp{0}, fp{-4}, fp{3.5f}), result);
+
+        // Result point can be anywhere along top face. Thus verify its within top face bounds
+        TestHelpers::assertNear(fp{3.5f}, result.z, fp{0.01f}); // +z max
+        TestHelpers::assertNear(fp{1}, result.x, fp{1});        // x axis extents
+        TestHelpers::assertNear(fp{-2}, result.y, fp{2});       // y axis extents
     }
 
     TEST_F(Collider_GetFurthestPointTests, capsule_whenProvidedUpDirection_whenNoRotation_thenReturnsFurthestUpwardsPoint) {
@@ -135,9 +140,9 @@ namespace ColliderTests {
         ASSERT_EQ(center, collider.center);
 
         ASSERT_EQ(radius, collider.getCapsuleRadius());
-        ASSERT_EQ(radius, collider.sharedCollisionData.Capsule.radius);
+        ASSERT_EQ(radius, collider.radius);
         ASSERT_EQ(halfHeight, collider.getCapsuleHalfHeight());
-        ASSERT_EQ(halfHeight, collider.sharedCollisionData.Capsule.halfHeight);
+        ASSERT_EQ(halfHeight, collider.capsuleHalfHeight);
     }
 
     TEST(setCapsule, whenGivenRotation_createsExpectedCollider) {
@@ -158,9 +163,9 @@ namespace ColliderTests {
         ASSERT_EQ(rotation, collider.rotation);
 
         ASSERT_EQ(radius, collider.getCapsuleRadius());
-        ASSERT_EQ(radius, collider.sharedCollisionData.Capsule.radius);
+        ASSERT_EQ(radius, collider.radius);
         ASSERT_EQ(halfHeight, collider.getCapsuleHalfHeight());
-        ASSERT_EQ(halfHeight, collider.sharedCollisionData.Capsule.halfHeight);
+        ASSERT_EQ(halfHeight, collider.capsuleHalfHeight);
     }
 
     TEST(setSphere, createsExpectedCollider) {
@@ -177,7 +182,7 @@ namespace ColliderTests {
         ASSERT_EQ(center, collider.center);
 
         ASSERT_EQ(radius, collider.getSphereRadius());
-        ASSERT_EQ(radius, collider.sharedCollisionData.Sphere.radius);
+        ASSERT_EQ(radius, collider.radius);
     }
 
 #pragma endregion

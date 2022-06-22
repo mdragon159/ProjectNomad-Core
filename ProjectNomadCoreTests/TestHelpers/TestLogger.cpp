@@ -5,6 +5,12 @@ bool TestLogger::didLoggingOccur() {
     return wasMessageLogged;
 }
 
+void TestLogger::resetLogging() {
+    // Queues aren't actually used at the moment and thus only need to reset relevant flags
+    wasMessageLogged = false;
+    wasNetLogMessageLogged = false;
+}
+
 #pragma region ILogger Methods
 
 std::queue<DebugMessage>& TestLogger::getDebugMessages() {

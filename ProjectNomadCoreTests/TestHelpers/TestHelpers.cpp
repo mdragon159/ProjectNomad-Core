@@ -34,6 +34,9 @@ void TestHelpers::expectEq(FPVector expected, FPVector actual) {
 
 void TestHelpers::verifyErrorsLogged(TestLogger& logger) {
     EXPECT_TRUE(logger.didLoggingOccur());
+
+    // Reset logging state as already checked. This allows us to NOT have to "override" verifyNoErrorsLogged calls in relevant tests
+    logger.resetLogging();
 }
 
 void TestHelpers::verifyNoErrorsLogged(TestLogger& logger) {

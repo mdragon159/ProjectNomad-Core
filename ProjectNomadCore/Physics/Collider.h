@@ -19,32 +19,14 @@ namespace ProjectNomad {
         // Half size must be positive (>0 in all dimensions)
         // Rotation must be a unit quaternion
 
-        // Avoid needing to use pointers via dangerous union type, see following for quick explanation regarding union:
-        // https://stackoverflow.com/a/3071899/3735890
-        // This allows us to not have redundant/unused data across all types, but need to be careful with usage
-        // Oof, also union with 3 floats which Unreal does -_- Not using FPVector as not sure if composite types works well here
-        union SharedColliderData {
-            struct {
-                fp halfSizeX{0}; // Positive halfwidth extents in each direction per axis from center point
-                fp halfSizeY{0};
-                fp halfSizeZ{0};
-            } Box;
-
-            struct {
-                fp radius{0}; // Radius of rounded ends of capsule
-                fp halfHeight{0}; // One half of total height of capsule, including rounded ends. Should be >= radius
-            } Capsule;
-
-            struct {
-                fp radius{0};
-            } Sphere;
-
-            // Using a named union and explicit constructors due to fp not having a default constructor
-            // See following for more info: https://www.codeproject.com/Answers/1187708/Having-problems-with-union-forcing-initiation-of-a#answer1
-            SharedColliderData() : Box(), Capsule(), Sphere() {}
-        };
-
-        SharedColliderData sharedCollisionData;
+        // Data describing shape of each specific collider shape
+        // TODO: Would be nice to combine these all into a union. Note that the union at the time (pre-June 21st, 2022)
+        //       was causing occasional build issues with UE5 (w/ C++20) and thus scrapped for time being
+        fp boxHalfSizeX{0}; // Positive halfwidth extents in each direction per axis from center point
+        fp boxHalfSizeY{0};
+        fp boxHalfSizeZ{0};
+        fp capsuleHalfHeight{0}; // One half of total height of capsule, including rounded ends. Should be >= radius
+        fp radius{0};            // Either radius of sphere OR radius of rounded ends of capsule
 
 #pragma region Setters/"Constructors"
 
@@ -125,9 +107,9 @@ namespace ProjectNomad {
                 return;
             }
 
-            sharedCollisionData.Box.halfSizeX = newHalfSize.x;
-            sharedCollisionData.Box.halfSizeY = newHalfSize.y;
-            sharedCollisionData.Box.halfSizeZ = newHalfSize.z;
+            boxHalfSizeX = newHalfSize.x;
+            boxHalfSizeY = newHalfSize.y;
+            boxHalfSizeZ = newHalfSize.z;
         }
 
         FPVector getBoxHalfSize() const {
@@ -137,7 +119,7 @@ namespace ProjectNomad {
             }
 
             return {
-                sharedCollisionData.Box.halfSizeX, sharedCollisionData.Box.halfSizeY, sharedCollisionData.Box.halfSizeZ
+                boxHalfSizeX, boxHalfSizeY, boxHalfSizeZ
             };
         }
 
@@ -147,7 +129,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            sharedCollisionData.Capsule.radius = newRadius;
+            radius = newRadius;
         }
 
         fp getCapsuleRadius() const {
@@ -156,7 +138,7 @@ namespace ProjectNomad {
                 return fp{0};
             }
 
-            return sharedCollisionData.Capsule.radius;
+            return radius;
         }
 
         void setCapsuleHalfHeight(const fp& newHalfHeight) {
@@ -165,7 +147,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            sharedCollisionData.Capsule.halfHeight = newHalfHeight;
+            capsuleHalfHeight = newHalfHeight;
         }
 
         fp getCapsuleHalfHeight() const {
@@ -174,7 +156,7 @@ namespace ProjectNomad {
                 return fp{0};
             }
 
-            return sharedCollisionData.Capsule.halfHeight;
+            return capsuleHalfHeight;
         }
 
         void setSphereRadius(const fp& newRadius) {
@@ -183,7 +165,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            sharedCollisionData.Sphere.radius = newRadius;
+            radius = newRadius;
         }
 
         fp getSphereRadius() const {
@@ -192,7 +174,7 @@ namespace ProjectNomad {
                 return fp{0};
             }
 
-            return sharedCollisionData.Sphere.radius;
+            return radius;
         }
 
 #pragma endregion
@@ -250,14 +232,14 @@ namespace ProjectNomad {
                 case ColliderType::Capsule:
                     return "Capsule center: {" + center.toString()
                         + "}, rotation: {" + rotation.toString()
-                        + "}, radius: {" + std::to_string(static_cast<float>(sharedCollisionData.Capsule.radius))
+                        + "}, radius: {" + std::to_string(static_cast<float>(radius))
                         + "}, halfHeight: {" + std::to_string(
-                            static_cast<float>(sharedCollisionData.Capsule.halfHeight))
+                            static_cast<float>(capsuleHalfHeight))
                         + "}";
 
                 case ColliderType::Sphere:
                     return "Sphere center: {" + center.toString()
-                        + "}, radius: {" + std::to_string(static_cast<float>(sharedCollisionData.Sphere.radius))
+                        + "}, radius: {" + std::to_string(static_cast<float>(radius))
                         + "}";
 
                 default:

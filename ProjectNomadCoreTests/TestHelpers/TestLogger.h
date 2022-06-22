@@ -15,6 +15,7 @@ public:
     ~TestLogger() override {}
 
     bool didLoggingOccur();
+    void resetLogging();
 
 #pragma region ILogger Methods
     
