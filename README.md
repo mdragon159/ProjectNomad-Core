@@ -64,3 +64,62 @@ Collision layers (eg, set camera to not collide against player and enemies)
 - Trying to avoid pointers (including interfaces/virtual methods and overloads) as much as possible for performance reasons
 - Likewise, trying to avoid object oriented programming as much as possible
 - Also header-only as is a pain dealing with linker (esp with Unreal)
+
+## Style Guide
+
+After much deliberation... I'm not a fan of a single style guide, due to the mismatch of prior
+experiences with styles in other languages (such as Java and C#) and dislike of Unreal style
+vs my personal preference.
+
+Thus, taking note of preferred style below:
+
+### Inspirations
+- [Google Style Guide](https://google.github.io/styleguide/cppguide.html) is decent but not perfect
+- Recommended talk: [When C++ Style Guides Contradict](https://www.youtube.com/watch?v=WRQ1xqYBKgc)
+- Also not necessarily style but good talk to add here nonetheless: [Breaking Dependencies: The SOLID Principles](https://www.youtube.com/watch?v=Ntraj80qN2k)
+
+### General
+- Use 4 space indenting
+  - Use 2 spaces for `public`/`protected`/`private` declarations
+- 120 line character limit. Try to stick to character limit whenever possible (ie, have good reason when breaking rule)
+
+- Use const and constexpr wherever possible
+- Do NOT capture everything by reference for lambdas (eg, `[&]`). Use `[this]` if need reference to self
+- Follow class format from [Google Style Guide](https://google.github.io/styleguide/cppguide.html#Class_Format)
+  - One `public`, `protected`, and `private` section each, in that order
+  - Prefer functions before data members
+
+### Naming
+- Follow variable, constant, enumerator, and function names from 
+  [Google Style Guide](https://google.github.io/styleguide/cppguide.html#Variable_Names) *EXCEPT* 
+  - Variables should be lowercase with underscore (snake_case)
+    - So `table_name` instead of `tableName`. Yes I normally like camelCase too
+    - Struct member variables should be identical to above
+  - Class data members (but NOT struct data members) should have a trailing underscore
+    - Eg, `table_name_`
+  - Constants should have a leading `k` followed by mixed case
+    - Eg, `kDaysInAWeek = 7`
+  - All function names should have "mixed" case (PascalCase)
+    - Eg, `DoSomeStuff()`
+- Variables should be in camelCase
+  - So `tableName` instead of `table_name`
+  - Struct member variables should be identical to above
+- Class data members (but NOT struct data members) should have a leading `m`
+  - Eg, `mTableTable` instead of `table_name` or `tableName_`
+    - That trailing underscore looks terrible when calling member functions or such
+- Constants should have a leading `k` followed by mixed case. Enums should also follow this
+  - Eg, `kDaysInAWeek = 7`
+  - This is taken straight from the [Google Style guide](https://google.github.io/styleguide/cppguide.html#Constant_Names)
+    as it _seems_ to work pretty well with other rules
+
+### Pointers
+- Don't use raw pointers except when absolutely necessary 
+  - Prefer passing around references when possible instead
+- Unreal: Use `TUniquePtr` when owning an object and `TWeakPtr` when not owning an object
+  - [Link to Unreal Smart Pointer Library documentation](https://docs.unrealengine.com/4.27/en-US/ProgrammingAndScripting/ProgrammingWithCPP/UnrealArchitecture/SmartPointerLibrary/)
+  - Note that this means something pointed towards COULD be garbage collected. Thus we'll need to
+    to be very careful with the lifetime of all objects pointed towards at all times
+  - Preferably, this means "owned" pointers are only held by the `GameInstance` and the 
+    `GameInstance` is the only object which creates or destroys other objects which it points to
+- Likewise, for native C++ code use `std::unique_ptr` and `std::weak_ptr`
+  - [Link to unique_ptr documentation](https://en.cppreference.com/w/cpp/memory/unique_ptr)

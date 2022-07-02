@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 #include <fpm/fixed.hpp>
 
 namespace ProjectNomad {
