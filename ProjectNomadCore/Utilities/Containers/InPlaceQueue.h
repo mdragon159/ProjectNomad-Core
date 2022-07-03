@@ -7,6 +7,7 @@ namespace ProjectNomad {
     /// Queue in place with fixed size. Intended to be alternative to std::queue for snapshot/memcpy behavior,
     ///     as std::queue's storage is effectively a pointer to elsewhere in memory.
     /// </summary>
+    // TODO: This is a stack (first-in-last-out), NOT a queue (FIFO)! Fix this!
     template <typename ContentType, uint32_t MaxSize>
     class InPlaceQueue {
         static_assert(MaxSize > 0, "MaxSize must be greater than 0");
@@ -24,8 +25,8 @@ namespace ProjectNomad {
         uint32_t getSize() {
             return headIndex;
         }
-
-        // Returns true if succeeds
+        
+        /// <returns>Returns true if succeeds, false otherwise</returns>
         bool push(const ContentType& element) {
             if (headIndex >= MaxSize) {
                 return false;
@@ -40,6 +41,7 @@ namespace ProjectNomad {
             return array[headIndex - 1]; // May be out of range if no elements but leaving that as a concern for user
         }
 
+        /// <returns>Returns true if succeeds, false otherwise</returns>
         bool pop() {
             if (headIndex == 0) {
                 return false;
