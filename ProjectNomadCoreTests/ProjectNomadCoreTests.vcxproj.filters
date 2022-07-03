@@ -19,6 +19,7 @@
     <ClCompile Include="Utilities\Containers\FlexArrayTests.cpp" />
     <ClCompile Include="Utilities\Containers\InPlaceQueueTests.cpp" />
     <ClCompile Include="TestHelpers\TestLogger.cpp" />
+    <ClCompile Include="Utilities\Containers\RingBufferTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
