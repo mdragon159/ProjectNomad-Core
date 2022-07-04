@@ -10,6 +10,6 @@ namespace ProjectNomad {
     public:
         virtual ~BaseSystem() {}
 
-        virtual void update(entt::registry& registry) {}
+        virtual void Update(entt::registry& registry) {}
     };
 }

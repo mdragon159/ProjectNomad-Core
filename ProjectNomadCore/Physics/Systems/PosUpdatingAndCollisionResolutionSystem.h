@@ -23,7 +23,7 @@ namespace ProjectNomad {
         : logger(logger), physicsManager(physicsManager), collisionResolutionHelper(logger) {}
         ~PosUpdatingAndCollisionResolutionSystem() override {}
         
-        void update(entt::registry& registry) override {
+        void Update(entt::registry& registry) override {
             // Iterate over all (currently) physics supported actors...
             auto view = registry.view<TransformComponent, PhysicsComponent, DynamicColliderComponent>();
             for (auto &&[entityId, transform, physicsComp, colliderComp] : view.each()) {
