@@ -8,6 +8,13 @@
 namespace ProjectNomad {
     // Note that SnapshotType should NOT have any pointers as snapshot restoration will be ineffective.
     // This includes std::array and callbacks.
+
+    /// <summary>
+    /// Encapsulates snapshot data and related behavior specific to rollbacks.
+    /// ie this does not define what a snapshot is nor when to take one, but rather is responsible for:
+    /// - Storing snapshots for rollback usage (eg, one per frame and just enough data stored for all rollback needs)
+    /// - Retrieving relevant snapshot for any possible rollback usage
+    /// </summary>
     template <typename SnapshotType>
     class RollbackSnapshotManager {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
