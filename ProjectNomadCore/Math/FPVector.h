@@ -13,7 +13,7 @@ namespace ProjectNomad {
         fp z;
 
         FPVector() : x(0), y(0), z(0) {}
-        FPVector(const fp& val): x(val), y(val), z(val) {}
+        explicit FPVector(const fp& val): x(val), y(val), z(val) {}
         FPVector(fp x, fp y, fp z) : x(x), y(y), z(z) {}
 
         static FPVector zero() {

@@ -46,7 +46,7 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(SimpleWrongTypeErrors, isBoxAndBoxColliding_whenSecondColliderNotInitialized_thenLogsError) {
-        colliderA.setBox(FPVector::zero(), fp{5});
+        colliderA.setBox(FPVector::zero(), FPVector(fp{5}));
 
         bool result = simpleCollisions.isBoxAndBoxColliding(colliderA, colliderB);
         EXPECT_FALSE(result);
@@ -82,7 +82,7 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(SimpleWrongTypeErrors, isBoxAndCapsuleColliding_whenSecondColliderNotInitialized_thenLogsError) {
-        colliderA.setBox(FPVector::zero(), fp{5});
+        colliderA.setBox(FPVector::zero(), FPVector(fp{5}));
 
         bool result = simpleCollisions.isBoxAndCapsuleColliding(colliderA, colliderB);
         EXPECT_FALSE(result);
@@ -94,7 +94,7 @@ namespace SimpleCollisionsTests {
     }
 
     TEST_F(SimpleWrongTypeErrors, isBoxAndSphereColliding_whenSecondColliderNotInitialized_thenLogsError) {
-        colliderA.setBox(FPVector::zero(), fp{5});
+        colliderA.setBox(FPVector::zero(), FPVector(fp{5}));
 
         bool result = simpleCollisions.isBoxAndSphereColliding(colliderA, colliderB);
         EXPECT_FALSE(result);
