@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "pchNCT.h"
 
 #include "TestHelpers/TestHelpers.h"
 #include "Physics/Collider.h"

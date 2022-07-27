@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "pchNCT.h"
 
 #include "Math/FixedPoint.h"
 #include "TestHelpers/TestHelpers.h"

@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "pchNCT.h"
 #include "TestLogger.h"
 
 bool TestLogger::didLoggingOccur() {

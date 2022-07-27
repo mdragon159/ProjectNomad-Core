@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "pchNCT.h"
 #include "Physics/Ray.h"
 
 using namespace ProjectNomad;
