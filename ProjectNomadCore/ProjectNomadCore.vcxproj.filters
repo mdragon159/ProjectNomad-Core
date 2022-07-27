@@ -44,7 +44,7 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Vendor\EnTT\entt.hpp" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="pchNC.h" />
     <ClInclude Include="Physics\Collider.h" />
     <ClInclude Include="Physics\SimpleCollisions.h" />
     <ClInclude Include="Physics\ComplexCollisions.h" />
@@ -200,6 +200,7 @@
     <ClInclude Include="Vendor\EOS\Include\Windows\eos_Windows.h" />
     <ClInclude Include="Vendor\EOS\Include\Windows\eos_Windows_base.h" />
     <ClInclude Include="Vendor\random\random.hpp" />
+    <ClInclude Include="Utilities\CoreEnumType.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Physics">
@@ -225,6 +226,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="pchNC.cpp" />
   </ItemGroup>
 </Project>
