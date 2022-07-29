@@ -1,6 +1,6 @@
 #pragma once
 #include "GameCore/PlayerInput.h"
-#include "Rollback/RollbackStaticSettings.h"
+#include "Rollback/Old/OldRollbackStaticSettings.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
@@ -35,7 +35,7 @@ namespace ProjectNomad {
 
     // For now, send enough inputs always to fill rollback info
     // FUTURE: Minimize packet size via minimizing PlayerInput size and decreasing this var as appropriate
-    static constexpr FrameType INPUTS_HISTORY_SIZE = RollbackStaticSettings::MaxRollbackFrames;
+    static constexpr FrameType INPUTS_HISTORY_SIZE = OldRollbackStaticSettings::MaxRollbackFrames;
     using InputHistoryArray = std::array<PlayerInput, INPUTS_HISTORY_SIZE>;
     struct InputUpdateMessage : BaseNetMessage {
         FrameType updateFrame;

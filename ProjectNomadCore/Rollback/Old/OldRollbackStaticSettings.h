@@ -2,7 +2,7 @@
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
-    class RollbackStaticSettings {
+    class OldRollbackStaticSettings {
     public:
         static constexpr bool UseLockstep = false;
         

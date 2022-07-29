@@ -26,7 +26,7 @@ namespace ProjectNomad {
             }
 
             // Support "TCP" for lockstep testing, but otherwise use "UDP" for speed
-            PacketReliability packetReliability = RollbackStaticSettings::UseLockstep ?
+            PacketReliability packetReliability = OldRollbackStaticSettings::UseLockstep ?
                                             PacketReliability::ReliableOrdered : PacketReliability::UnreliableUnordered;
 
             // Finally send the actual message
