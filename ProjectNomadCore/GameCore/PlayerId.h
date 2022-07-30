@@ -7,6 +7,8 @@ namespace ProjectNomad {
         INVALID,
         Player1,
         Player2,
+        Player3,
+        Player4,
         
         Spectator
     };

@@ -5,6 +5,7 @@
 namespace ProjectNomad {
     struct RollbackSettings {
         bool useLockstep = false;
+        bool useSyncTest = false;
 
         // If this is negative then "negative input delay" feature will be used.
         // "Negative input delay" best explained by this: https://medium.com/@yosispring/input-buffering-action-canceling-and-also-forbidden-knowledge-47a3f8a95151
@@ -15,7 +16,7 @@ namespace ProjectNomad {
     };
 
     struct RollbackStaticSettings {
-        static constexpr FrameType kMaxInputDelay = 10;
+        static constexpr FrameType kMaxInputDelay = 10; // Does not affect negative input delay
         
         // Rollback up to this number of frames. Does not impact local "negative input delay" feature.
         // ie, if for some reason trying to test negative input delay locally that's bigger than this number, than

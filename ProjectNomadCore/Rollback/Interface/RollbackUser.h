@@ -34,7 +34,7 @@ namespace ProjectNomad {
         * ie, if game state is currently at frame 10, then one call to this method is expected to process frame 10.
         * Thereafter the next call is expected to process frame 11. 
         **/
-        virtual void ProcessFrame() = 0;
+        virtual void ProcessFrame(const PlayerInput& localPlayerInput) = 0;
 
         /**
         * Identical to ProcessFrame except expecting rendering to not be necessary.
@@ -60,6 +60,6 @@ namespace ProjectNomad {
         * @param allPlayerInputsForFrame - all player inputs for the given frame. Note that this will match the
         *                                  number of players in the current game  
         **/
-        virtual void OnInputsExitRollbackWindow(FrameType frame, const std::initializer_list<PlayerInput>& allPlayerInputsForFrame) = 0;
+        // virtual void OnInputsExitRollbackWindow(FrameType frame, const std::initializer_list<const PlayerInput&>& allPlayerInputsForFrame) = 0;
     };
 }

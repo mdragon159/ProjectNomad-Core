@@ -1,9 +1,9 @@
 #pragma once
 #include "InputBuffer.h"
-#include "InputPredictor.h"
+#include "Rollback/InputPredictor.h"
 #include "RollbackCommunicationHandler.h"
 #include "RollbackManagerGameState.h"
-#include "RollbackSnapshotManager.h"
+#include "Rollback/Model/RollbackSnapshotManager.h"
 #include "OldRollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
