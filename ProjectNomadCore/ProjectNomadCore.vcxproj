@@ -128,6 +128,7 @@
     <ClInclude Include="Physics\Simplex.h" />
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Physics\Utility\CollisionResolutionHelper.h" />
+    <ClInclude Include="Rollback\RollbackInputManager.h" />
     <ClInclude Include="Rollback\InputPredictor.h" />
     <ClInclude Include="Rollback\Model\RollbackSessionInfo.h" />
     <ClInclude Include="Rollback\Model\RollbackSettings.h" />

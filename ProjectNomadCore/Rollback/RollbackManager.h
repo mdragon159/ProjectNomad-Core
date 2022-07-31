@@ -1,6 +1,7 @@
 #pragma once
 
 #include "InputPredictor.h"
+#include "RollbackInputManager.h"
 #include "GameCore/PlayerId.h"
 #include "Interface/RollbackUser.h"
 #include "Model/RollbackSessionInfo.h"
@@ -27,12 +28,20 @@ namespace ProjectNomad {
         * @param rollbackSettings - settings for rollback behavior such as input delay
         * @param rollbackSessionInfo - session-specific settings such as number of players
         **/
-        void OnSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
+        void OnSessionStart(RollbackSettings rollbackSettings, RollbackSessionInfo rollbackSessionInfo) {
             if (mIsSessionRunning) {
-                mLogger.logWarnMessage("RollbackManager::StartGame", "Start called while already running!");
+                mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Start called while already running!");
+            }
+
+            // Assure settings are within expected limits
+            if (std::abs(rollbackSettings.localInputDelay) > RollbackStaticSettings::kMaxInputDelay) {
+                mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Provided input delay is outside expected window");
+                rollbackSettings.localInputDelay = 0; // Assure no downstream systems break
             }
             
             SetupStateForSessionStart(rollbackSettings, rollbackSessionInfo);
+            mInputManager.OnSessionStart(rollbackSettings, rollbackSessionInfo);
+            
             mIsSessionRunning = true;
         }
         
@@ -116,8 +125,8 @@ namespace ProjectNomad {
                 );
             }
             
-            // Store input for given frame
-            currentFrameLocalInput = localPlayerInput;
+            // Store input for given frame. This both handles both input delay and historic lookup for rollbacks
+            mInputManager.AddLocalPlayerInput(currentFrame, localPlayerInput);
             // TODO: Send input to remote client (if any)
             // TODO: If local and doing negative input delay, then check against prediction and potentially rollback
 
@@ -128,7 +137,7 @@ namespace ProjectNomad {
 
         void HandleGameplayFrame(FrameType targetFrame) {
             // Grab input(s) for updating game
-            const PlayerInput& localPlayerInput = currentFrameLocalInput;
+            const PlayerInput& localPlayerInput = mInputManager.GetLocalPlayerInput(targetFrame);
 
             // Update game
             mRollbackUser.ProcessFrame(localPlayerInput);
@@ -139,16 +148,16 @@ namespace ProjectNomad {
             mSnapshotManager.storeSnapshot(targetFrame, snapshot);
         }
         
+        
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
 
         RollbackUser<SnapshotType>& mRollbackUser;
         RollbackSettings mRollbackSettings;
         RollbackSessionInfo mRollbackSessionInfo;
         
+        RollbackInputManager mInputManager;
+        // InputPredictor mInputPredictor;
         RollbackSnapshotManager<SnapshotType> mSnapshotManager;
-        InputPredictor mInputPredictor;
-        // TODO: RollbackInputManager
-        PlayerInput currentFrameLocalInput;
 
         bool mIsSessionRunning = false;
         FrameType mLastProcessedFrame = 0;

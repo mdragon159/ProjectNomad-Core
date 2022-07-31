@@ -17,11 +17,11 @@ namespace ProjectNomad {
     class RingBuffer {
         static_assert(Size > 0, "MaxSize must be greater than 0");
 
-        ContentType array[Size];
+        ContentType array[Size] = {};
         uint32_t headIndex = 0; // Points to where next element should be added
 
     public:
-        RingBuffer() {}
+        RingBuffer() = default;
         
         static constexpr uint32_t getSize() {
             return Size;

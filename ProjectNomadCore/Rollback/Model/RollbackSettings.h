@@ -16,11 +16,16 @@ namespace ProjectNomad {
     };
 
     struct RollbackStaticSettings {
-        static constexpr FrameType kMaxInputDelay = 10; // Does not affect negative input delay
+        static constexpr FrameType kMaxInputDelay = 30; // TODO: Change back to 10. For now using 30 for clear effects while testing
         
         // Rollback up to this number of frames. Does not impact local "negative input delay" feature.
         // ie, if for some reason trying to test negative input delay locally that's bigger than this number, than
         // the rollback window will simply be the negative input delay.
         static constexpr FrameType kMaxRollbackFrames = 10;
+
+        // Easy access to calculation for  max "buffer" windows for all relevant rollback windows
+        // Size includes rollback window + EITHER negative or positive input delay max value + 1 for "current" frame
+        // (Note that can't use both positive and negative input delay at same time)
+        static constexpr FrameType kMaxBufferWindow = kMaxRollbackFrames + kMaxInputDelay + 1;
     }; 
 }
