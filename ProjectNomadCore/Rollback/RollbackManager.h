@@ -61,8 +61,8 @@ namespace ProjectNomad {
             if (currentFrame != mLastProcessedFrame + 1) {
                 mLogger.logErrorMessage(
                     "RollbackManager::OnUpdate",
-                    "Received unexpected frame which should be one greater than last processed frame! mLastProcessedFrame: "
-                    + std::to_string(mLastProcessedFrame) + ", provided frame: " + std::to_string(currentFrame)
+                    "Received unexpected frame which should be one greater than last processed frame! Expected frame: "
+                    + std::to_string(mLastProcessedFrame + 1) + ", provided frame: " + std::to_string(currentFrame)
                 );
                 return; // Don't try to proceed so frame drift is as noticeable as possible
             }
@@ -126,7 +126,7 @@ namespace ProjectNomad {
             // If local session then try setting up special local-only features
             if (!rollbackSessionInfo.isNetworkedMPSession) {
                 // Negative input delay setup (ie, local prediction/forward simulation)
-                mIsUsingLocalNegativeInputDelay = rollbackSettings.onlineInputDelay < 0;
+                mIsUsingLocalNegativeInputDelay = rollbackSettings.localInputDelay < 0;
                 if (mIsUsingLocalNegativeInputDelay) {
                     mLocalPredictionAmount = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
                 }
@@ -161,7 +161,7 @@ namespace ProjectNomad {
                 // Also doing before any rollbacks so we have the "source of truth" for relevant frame already stored.
                 mInputManager.AddLocalPlayerInput(targetFrame, localPlayerInput);
                 
-                // Compare against actual input (TODO: Is same frame input?)
+                // Compare against actual input to determine if rollback is necessary for accurate simulation
                 bool shouldRollback = predictedInput != localPlayerInput;
                 if (shouldRollback) {
                     mLogger.logInfoMessage("OnFixedGameplayUpdate", "Rollback situation detected yay!");
