@@ -30,11 +30,13 @@ namespace ProjectNomad {
         /**
         * Callback to process gameplay for a single "frame".
         * 
-        * Underlying code should mark that frame was processed and remember to move one frame forward.
+        * Underlying code should remember to move one frame forward.
         * ie, if game state is currently at frame 10, then one call to this method is expected to process frame 10.
         * Thereafter the next call is expected to process frame 11. 
+        * @param expectedFrame - frame number that is expected to be processed. Only intended for debug assistance
+        * @param localPlayerInput - Input to be used with frame processing
         **/
-        virtual void ProcessFrame(const PlayerInput& localPlayerInput) = 0;
+        virtual void ProcessFrame(FrameType expectedFrame, const PlayerInput& localPlayerInput) = 0;
 
         /**
         * Identical to ProcessFrame except expecting rendering to not be necessary.
@@ -42,7 +44,7 @@ namespace ProjectNomad {
         * This callback is used when a rollback occurs and then need to re-process frames quickly back to back.
         * After a rollback, only this method and OnPostRollback will be called instead of ProcessFrame
         **/
-        virtual void ProcessFrameWithoutRendering() = 0;
+        virtual void ProcessFrameWithoutRendering(FrameType expectedFrame, const PlayerInput& localPlayerInput) = 0;
 
         /**
         * Called after a rollback occurs and frames are finished re-processing.

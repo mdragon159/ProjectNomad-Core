@@ -7,6 +7,11 @@
 #include "Utilities/Containers/RingBuffer.h"
 
 namespace ProjectNomad {
+    /**
+    * This class encapsulates all input related logic for rollback related features, including input delay.
+    * Note that this class is expected to use in-place memory (eg, NOT std::vectors) to support memcpy for direct
+    * snapshot creation and restoration.
+    **/
     class RollbackInputManager {
       public:
         /**
@@ -84,16 +89,22 @@ namespace ProjectNomad {
             // Simply look up the already stored value for that frame
             return mLocalPlayerInputs.get(TargetFrameToLocalPlayerInputBufferOffset(targetFrame));
         }
-
+         
         /**
-        * Returns predicted input used for last *series* of predictions. Note that this works as current prediction logic
-        * is to simply repeat the last known input for ALL prediction frames.
-        * WARNING: Called the add input operation will overwrite what this returns! Should call this BEFORE storing new input
-        * @returns predicted input since prior add call.
+        * Retrieves prediction used for the provided target frame.
+        * WARNING: Calling the add input operation will overwrite what this returns! Should call this BEFORE storing new input
+        * @param targetFrame - "real" frame (input delay adjusted) to retrieve input for
+        * @returns predicted input used for target frame.
         *          NOT returning by const reference as theoretically enough writes would modify this value. Shouldn't
         *          be necessary but nice to not have to think about the underlying data storage's limitations.
         **/
-        PlayerInput GetLatestLocalPlayerPredictedInput() const {
+        PlayerInput GetLocalPlayerPredictedInputForFrame(const FrameType targetFrame) const {
+            // Note that - with current prediction logic - we reuse the same prediction for ALL prediction frames
+            // (until a new input is provided).
+            //
+            // Thus, we don't actually need the frame input parameter BUT we define it anyways in order to mask
+            // implementation from caller. After all, prediction logic may change in future and would be nice to not
+            // have to update callers too.
             return GetPredictedLocalPlayerInput();
         }
 
