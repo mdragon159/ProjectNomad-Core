@@ -58,11 +58,11 @@ namespace ProjectNomad {
             }
             // Sanity check: Verify that the frame is expected, which should always be called one frame forward
             // (aside from first frame processing)
-            if (mLastProcessedFrame != 0 && currentFrame != mLastProcessedFrame + 1) {
+            if (currentFrame != mLastProcessedFrame + 1) {
                 mLogger.logErrorMessage(
                     "RollbackManager::OnUpdate",
-                    "Received unexpected frame! mLastProcessedFrame: " + std::to_string(mLastProcessedFrame) +
-                    ", currentFrame: " + std::to_string(currentFrame)
+                    "Received unexpected frame which should be one greater than last processed frame! mLastProcessedFrame: "
+                    + std::to_string(mLastProcessedFrame) + ", provided frame: " + std::to_string(currentFrame)
                 );
                 return; // Don't try to proceed so frame drift is as noticeable as possible
             }
@@ -119,12 +119,13 @@ namespace ProjectNomad {
         }
         
         void SetupStateForSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
-            // Reset relevant state
-            mLastProcessedFrame = 0;
+            // Reset last processed frame. Note that next frame to process is expected to be 0 as max + 1 = 0
+            // (due to unsigned int overflow being defined behavior) 
+            mLastProcessedFrame = std::numeric_limits<FrameType>::max();
 
             // If local session then try setting up special local-only features
             if (!rollbackSessionInfo.isNetworkedMPSession) {
-                // If appropriate, setup state for negative input delay (ie, local prediction/forward simulation)
+                // Negative input delay setup (ie, local prediction/forward simulation)
                 mIsUsingLocalNegativeInputDelay = rollbackSettings.onlineInputDelay < 0;
                 if (mIsUsingLocalNegativeInputDelay) {
                     mLocalPredictionAmount = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
@@ -238,6 +239,7 @@ namespace ProjectNomad {
         RollbackSnapshotManager<SnapshotType> mSnapshotManager;
 
         bool mIsSessionRunning = false;
-        FrameType mLastProcessedFrame = 0;
+        // Should always be one less than next frame to process (including overflow) 
+        FrameType mLastProcessedFrame = std::numeric_limits<FrameType>::max();
     };
 }
