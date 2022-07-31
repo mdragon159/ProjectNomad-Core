@@ -33,11 +33,7 @@ namespace ProjectNomad {
                 mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Start called while already running!");
             }
 
-            // Assure settings are within expected limits
-            if (std::abs(rollbackSettings.localInputDelay) > RollbackStaticSettings::kMaxInputDelay) {
-                mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Provided input delay is outside expected window");
-                rollbackSettings.localInputDelay = 0; // Assure no downstream systems break
-            }
+            AssureSettingsAreValid(rollbackSettings, rollbackSessionInfo);
             
             SetupStateForSessionStart(rollbackSettings, rollbackSessionInfo);
             mInputManager.OnSessionStart(rollbackSettings, rollbackSessionInfo);
@@ -64,6 +60,19 @@ namespace ProjectNomad {
             }
 
             CheckAndHandleRollbackForNetworkedMPSession();
+
+            // If using negative input delay but haven't yet processed initial prediction frames...
+            if (mIsUsingLocalNegativeInputDelay && currentFrame == 0) {
+                // Run simulation for those initial frames so we're actually AHEAD of the provided input.
+                //  Note that this relies on integration with RollbackInputManager, which handles the actual input prediction.
+                //  (eg, InputManager will discard passed in input for these initial frames)
+                for (FrameType i = 0; i < mLocalPredictionAmount; i++) {
+                    OnFixedGameplayUpdate(i, localPlayerInput);
+                }
+
+                // In case we're next doing an actual fixed gameplay update: Remember correct frame to next process
+                currentFrame = mLocalPredictionAmount;
+            }
             
             // Any further work is only appropriate for fixed gameplay frames
             if (isFixedGameplayFrame) {
@@ -96,12 +105,28 @@ namespace ProjectNomad {
         //                  Could potentially be used for replay rewinding as well.
 
       private:
+        void AssureSettingsAreValid(RollbackSettings& rollbackSettings, RollbackSessionInfo& rollbackSessionInfo) {
+            // Assure that input delay is not outside expected range
+            auto localInputDelayMagnitude = static_cast<FrameType>(std::abs(rollbackSettings.localInputDelay));
+            if (localInputDelayMagnitude > RollbackStaticSettings::kMaxInputDelay) {
+                mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Provided input delay is outside expected window");
+                rollbackSettings.localInputDelay = 0; // Assure no downstream systems break
+            }
+        }
+        
         void SetupStateForSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
             // Reset relevant state
             mLastProcessedFrame = 0;
 
-            // Setup relevant settings
-            mRollbackSettings = rollbackSettings;
+            // If local session then try setting up special local-only features
+            if (!rollbackSessionInfo.isNetworkedMPSession) {
+                // If appropriate, setup state for negative input delay (ie, local prediction/forward simulation)
+                mIsUsingLocalNegativeInputDelay = rollbackSettings.onlineInputDelay < 0;
+                if (mIsUsingLocalNegativeInputDelay) {
+                    mLocalPredictionAmount = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
+                }
+            }
+
             mRollbackSessionInfo = rollbackSessionInfo;
         }
 
@@ -115,45 +140,59 @@ namespace ProjectNomad {
         }
 
         void OnFixedGameplayUpdate(FrameType currentFrame, const PlayerInput& localPlayerInput) {
-            // Debug helper: Check that frame is expected, which should always be called one frame forward
-            // (aside from first frame processing)
-            if (mLastProcessedFrame != 0 && currentFrame != mLastProcessedFrame + 1) {
-                mLogger.logWarnMessage(
-                    "RollbackManager::OnFixedGameplayUpdate",
-                    "Received unexpected frame! mLastProcessedFrame: " + std::to_string(mLastProcessedFrame) +
-                    ", currentFrame: " + std::to_string(currentFrame)
-                );
+            if (mIsUsingLocalNegativeInputDelay) {
+                // TODO: Check against prediction and rollback + re-process if necessary
             }
             
             // Store input for given frame. This both handles both input delay and historic lookup for rollbacks
             mInputManager.AddLocalPlayerInput(currentFrame, localPlayerInput);
+            
             // TODO: Send input to remote client (if any)
-            // TODO: If local and doing negative input delay, then check against prediction and potentially rollback
 
             // Finally handle gameplay update for current frame
             HandleGameplayFrame(currentFrame);
-            mLastProcessedFrame = currentFrame;
         }
 
+        /**
+        * Actually do a gameplay update for a given frame
+        * @param targetFrame - frame to process update for.
+        *                       Note that this should always be the NEXT expected frame to update with relation to internal
+        *                       tracking. ie, if we rollback and re-process frames, internal state of this manager
+        *                       should also have been accordingly updated.
+        **/
         void HandleGameplayFrame(FrameType targetFrame) {
+            // Debug helper: Check that frame is expected, which should always be called one frame forward
+            // (aside from first frame processing)
+            if (mLastProcessedFrame != 0 && targetFrame != mLastProcessedFrame + 1) {
+                mLogger.logWarnMessage(
+                    "RollbackManager::HandleGameplayFrame",
+                    "Received unexpected frame! mLastProcessedFrame: " + std::to_string(mLastProcessedFrame) +
+                    ", targetFrame: " + std::to_string(targetFrame)
+                );
+            }
+            
             // Grab input(s) for updating game
             const PlayerInput& localPlayerInput = mInputManager.GetLocalPlayerInput(targetFrame);
 
-            // Update game
+            // Update game. Note that this is also expected to increment RollbackUser's frame tracking as well 
             mRollbackUser.ProcessFrame(localPlayerInput);
             
             // Store game state
             SnapshotType snapshot = {};
             mRollbackUser.GenerateSnapshot(snapshot);
             mSnapshotManager.storeSnapshot(targetFrame, snapshot);
+
+            mLastProcessedFrame = targetFrame;
         }
         
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
 
         RollbackUser<SnapshotType>& mRollbackUser;
-        RollbackSettings mRollbackSettings;
         RollbackSessionInfo mRollbackSessionInfo;
+
+        bool mIsUsingLocalNegativeInputDelay = false;
+        FrameType mLocalPredictionAmount = 0;
         
         RollbackInputManager mInputManager;
         // InputPredictor mInputPredictor;

@@ -9,6 +9,11 @@
 namespace ProjectNomad {
     class RollbackInputManager {
       public:
+        /**
+        * Start a new session. Expected to be called before any other methods are used.
+        * @param rollbackSettings - Validated rollback settings to use
+        * @param rollbackSessionInfo - Validated session settings to use
+        **/
         void OnSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
             // Handle setting up input delay as necessary (eg, pre-fill inputs for initial delay)
             SetupInputDelay(rollbackSettings);
@@ -17,8 +22,28 @@ namespace ProjectNomad {
             mNextLocalFrameToStore = 0;
         }
 
-        void AddLocalPlayerInput(const FrameType targetFrame, const PlayerInput& localPlayerInput) {
-            // Sanity check: We should be only incrementally adding inputs for the local player
+        /**
+        * Adds player input for later retrieval. Expected to be called for a given frame BEFORE calling the respective Get.
+        *
+        * Note that (negative and positive) input delay is handled by this manager and thus it is NOT guaranteed that
+        * calling Get with the given target frame will return the same value.
+        * @param targetFrame - current frame from caller's perspective to add input for
+        * @param localPlayerInput - the input to store
+        **/
+        void AddLocalPlayerInput(FrameType targetFrame, const PlayerInput& localPlayerInput) {
+            if (mIsUsingLocalNegativeInputDelay) {
+                // If initial prediction frames, then *don't* add any input as using default inputs for these frames
+                if (targetFrame + 1 < mNegativeLocalInputDelay) {
+                    return;
+                }
+                
+                // Otherwise offset target frame for prediction frames as consuming code's simulation is technically
+                // AHEAD of stored inputs (the "source of truth" for player inputs).
+                // ie, help assure internal storage state only represents validated inputs from OUTSIDE prediction frames
+                targetFrame = targetFrame + 1 - mNegativeLocalInputDelay;
+            }
+            
+            // Sanity check: We should only be incrementally adding inputs for the local player
             if (targetFrame != mNextLocalFrameToStore) {
                 mLogger.logErrorMessage(
                     "RollbackInputManager::AddLocalPlayerInput",
@@ -31,10 +56,23 @@ namespace ProjectNomad {
             mLocalPlayerInputs.add(localPlayerInput); // Expectation: "Head" is always the last value we've received
             mNextLocalFrameToStore++;
         }
-        
+
+        /**
+        * Retrieves input for local player for given frame based on what's currently known.
+        * NOTE: 
+        * @param targetFrame - the frame to retrieve input for. This should be
+        * @returns "appropriate" input for given frame based on what was previously stored and input delay settings
+        **/
         const PlayerInput& GetLocalPlayerInput(const FrameType targetFrame) {
-            // Sanity check: Expecting calling code to always add input for a frame before trying to retrieve it
+            // Is target frame outside data that we've stored?
             if (targetFrame >= mNextLocalFrameToStore) {
+                // If using negative input delay, then valid input IF trying to retrieve input from within prediction window
+                if (mIsUsingLocalNegativeInputDelay && targetFrame <= GetMaxPredictionFrame()) {
+                    return GetPredictedLocalPlayerInput();
+                }
+                
+                // Otherwise invalid situation:
+                // Expecting calling code to always add input for a frame before trying to retrieve it
                 mLogger.logErrorMessage(
                     "RollbackInputManager::GetLocalPlayerInput",
                     "Bad frame input! Received target frame " + std::to_string(targetFrame)
@@ -43,13 +81,20 @@ namespace ProjectNomad {
                 return mLocalPlayerInputs.get(0); // Grab whatever is at head to ensure no out-of-bounds retrieval
             }
 
-            // Otherwise, assuming no negative input delay (unlikely case), simply look up the stored input
-            if (!mIsUsingLocalNegativeInputDelay) {
-                return mLocalPlayerInputs.get(TargetFrameToStoredInputBufferOffset(targetFrame));
-            }
+            // Simply look up the already stored value for that frame
+            return mLocalPlayerInputs.get(TargetFrameToLocalPlayerInputBufferOffset(targetFrame));
+        }
 
-            // Fun negative input delay case: Predict the future frame's input! 
-            return GetPredictedLocalPlayerInput(targetFrame);
+        /**
+        * Returns predicted input used for last *series* of predictions. Note that this works as current prediction logic
+        * is to simply repeat the last known input for ALL prediction frames.
+        * WARNING: Called the add input operation will overwrite what this returns! Should call this BEFORE storing new input
+        * @returns predicted input since prior add call.
+        *          NOT returning by const reference as theoretically enough writes would modify this value. Shouldn't
+        *          be necessary but nice to not have to think about the underlying data storage's limitations.
+        **/
+        PlayerInput GetLatestLocalPlayerPredictedInput() const {
+            return GetPredictedLocalPlayerInput();
         }
 
       private:
@@ -61,7 +106,10 @@ namespace ProjectNomad {
             if (mIsUsingLocalNegativeInputDelay) {
                 mIsUsingLocalNegativeInputDelay = true;
                 mNegativeLocalInputDelay = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
-                // TODO: Have input prediction in its own list...?
+
+                // Given "prediction" is just using latest actual input, add a default value to start with
+                // (If this is NOT done, then first predictions will be undefined/will vary depending on prior state)
+                mLocalPlayerInputs.add({});
             }
             // Using positive input delay...?
             else if (rollbackSettings.localInputDelay > 0) {
@@ -76,21 +124,33 @@ namespace ProjectNomad {
             }
         }
 
-        const PlayerInput& GetPredictedLocalPlayerInput(const FrameType targetFrame) {
-            // TODO: Use input prediction!
-            // BUT: What if the input is NOT in negative input delay space?
-            // eg, negative input delay = 3 frames. Gameplay is at frame 5 (so stored up to frame 5 worth of inputs)
-            //          BUT we're currently rolling back and want the known input for frame 1.
-            mLogger.logErrorMessage("GetLocalPlayerInput", "Not yet implemented negative input delay retrieval!");
+        const PlayerInput& GetPredictedLocalPlayerInput() const {
+            // Always predict that player will use the latest known input.
+
+            // Using this prediction as piggybacking off of typical FGC rollback algo findings: Using latest known input
+            //  will be accurate more often than not as player isn't really switching inputs that fast compared to how
+            //  fast simulation is.
             return mLocalPlayerInputs.get(0);
         }
 
-        uint32_t TargetFrameToStoredInputBufferOffset(const FrameType targetFrame) {
-            // Few invariants are expected:
-            // 1. If using positive InputDelay, then there are at least InputDelay inputs already stored before the "head"
-            // 2. "Head" is the latest input stored from gameplay (due to style of ring buffer). This also means for
-            //      frame 0, an input should be added BEFORE we try to retrieve. Which brings to next point...
-            // 3. Already verified that targetFrame < mNextLocalFrameToStore
+        FrameType GetMaxPredictionFrame() const {
+            // Eg, if at start of game (mNextLocalFrameToStore = 0) with 3 frames of negative input delay,
+            // then should be predicting from frames 0 to 2
+            return mNextLocalFrameToStore + mNegativeLocalInputDelay - 1;
+        }
+
+        /**
+        * Description
+        * Few invariants are expected:
+        * 1. If using positive InputDelay, then there are at least InputDelay inputs already stored before the "head"
+        * 2. "Head" is the latest input stored from gameplay (due to style of ring buffer). This also means for
+        *     frame 0, an input should be added BEFORE we try to retrieve. Which brings to next point...
+        * 3. Already verified that targetFrame < mNextLocalFrameToStore
+        * @param targetFrame - desired frame to retrieve input from storage 
+        * @returns offset to lookup desired input from relevant RingBuffer
+        **/
+        uint32_t TargetFrameToLocalPlayerInputBufferOffset(const FrameType targetFrame) {
+            // 
 
             FrameType offsetWithoutInputDelay = mNextLocalFrameToStore - targetFrame - 1; // Should result in 0 when targetFrame is one less than next frame to store
             FrameType offset = offsetWithoutInputDelay + mPositiveLocalInputDelay;
@@ -122,14 +182,17 @@ namespace ProjectNomad {
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
 
+        RingBuffer<PlayerInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs;
+        FrameType mNextLocalFrameToStore = 1000; // Starting session should set this back to 0. Cheap way for enforcing session start
+        
         // Input delay related vars
         // Note that using separate pos vs negative input delay vars to improve readability via simplifying math/conditionals
         bool mIsUsingLocalNegativeInputDelay = false;
         FrameType mPositiveLocalInputDelay = 0;
         FrameType mNegativeLocalInputDelay = 0;
 
-        FrameType mNextLocalFrameToStore = 1000; // Starting session should set this back to 0. Cheap way for enforcing session start
-        RingBuffer<PlayerInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs;
-        // TODO: Tracking var for translating where "retrieval head" is compared to RingBuffer head
+        // TODO: Combine complexity of RingBuffer + mNextLocalFrameToStore + mPositiveLocalInputDelay into its own class
+        //       as there's a whole lotta logic here just to encapsulate those relevant expectations.
+        //       ie, encapsulate the "source of truth" for inputs into its own class.
     };
 }

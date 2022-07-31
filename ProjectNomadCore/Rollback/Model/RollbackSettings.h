@@ -24,8 +24,8 @@ namespace ProjectNomad {
         static constexpr FrameType kMaxRollbackFrames = 10;
 
         // Easy access to calculation for  max "buffer" windows for all relevant rollback windows
-        // Size includes rollback window + EITHER negative or positive input delay max value + 1 for "current" frame
-        // (Note that can't use both positive and negative input delay at same time)
+        // Size includes rollback window + positive input delay max value + 1 for "current" frame
+        // (Note that no need to explicitly account for negative input delay
         static constexpr FrameType kMaxBufferWindow = kMaxRollbackFrames + kMaxInputDelay + 1;
     }; 
 }
