@@ -1,10 +1,10 @@
 #pragma once
 
 #include "RollbackInputManager.h"
+#include "RollbackSnapshotManager.h"
 #include "Interface/RollbackUser.h"
 #include "Model/RollbackSessionInfo.h"
 #include "Model/RollbackSettings.h"
-#include "Model/RollbackSnapshotManager.h"
 #include "Utilities/LoggerSingleton.h"
 #include "Utilities/Singleton.h"
 
@@ -185,6 +185,7 @@ namespace ProjectNomad {
 
         /**
         * Actually do gameplay update for next frame
+        * @param didRollbackOccur - true if rollback already occurred
         **/
         void HandleGameplayFrame(bool didRollbackOccur) {
             FrameType targetFrame = mLastProcessedFrame + 1;
@@ -203,7 +204,7 @@ namespace ProjectNomad {
             // Store game state
             SnapshotType snapshot = {};
             mRollbackUser.GenerateSnapshot(snapshot);
-            mSnapshotManager.storeSnapshot(targetFrame, snapshot);
+            mSnapshotManager.StoreSnapshot(targetFrame, snapshot);
             // TODO: Store internal rollback manager state
 
             // Finally internally remember that we processed this frame
@@ -211,14 +212,30 @@ namespace ProjectNomad {
         }
 
         /**
-        * Handles process of rolling back then re-processing relevant frames
+        * Handles process of rolling back then re-processing relevant frames. Relevant inputs are expected to be stored
+        * before calling this method.
         * @param firstFrameToReprocess - what frame was incorrect and thus needs to start re-processing from
         **/
         void HandleRollback(FrameType firstFrameToReprocess) {
-            // TODO: Sanity check inputs
+            // Calculate number of frames we actually need to re-process
+            // Eg: Last processed frame = 2, input = 0, so we want to redo 3 frames (0 through 2)
+            const FrameType numOfFramesToProcess = mLastProcessedFrame - firstFrameToReprocess + 1;
 
-            // Eg: mLastProcessedFrame = 2, input = 0, want to redo frames 4 frames (0 through 2)
-            const FrameType numOfFramesToProcess = mLastProcessedFrame - firstFrameToReprocess;
+            // Sanity check input
+            if (firstFrameToReprocess > mLastProcessedFrame) { // Should never occur during normal play (and not expecting overflow to occur normally)
+                mLogger.logWarnMessage(
+                    "RollbackManager::HandleRollback",
+                    "Non-existent frame to re-process! Last processed frame: " + std::to_string(mLastProcessedFrame) +
+                    ", input frame: " + std::to_string(firstFrameToReprocess)
+                );
+            }
+            if (numOfFramesToProcess > RollbackStaticSettings::kMaxRollbackFrames) {
+                mLogger.logWarnMessage(
+                    "RollbackManager::HandleRollback",
+                    "Trying to roll back beyond supported window! Last processed frame: " +
+                    std::to_string(mLastProcessedFrame) + ", input frame: " + std::to_string(firstFrameToReprocess)
+                );
+            }
             
             // TODO: Implement rollback!
             // 1. Restore snapshot for target frame (both for User and for self)
@@ -235,7 +252,6 @@ namespace ProjectNomad {
         FrameType mLocalPredictionAmount = 0;
         
         RollbackInputManager mInputManager;
-        // InputPredictor mInputPredictor;
         RollbackSnapshotManager<SnapshotType> mSnapshotManager;
 
         bool mIsSessionRunning = false;

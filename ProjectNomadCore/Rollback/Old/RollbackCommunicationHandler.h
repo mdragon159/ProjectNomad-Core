@@ -22,7 +22,7 @@ namespace ProjectNomad {
             InputHistoryArray inputHistory;
             for (FrameType i = 0; i < INPUTS_HISTORY_SIZE; i++) {
                 // Note that 0th spot is current frame's input
-                inputHistory[i] = remoteInputs.get(i);
+                inputHistory[i] = remoteInputs.Get(i);
             }
 
             // Support "TCP" for lockstep testing, but otherwise use "UDP" for speed

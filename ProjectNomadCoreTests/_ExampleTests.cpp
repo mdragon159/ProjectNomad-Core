@@ -1,14 +1,16 @@
 #include "pchNCT.h"
-#include "../SimLibrary/Physics/AABB.h"
 
-using namespace TopDownSimLibrary;
+#include "Math/FixedPoint.h"
+#include "TestHelpers/TestHelpers.h"
+
+using namespace ProjectNomad;
 
 namespace ExampleTests {
-
-  TEST(Example, SomethingElse) {
-    fp test = 1;
-    EXPECT_EQ(test, 1.f);
-    EXPECT_TRUE(true);
-  }
-
+    class ExampleTests : public BaseSimTest {};
+    
+    TEST_F(ExampleTests, SomethingElse) {
+        fp test = fp{1};
+        EXPECT_EQ(test, fp{1.f});
+        EXPECT_TRUE(true);
+    }
 }

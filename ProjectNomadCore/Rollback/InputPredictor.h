@@ -15,7 +15,7 @@ namespace ProjectNomad {
                                  const InputBuffer& inputBuffer) {
 
             // Simply retrieve the latest input we know about
-            return inputBuffer.get(0);
+            return inputBuffer.Get(0);
         }
     };
 }

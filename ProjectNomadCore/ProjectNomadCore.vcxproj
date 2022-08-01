@@ -134,7 +134,6 @@
     <ClInclude Include="Rollback\Model\RollbackSettings.h" />
     <ClInclude Include="Rollback\Interface\RollbackNetCommunicator.h" />
     <ClInclude Include="Rollback\Interface\RollbackUser.h" />
-    <ClInclude Include="Rollback\Model\RollbackSnapshotManager.h" />
     <ClInclude Include="Rollback\RollbackManager.h" />
     <ClInclude Include="Rollback\Old\InputBuffer.h" />
     <ClInclude Include="Rollback\Old\RollbackCommunicationHandler.h" />
@@ -142,6 +141,7 @@
     <ClInclude Include="Rollback\Old\RollbackManagerGameState.h" />
     <ClInclude Include="Rollback\Old\OldRollbackStaticSettings.h" />
     <ClInclude Include="Rollback\Old\RollbackUpdateResult.h" />
+    <ClInclude Include="Rollback\RollbackSnapshotManager.h" />
     <ClInclude Include="Secrets\NetworkSecrets.example.h" />
     <ClInclude Include="Secrets\NetworkSecrets.h" />
     <ClInclude Include="Utilities\Assertion.h" />

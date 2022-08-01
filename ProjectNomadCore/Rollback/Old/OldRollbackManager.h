@@ -1,9 +1,10 @@
 #pragma once
+
 #include "InputBuffer.h"
 #include "Rollback/InputPredictor.h"
 #include "RollbackCommunicationHandler.h"
 #include "RollbackManagerGameState.h"
-#include "Rollback/Model/RollbackSnapshotManager.h"
+#include "Rollback/RollbackSnapshotManager.h"
 #include "OldRollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
@@ -102,7 +103,7 @@ namespace ProjectNomad {
         }
 
         void onGameFrameEnd(SnapshotType& snapshot) {
-            snapshotManager.storeSnapshot(gameState.latestLocalFrame, snapshot);
+            snapshotManager.StoreSnapshot(gameState.latestLocalFrame, snapshot);
         }
 
         /// <summary>Retrieves input for a given frame. Assumes doFrameUpdate() has been called for every frame already</summary>
@@ -145,9 +146,9 @@ namespace ProjectNomad {
             
             switch(playerId.playerSpot) {
                 case PlayerSpot::Player1:
-                    return gameState.inputBufferForPlayer1.get(frameOffset);
+                    return gameState.inputBufferForPlayer1.Get(frameOffset);
                 case PlayerSpot::Player2:
-                    return gameState.inputBufferForPlayer2.get(frameOffset);
+                    return gameState.inputBufferForPlayer2.Get(frameOffset);
 
                 default:
                     logger.logWarnMessage(
@@ -188,7 +189,7 @@ namespace ProjectNomad {
         }
 
         const SnapshotType& retrieveSnapshot(FrameType frameToRetrieveSnapshotFor) {
-            return snapshotManager.getSnapshot(frameToRetrieveSnapshotFor);
+            return snapshotManager.GetSnapshot(frameToRetrieveSnapshotFor);
         }
 
         // FUTURE: Perhaps rename to something akin to "storeSnapshotData" for clarity vs other snapshot behavior
@@ -214,8 +215,8 @@ namespace ProjectNomad {
             gameState.inputBufferForPlayer1 = {};
             gameState.inputBufferForPlayer2 = {};
             for (FrameType i = 0; i < OldRollbackStaticSettings::MaxRollbackFrames; i++) {
-                gameState.inputBufferForPlayer1.add({});
-                gameState.inputBufferForPlayer2.add({});
+                gameState.inputBufferForPlayer1.Add({});
+                gameState.inputBufferForPlayer2.Add({});
             }
         }
 
@@ -249,7 +250,7 @@ namespace ProjectNomad {
             
             // Store player input to be retrieved on the appropriate frame (which may be a latter frame due to input lag)
             InputBuffer& localInputsBuffer = getLocalPlayerInputBuffer();
-            localInputsBuffer.add(localPlayerInput);
+            localInputsBuffer.Add(localPlayerInput);
 
             if (isMultiplayerGame) {
                 communicationHandler.sendInputsToRemotePlayer(currentFrame, localInputsBuffer);
@@ -340,7 +341,7 @@ namespace ProjectNomad {
             for (FrameType i = 0; i < amountOfNewInputs; i++) {
                 // index 0 is the latest frame so add backwards
                 const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfNewInputs - i);
-                remoteInputsBuffer.add(remotePlayerInput);
+                remoteInputsBuffer.Add(remotePlayerInput);
             }
 
             gameState.latestRemotePlayerFrame = inputUpdateMessage.updateFrame;

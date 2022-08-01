@@ -2,6 +2,7 @@
 
 #include "TestLogger.h"
 #include "Math/FPVector.h"
+#include "Utilities/LoggerSingleton.h"
 
 // Starting to see why "using namespace" and these includes ain't in the header file... (slowness and finally what "poisoning" namespace means)
 // TODO: Replace with forward declaration in header file
@@ -23,6 +24,11 @@ public:
 
     static void verifyErrorsLogged(TestLogger& logger);
     static void verifyNoErrorsLogged(TestLogger& logger);
+
+    static void VerifySingletonLoggingOccured();
+    static void VerifySingleLoggingDidNotOccur();
+
+    static void EmptySingletonLogger();
 };
 
 class BaseSimTest : public ::testing::Test {
@@ -33,5 +39,8 @@ protected:
 
     void TearDown() override {
         TestHelpers::verifyNoErrorsLogged(testLogger);
+
+        TestHelpers::VerifySingleLoggingDidNotOccur();
+        TestHelpers::EmptySingletonLogger(); // Don't want state from one test to carry on to next
     }
 };

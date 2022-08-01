@@ -58,7 +58,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            mLocalPlayerInputs.add(localPlayerInput); // Expectation: "Head" is always the last value we've received
+            mLocalPlayerInputs.Add(localPlayerInput); // Expectation: "Head" is always the last value we've received
             mNextLocalFrameToStore++;
         }
 
@@ -83,11 +83,11 @@ namespace ProjectNomad {
                     "Bad frame input! Received target frame " + std::to_string(targetFrame)
                     + " but mNextFrameToStore is " + std::to_string(mNextLocalFrameToStore)
                 );
-                return mLocalPlayerInputs.get(0); // Grab whatever is at head to ensure no out-of-bounds retrieval
+                return mLocalPlayerInputs.Get(0); // Grab whatever is at head to ensure no out-of-bounds retrieval
             }
 
             // Simply look up the already stored value for that frame
-            return mLocalPlayerInputs.get(TargetFrameToLocalPlayerInputBufferOffset(targetFrame));
+            return mLocalPlayerInputs.Get(TargetFrameToLocalPlayerInputBufferOffset(targetFrame));
         }
          
         /**
@@ -120,7 +120,7 @@ namespace ProjectNomad {
 
                 // Given "prediction" is just using latest actual input, add a default value to start with
                 // (If this is NOT done, then first predictions will be undefined/will vary depending on prior state)
-                mLocalPlayerInputs.add({});
+                mLocalPlayerInputs.Add({});
             }
             // Using positive input delay...?
             else if (rollbackSettings.localInputDelay > 0) {
@@ -130,7 +130,7 @@ namespace ProjectNomad {
                 * the input later returned for that gameplay frame 0 processing
                 */
                 for (FrameType i = 0; i < mPositiveLocalInputDelay; i++) {
-                    mLocalPlayerInputs.add({}); // Use "empty"/default inputs for initial delayed frames
+                    mLocalPlayerInputs.Add({}); // Use "empty"/default inputs for initial delayed frames
                 }
             }
         }
@@ -141,7 +141,7 @@ namespace ProjectNomad {
             // Using this prediction as piggybacking off of typical FGC rollback algo findings: Using latest known input
             //  will be accurate more often than not as player isn't really switching inputs that fast compared to how
             //  fast simulation is.
-            return mLocalPlayerInputs.get(0);
+            return mLocalPlayerInputs.Get(0);
         }
 
         FrameType GetMaxPredictionFrame() const {
