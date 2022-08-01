@@ -35,6 +35,7 @@ namespace ProjectNomad {
             
             SetupStateForSessionStart(rollbackSettings, rollbackSessionInfo);
             mInputManager.OnSessionStart(rollbackSettings, rollbackSessionInfo);
+            mSnapshotManager.OnSessionStart();
             
             mIsSessionRunning = true;
         }
@@ -57,7 +58,6 @@ namespace ProjectNomad {
                 return;
             }
             // Sanity check: Verify that the frame is expected, which should always be called one frame forward
-            // (aside from first frame processing)
             if (currentFrame != mLastProcessedFrame + 1) {
                 mLogger.logErrorMessage(
                     "RollbackManager::OnUpdate",
@@ -164,8 +164,6 @@ namespace ProjectNomad {
                 // Compare against actual input to determine if rollback is necessary for accurate simulation
                 bool shouldRollback = predictedInput != localPlayerInput;
                 if (shouldRollback) {
-                    mLogger.logInfoMessage("OnFixedGameplayUpdate", "Rollback situation detected yay!");
-                    
                     HandleRollback(formerPredictionFrame);
                     didRollbackOccur = true;
                 }
@@ -177,7 +175,8 @@ namespace ProjectNomad {
             
             // TODO: Send input to remote client (if any)
 
-            HandleGameplayFrame(didRollbackOccur);
+            HandleGameplayFrame(false, didRollbackOccur);
+            
             if (didRollbackOccur) {
                 mRollbackUser.OnPostRollback();
             }
@@ -185,10 +184,18 @@ namespace ProjectNomad {
 
         /**
         * Actually do gameplay update for next frame
-        * @param didRollbackOccur - true if rollback already occurred
+        * @param skipSnapshotCreation - true if should skip snapshot creation, such as when re-processing the first
+        *                               frame of a series since the snapshot would be identical to what's stored
+        * @param didRollbackOccur - true if rollback already occurred in this manager update
         **/
-        void HandleGameplayFrame(bool didRollbackOccur) {
+        void HandleGameplayFrame(bool skipSnapshotCreation, bool didRollbackOccur) {
             FrameType targetFrame = mLastProcessedFrame + 1;
+
+            if (!skipSnapshotCreation) {
+                // Store game state at START of frame.
+                // This works around how to re-process first (0th) frame and thus how to rollback to before then
+                StoreSnapshot(targetFrame);
+            }
             
             // Grab input(s) for updating game
             const PlayerInput& localPlayerInput = mInputManager.GetLocalPlayerInput(targetFrame);
@@ -200,12 +207,6 @@ namespace ProjectNomad {
             else {
                 mRollbackUser.ProcessFrameWithoutRendering(targetFrame, localPlayerInput);
             }
-            
-            // Store game state
-            SnapshotType snapshot = {};
-            mRollbackUser.GenerateSnapshot(snapshot);
-            mSnapshotManager.StoreSnapshot(targetFrame, snapshot);
-            // TODO: Store internal rollback manager state
 
             // Finally internally remember that we processed this frame
             mLastProcessedFrame = targetFrame;
@@ -222,25 +223,88 @@ namespace ProjectNomad {
             const FrameType numOfFramesToProcess = mLastProcessedFrame - firstFrameToReprocess + 1;
 
             // Sanity check input
-            if (firstFrameToReprocess > mLastProcessedFrame) { // Should never occur during normal play (and not expecting overflow to occur normally)
-                mLogger.logWarnMessage(
+            if (firstFrameToReprocess > mLastProcessedFrame) { // Should never occur during normal play (incl overflow)
+                mLogger.logErrorMessage(
                     "RollbackManager::HandleRollback",
                     "Non-existent frame to re-process! Last processed frame: " + std::to_string(mLastProcessedFrame) +
                     ", input frame: " + std::to_string(firstFrameToReprocess)
                 );
+                return;
             }
             if (numOfFramesToProcess > RollbackStaticSettings::kMaxRollbackFrames) {
-                mLogger.logWarnMessage(
+                mLogger.logErrorMessage(
                     "RollbackManager::HandleRollback",
-                    "Trying to roll back beyond supported window! Last processed frame: " +
+                    "Trying to rollback beyond supported window! Last processed frame: " +
                     std::to_string(mLastProcessedFrame) + ", input frame: " + std::to_string(firstFrameToReprocess)
                 );
+                return;
             }
             
-            // TODO: Implement rollback!
-            // 1. Restore snapshot for target frame (both for User and for self)
-            // 2. Process frames starting at frameToRollbackTo and up to mLocalPredictionAmount - 1
-            //    1. Simply call HandleGameplayFrame with rollback bool set
+            // 1. Restore snapshot before the first frame we want to reprocess
+            RestoreSnapshot(firstFrameToReprocess);
+            
+            // 2. Simply reprocess all needed frames
+            for (FrameType i = 0; i < numOfFramesToProcess; i++) {
+                // Skip snapshot creation for first frame as it'll be identical to what's already stored and been restored,
+                // since snapshots are stored at the start of a frame
+                bool skipSnapshotCreation = i == 0;
+                HandleGameplayFrame(skipSnapshotCreation, true);
+            }
+        }
+
+        /**
+        * Generates and stores a snapshot so we can re-process the target frame if/when necessary
+        * @param targetFrame - intended frame to generate snapshot for. This should be BEFORE frame is processed.
+        **/
+        void StoreSnapshot(FrameType targetFrame) {
+            // Likely redundant sanity checks BUT could uncover bugs in future!
+            if (targetFrame == std::numeric_limits<FrameType>::max()) {
+                mLogger.logErrorMessage(
+                    "RollbackManager::StoreSnapshot",
+                    "Invalid frame (max value) to store snapshot for!: Input frame: " + std::to_string(targetFrame)
+                );
+                return;
+            }
+            if (targetFrame > mLastProcessedFrame + 1) {
+                mLogger.logErrorMessage(
+                    "RollbackManager::StoreSnapshot",
+                    "Trying to store snapshot for unprocessed frame! Last processed frame: " +
+                    std::to_string(mLastProcessedFrame) + ", input frame: " + std::to_string(targetFrame)
+                );
+                return;
+            }
+            
+            SnapshotType snapshot = {};
+            mRollbackUser.GenerateSnapshot(targetFrame, snapshot);
+            mSnapshotManager.StoreSnapshot(targetFrame, snapshot);
+        }
+
+        void RestoreSnapshot(FrameType frameToReprocess) {
+            // Likely redundant sanity checks BUT could uncover bugs in future!
+            if (frameToReprocess == std::numeric_limits<FrameType>::max()) {
+                mLogger.logErrorMessage(
+                    "RollbackManager::RestoreSnapshot",
+                    "Invalid frame (max value) to retrieve snapshot for!: Input frame: " + std::to_string(frameToReprocess)
+                );
+                return;
+            }
+            if (frameToReprocess > mLastProcessedFrame) { // Snapshots are expected to be generated BEFORE an update occurs
+                mLogger.logErrorMessage(
+                    "RollbackManager::RestoreSnapshot",
+                    "Trying to retrieve snapshot for unprocessed frame! Last processed frame: " +
+                    std::to_string(mLastProcessedFrame) + ", input frame: " + std::to_string(frameToReprocess)
+                );
+                return;
+            }
+            
+            // Get and restore game snapshot
+            const SnapshotType& snapshot = mSnapshotManager.GetSnapshot(frameToReprocess);
+            mRollbackUser.RestoreSnapshot(frameToReprocess, snapshot);
+
+            // Also update necessary internal state, which is just this manager's frame tracking at the moment.
+            //  Yes, at time of writing ALL other rollback state is either history based (so shouldn't be overwritten)
+            //  or session based (so no need to restore)
+            mLastProcessedFrame = frameToReprocess - 1;
         }
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();

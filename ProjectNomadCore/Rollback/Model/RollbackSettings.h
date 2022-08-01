@@ -16,7 +16,7 @@ namespace ProjectNomad {
     };
 
     struct RollbackStaticSettings {
-        static constexpr FrameType kMaxInputDelay = 30; // TODO: Change back to 10. For now using 30 for clear effects while testing
+        static constexpr FrameType kMaxInputDelay = 10;
         
         // Rollback up to this number of frames. Does not impact local "negative input delay" feature.
         // ie, if for some reason trying to test negative input delay locally that's bigger than this number, than

@@ -15,17 +15,20 @@ namespace ProjectNomad {
         virtual ~RollbackUser() = default;
 
         /**
-        * Generates snapshot for current frame. This will be used with RestoreSnapshot when rollback .
+        * Generates snapshot for start of frame. This will be used with RestoreSnapshot when rollback occurs.
+        * @param expectedFrame - frame number of snapshot. Called before frame number is processed (ie, before ProcessFrame
+        *                        is called for related frame). Only intended for debug assistance
         * @param result - represents snapshot of current frame. Can be assumed to be "empty"/default initializer state
         **/
-        virtual void GenerateSnapshot(SnapshotType& result) = 0;
+        virtual void GenerateSnapshot(FrameType expectedFrame, SnapshotType& result) = 0;
 
         /**
         * Callback to restore the gameplay state from the provided snapshot.
-        * This is the "rollback to previous state" part of the rollback library
+        * This is the "rollback to previous state" part of the rollback library.
+        * @param expectedFrame - frame number of snapshot. Only intended for debug assistance
         * @param snapshotToRestore - represents gameplay snapshot that should be used going forward
         **/
-        virtual void RestoreSnapshot(const SnapshotType& snapshotToRestore) = 0;
+        virtual void RestoreSnapshot(FrameType expectedFrame, const SnapshotType& snapshotToRestore) = 0;
 
         /**
         * Callback to process gameplay for a single "frame".
