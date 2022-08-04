@@ -128,6 +128,7 @@
     <ClInclude Include="Physics\Simplex.h" />
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Physics\Utility\CollisionResolutionHelper.h" />
+    <ClInclude Include="Rollback\Model\BaseSnapshot.h" />
     <ClInclude Include="Rollback\RollbackInputManager.h" />
     <ClInclude Include="Rollback\InputPredictor.h" />
     <ClInclude Include="Rollback\Model\RollbackSessionInfo.h" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Utilities\Randomizer.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
     <ClInclude Include="Utilities\Singleton.h" />
+    <ClInclude Include="Vendor\CRCpp\CRC.h" />
     <ClInclude Include="Vendor\EnTT\entt.hpp" />
     <ClInclude Include="Vendor\EOS\Include\eos_achievements.h" />
     <ClInclude Include="Vendor\EOS\Include\eos_achievements_types.h" />
@@ -273,6 +275,9 @@
     <ClInclude Include="Vendor\rapidjson\writer.h" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Vendor\CRCpp\LICENSE" />
+    <Content Include="Vendor\CRCpp\README-orig.md" />
+    <Content Include="Vendor\CRCpp\README.md" />
     <Content Include="Vendor\EnTT\LICENSE" />
     <Content Include="Vendor\EnTT\README.md" />
     <Content Include="Vendor\EOS\README.md" />
