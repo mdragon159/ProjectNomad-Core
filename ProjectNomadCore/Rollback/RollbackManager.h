@@ -3,6 +3,7 @@
 #include "RollbackInputManager.h"
 #include "RollbackSnapshotManager.h"
 #include "Interface/RollbackUser.h"
+#include "Model/BaseSnapshot.h"
 #include "Model/RollbackSessionInfo.h"
 #include "Model/RollbackSettings.h"
 #include "Utilities/LoggerSingleton.h"
@@ -14,10 +15,13 @@ namespace ProjectNomad {
     * ie, this class encapsulates all necessary logic for rollback-related features
     *
     * Also, useful high level general rollback logic outline: https://gist.github.com/rcmagic/f8d76bca32b5609e85ab156db38387e9
-    * @tparam SnapshotType - defines struct used for frame snapshot. "Restoring" this should effectively return to a prior frame
+    * @tparam SnapshotType - defines struct used for frame snapshot. "Restoring" this should effectively return to a 
+                             prior frame. Furthermore, this is expected to support comparison operator for debug tools.
     **/
     template <typename SnapshotType>
     class RollbackManager {
+        static_assert(std::is_base_of_v<BaseSnapshot, SnapshotType>, "SnapshotType must derive from BaseSnapshot");
+        
       public:
         RollbackManager(RollbackUser<SnapshotType>& rollbackUser) : mRollbackUser(rollbackUser) {}
 
@@ -116,6 +120,10 @@ namespace ProjectNomad {
                 mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Provided input delay is outside expected window");
                 rollbackSettings.localInputDelay = 0; // Assure no downstream systems break
             }
+
+            if (rollbackSettings.syncTestFrames > RollbackStaticSettings::kMaxRollbackFrames) {
+                rollbackSettings.syncTestFrames = RollbackStaticSettings::kMaxRollbackFrames;
+            }
         }
         
         void SetupStateForSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
@@ -130,6 +138,14 @@ namespace ProjectNomad {
                 if (mIsUsingLocalNegativeInputDelay) {
                     mLocalPredictionAmount = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
                 }
+
+                mDoLocalSyncTest = rollbackSettings.syncTestFrames > 0;
+                mSyncTestRollbackAmount = rollbackSettings.syncTestFrames;
+            }
+            else {
+                // Disable offline specific features
+                mIsUsingLocalNegativeInputDelay = false;
+                mDoLocalSyncTest = false;
             }
 
             mRollbackSessionInfo = rollbackSessionInfo;
@@ -169,16 +185,53 @@ namespace ProjectNomad {
                 }
             }
             else {
-                // Store input for given frame. This both handles both input delay and historic lookup for rollbacks
+                // Store input for given frame. This handles both input delay and historic lookup for rollbacks
                 mInputManager.AddLocalPlayerInput(targetFrame, localPlayerInput);
             }
             
             // TODO: Send input to remote client (if any)
-
-            HandleGameplayFrame(false, didRollbackOccur);
             
+            HandleGameplayFrame(false, didRollbackOccur);
+
+            // Handle SyncTest *after* normal processing is done so we can redo the frames again and compare results
+            if (mDoLocalSyncTest) {
+                HandleSyncTest();
+            }
+
+            // If rollback occurred, then we've been calling the non-rendering RollbackUser frame update call. Now that
+            // rollback is over, we should let User know that it's time to update rendering
             if (didRollbackOccur) {
                 mRollbackUser.OnPostRollback();
+            }
+        }
+
+        void HandleSyncTest() {
+            // Redundant sanity check
+            if (mSyncTestRollbackAmount == 0) {
+                mLogger.logWarnMessage("RollbackManager::HandleSyncTest", "Rollback frame amount is 0!");
+                return;
+            }
+            // If in initial frames - so can't rollback far enough - then don't bother testing
+            if (mLastProcessedFrame <  mSyncTestRollbackAmount) {
+                return;
+            }
+            
+            // Grab current snapshot's checksum so we know what to compare against
+            uint32_t preTestSnapshotChecksum = mSnapshotManager.GetSnapshot(mLastProcessedFrame).CalculateChecksum();
+            
+            // Do normal rollback process
+            // Note that OnFixedGameplayUpdate() doesn't care that we call HandleRollback here as we expect no different
+            // state and thus no difference in visuals
+            FrameType firstFrameToReprocess = mLastProcessedFrame - mSyncTestRollbackAmount;
+            HandleRollback(firstFrameToReprocess);
+
+            // Finally compare hashes and output result
+            uint32_t postTestSnapshotChecksum = mSnapshotManager.GetSnapshot(mLastProcessedFrame).CalculateChecksum();
+            if (preTestSnapshotChecksum != postTestSnapshotChecksum) {
+                mLogger.logWarnMessage(
+                    "RollbackManager::HandleSyncTest",
+                    "SyncTest failed for frame " + std::to_string(mLastProcessedFrame)
+                );
             }
         }
 
@@ -312,6 +365,9 @@ namespace ProjectNomad {
         RollbackUser<SnapshotType>& mRollbackUser;
         RollbackSessionInfo mRollbackSessionInfo;
 
+        bool mDoLocalSyncTest = false;
+        FrameType mSyncTestRollbackAmount = 0;
+        
         bool mIsUsingLocalNegativeInputDelay = false;
         FrameType mLocalPredictionAmount = 0;
         
