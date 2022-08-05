@@ -93,6 +93,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="GameCore\BaseComponent.h" />
     <ClInclude Include="GameCore\BaseSystem.h" />
     <ClInclude Include="GameCore\CoreComponents.h" />
     <ClInclude Include="GameCore\CoreConstants.h" />

@@ -218,6 +218,34 @@ namespace ProjectNomad {
             return rotation.inverted() * value;
         }
 
+        void CalculateCRC32(uint32_t& resultThusFar) {
+            center.CalculateCRC32(resultThusFar);
+            rotation.CalculateCRC32(resultThusFar);
+
+            // Only make checksum based on values in use, which depends on collider type.
+            // This is (supposedly) necessary as constructors and setters are designed to NOT set other values.
+            switch (colliderType) {
+                case ColliderType::Box:
+                    resultThusFar = CRC::Calculate(&boxHalfSizeX, sizeof(boxHalfSizeX), CRC::CRC_32(), resultThusFar);
+                    resultThusFar = CRC::Calculate(&boxHalfSizeY, sizeof(boxHalfSizeY), CRC::CRC_32(), resultThusFar);
+                    resultThusFar = CRC::Calculate(&boxHalfSizeZ, sizeof(boxHalfSizeZ), CRC::CRC_32(), resultThusFar);
+                    break;
+
+                case ColliderType::Capsule:
+                    resultThusFar = CRC::Calculate(&capsuleHalfHeight, sizeof(capsuleHalfHeight), CRC::CRC_32(), resultThusFar);
+                    resultThusFar = CRC::Calculate(&radius, sizeof(radius), CRC::CRC_32(), resultThusFar);
+                    break;
+
+                case ColliderType::Sphere:
+                    resultThusFar = CRC::Calculate(&radius, sizeof(radius), CRC::CRC_32(), resultThusFar);
+                    break;
+
+                default:
+                    // Would be nice to log some kinda message here but also not really necessary in context?
+                    return;
+            }
+        }
+
         std::string toString() const {
             switch (colliderType) {
                 case ColliderType::NotInitialized:

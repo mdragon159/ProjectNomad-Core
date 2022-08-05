@@ -67,6 +67,11 @@ namespace ProjectNomad {
             return input + vCrossInput * (2 * w) + v.cross(vCrossInput) * fp{2};
         }
 
+        void CalculateCRC32(uint32_t& resultThusFar) {
+            resultThusFar = CRC::Calculate(&w, sizeof(w), CRC::CRC_32(), resultThusFar);
+            v.CalculateCRC32(resultThusFar);
+        }
+
         std::string toString() const {
             auto floatW = static_cast<float>(w);
 
