@@ -7,107 +7,134 @@ using namespace ProjectNomad;
 namespace FlexArrayTests {
     class FlexArrayTests : public BaseSimTest {};
 
-    TEST_F(FlexArrayTests, getMaxSize_whenEmpty_returnsMaxSize) {
+    TEST_F(FlexArrayTests, GetMaxSize_whenEmpty_returnsMaxSize) {
         constexpr uint32_t maxSize = 101;
         FlexArray<int, maxSize> toTest;
         
-        EXPECT_EQ(maxSize, toTest.getMaxSize());
+        EXPECT_EQ(maxSize, toTest.GetMaxSize());
     }
 
-    TEST_F(FlexArrayTests, getSize_whenEmpty_returnsZero) {
+    TEST_F(FlexArrayTests, GetSize_whenEmpty_returnsZero) {
         FlexArray<int, 100> toTest;
         
-        EXPECT_EQ(0, toTest.getSize());
+        EXPECT_EQ(0, toTest.GetSize());
     }
 
-    TEST_F(FlexArrayTests, getSize_whenOneElementAdded_returnsOne) {
+    TEST_F(FlexArrayTests, GetSize_whenOneElementAdded_returnsOne) {
         FlexArray<int, 100> toTest;
-        toTest.add(100);
+        toTest.Add(100);
         
-        EXPECT_EQ(1, toTest.getSize());
+        EXPECT_EQ(1, toTest.GetSize());
     }
 
-    TEST_F(FlexArrayTests, isEmpty_whenEmpty_returnsTrue) {
+    TEST_F(FlexArrayTests, IsEmpty_whenEmpty_returnsTrue) {
         FlexArray<int, 3> toTest;
         
-        EXPECT_TRUE(toTest.isEmpty());
+        EXPECT_TRUE(toTest.IsEmpty());
     }
 
-    TEST_F(FlexArrayTests, isEmpty_whenElementAdded_returnsFalse) {
+    TEST_F(FlexArrayTests, IsEmpty_whenElementAdded_returnsFalse) {
         FlexArray<int, 3> toTest;
-        toTest.add(123);
+        toTest.Add(123);
         
-        EXPECT_FALSE(toTest.isEmpty());
+        EXPECT_FALSE(toTest.IsEmpty());
     }
 
-    TEST_F(FlexArrayTests, isEmpty_whenElementAddedThenRemoved_returnsTrue) {
+    TEST_F(FlexArrayTests, IsEmpty_whenElementAddedThenRemoved_returnsTrue) {
         FlexArray<int, 3> toTest;
-        toTest.add(123);
-        toTest.remove(0);
+        toTest.Add(123);
+        toTest.Remove(0);
         
-        EXPECT_TRUE(toTest.isEmpty());
+        EXPECT_TRUE(toTest.IsEmpty());
     }
 
-    TEST_F(FlexArrayTests, getSize_whenOneElementAddedThenRemoved_returnsZero) {
+    TEST_F(FlexArrayTests, GetSize_whenOneElementAddedThenRemoved_returnsZero) {
         FlexArray<int, 100> toTest;
-        toTest.add(100);
-        toTest.remove(0);
+        toTest.Add(100);
+        toTest.Remove(0);
         
-        EXPECT_EQ(0, toTest.getSize());
+        EXPECT_EQ(0, toTest.GetSize());
     }
 
-    TEST_F(FlexArrayTests, get_givenSeveralElementsAdded_thenSuccessfullyReturnsMiddleElement) {
+    TEST_F(FlexArrayTests, Get_givenSeveralElementsAdded_thenSuccessfullyReturnsMiddleElement) {
         FlexArray<int, 100> toTest;
-        toTest.add(123);
-        toTest.add(456);
-        toTest.add(789);
+        toTest.Add(123);
+        toTest.Add(456);
+        toTest.Add(789);
         
-        EXPECT_EQ(456, toTest.get(1));
+        EXPECT_EQ(456, toTest.Get(1));
     }
 
-    TEST_F(FlexArrayTests, get_givenElementRemovedThenAdded_thenSuccessfullyReturnsAddedElement) {
+    TEST_F(FlexArrayTests, Get_givenElementRemovedThenAdded_thenSuccessfullyReturnsAddedElement) {
         FlexArray<int, 100> toTest;
-        toTest.add(123);
-        toTest.add(456);
-        toTest.add(789);
-        toTest.remove(1);
-        toTest.add(234);
+        toTest.Add(123);
+        toTest.Add(456);
+        toTest.Add(789);
+        toTest.Remove(1);
+        toTest.Add(234);
         
-        EXPECT_EQ(234, toTest.get(2));
+        EXPECT_EQ(234, toTest.Get(2));
+    }
+
+    TEST_F(FlexArrayTests, Contains_whenEmpty_returnsFalse) {
+        FlexArray<int, 100> toTest;
+        EXPECT_FALSE(toTest.Contains(0));
+    }
+
+    TEST_F(FlexArrayTests, Contains_whenElementsAddedAndRemoved_whenCalledWithContainedElement_returnsTrue) {
+        FlexArray<int, 100> toTest;
+        toTest.Add(123);
+        toTest.Add(456);
+        toTest.Add(789);
+        toTest.Remove(1);
+        toTest.Add(234);
+        
+        EXPECT_TRUE(toTest.Contains(789));
+    }
+
+    TEST_F(FlexArrayTests, Contains_whenElementsAddedAndRemoved_whenCalledWithRemovedElement_returnsFalse) {
+        FlexArray<int, 100> toTest;
+        toTest.Add(123);
+        toTest.Add(456);
+        toTest.Add(789);
+        toTest.Remove(1);
+        toTest.Add(234);
+        
+        EXPECT_FALSE(toTest.Contains(456));
     }
     
-    TEST_F(FlexArrayTests, remove_whenLoopingOverElementsByIndexAndRemoveElement_thenCanContinueLoopingViaDecrementingIndex) {
+    TEST_F(FlexArrayTests, Remove_whenLoopingOverElementsByIndexAndRemoveElement_thenCanContinueLoopingViaDecrementingIndex) {
         FlexArray<int, 100> toTest;
-        toTest.add(123);
-        toTest.add(456);
-        toTest.add(789);
-        toTest.add(234);
+        toTest.Add(123);
+        toTest.Add(456);
+        toTest.Add(789);
+        toTest.Add(234);
         
         bool didRemoval = false;
         bool didSecondPassOnRemovedIndex = false;
-        for (uint32_t i = 0; i < toTest.getSize(); i++) {
+        for (uint32_t i = 0; i < toTest.GetSize(); i++) {
             switch(i) {
                 case 0:
-                    ASSERT_EQ(123, toTest.get(0));
+                    ASSERT_EQ(123, toTest.Get(0));
                     break;
 
                 case 1:
                     if (!didRemoval) {
-                        ASSERT_EQ(456, toTest.get(1));
+                        ASSERT_EQ(456, toTest.Get(1));
                         
-                        ASSERT_TRUE(toTest.remove(1));
+                        ASSERT_TRUE(toTest.Remove(1));
                         didRemoval = true;
 
                         i--;
                     }
                     else {
-                        ASSERT_EQ(234, toTest.get(1));
+                        ASSERT_EQ(234, toTest.Get(1));
                         didSecondPassOnRemovedIndex = true;
                     }
                     break;
 
                 case 2:
-                    ASSERT_EQ(789, toTest.get(2));
+                    ASSERT_EQ(789, toTest.Get(2));
                     break;
 
                 default:

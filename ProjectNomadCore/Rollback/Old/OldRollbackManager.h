@@ -139,7 +139,7 @@ namespace ProjectNomad {
                 // Store predicted input so we can check prediction vs real input later on to determine if need to rollback
                 // And yeah, given current predictor's implementation we don't need an entire array as prediction for entire
                 //     prediction period. However, this implementation is independent of InputPredictor and thus using this
-                predictedInputs.add(predictedInput);
+                predictedInputs.Add(predictedInput);
 
                 return predictedInput;
             }
@@ -278,13 +278,13 @@ namespace ProjectNomad {
                 return;
             }
 
-            if (!predictedInputs.isEmpty()) {
+            if (!predictedInputs.IsEmpty()) {
                 // Sanity check: Predicted inputs should be used every frame that goes beyond latestRemotePlayerFrame
-                if (predictedInputs.getSize() != gameState.latestLocalFrame - gameState.latestRemotePlayerFrame) {
+                if (predictedInputs.GetSize() != gameState.latestLocalFrame - gameState.latestRemotePlayerFrame) {
                     logger.logWarnMessage(
                                "RollbackManager::handleInputUpdateFromConnectedPlayer",
                                "predictedInputs.getSize() != drift size! \
-                                    , predictions size: " + std::to_string(predictedInputs.getSize()) +
+                                    , predictions size: " + std::to_string(predictedInputs.GetSize()) +
                                     ", local frame: " + std::to_string(gameState.latestLocalFrame) +
                                     ", latestRemotePlayerFrame: " + std::to_string(gameState.latestRemotePlayerFrame)
                             );
@@ -296,8 +296,8 @@ namespace ProjectNomad {
                 if (!needToRollback) {
                     // Check if any predicted inputs were inaccurate and thus if we need to rollback
                     // Note that need to start with the earliest prediction as need to rollback to earliest inaccurate prediction
-                    for (uint32_t i = 0; i < amountOfNewInputs && i < predictedInputs.getSize(); i++) {
-                        FrameType predictionFrame = gameState.latestLocalFrame - (predictedInputs.getSize() - 1 - i);
+                    for (uint32_t i = 0; i < amountOfNewInputs && i < predictedInputs.GetSize(); i++) {
+                        FrameType predictionFrame = gameState.latestLocalFrame - (predictedInputs.GetSize() - 1 - i);
                         if (predictionFrame > inputUpdateMessage.updateFrame) { // Sanity check
                             logger.logWarnMessage(
                                "RollbackManager::handleInputUpdateFromConnectedPlayer",
@@ -310,7 +310,7 @@ namespace ProjectNomad {
                         }
                     
                         FrameType remoteInputOffset = inputUpdateMessage.updateFrame - predictionFrame; // index 0 is the latest frame so go backwards from there
-                        if (predictedInputs.get(i) != inputUpdateMessage.playerInputs[remoteInputOffset]) {
+                        if (predictedInputs.Get(i) != inputUpdateMessage.playerInputs[remoteInputOffset]) {
                             needToRollback = true;
                             frameToRollbackTo = predictionFrame;
                             break; // We found the earliest misprediction so no need to check predictions further
@@ -319,7 +319,7 @@ namespace ProjectNomad {
                 }
                 
                 // Clear out predicted inputs since no longer need em (regardless if rolling back or if they were accurate)
-                if (predictedInputs.getSize() <= amountOfNewInputs) { // Do we have data for all our predictions?
+                if (predictedInputs.GetSize() <= amountOfNewInputs) { // Do we have data for all our predictions?
                     predictedInputs = {};
                 }
                 else { // Otherwise remove only the predictions we have data for and thus no longer need
@@ -327,8 +327,8 @@ namespace ProjectNomad {
                     // Thus copy over remaining data into a new array then copy that into the original array
                     // FUTURE: Make this more efficient...? Is this even worth worrying about at all?
                     FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> uncheckedPredictions;
-                    for (uint32_t i = amountOfNewInputs; i < predictedInputs.getSize(); i++) {
-                        uncheckedPredictions.add(predictedInputs.get(i));
+                    for (uint32_t i = amountOfNewInputs; i < predictedInputs.GetSize(); i++) {
+                        uncheckedPredictions.Add(predictedInputs.Get(i));
                     }
                     predictedInputs = uncheckedPredictions;
                 }

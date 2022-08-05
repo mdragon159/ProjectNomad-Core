@@ -13,24 +13,24 @@ namespace ProjectNomad {
     class FlexArray {
         static_assert(MaxSize > 0, "MaxSize must be greater than 0");
 
-        ContentType array[MaxSize];
+        ContentType array[MaxSize] = {};
         uint32_t headIndex = 0; // Points to where next element should be added
 
     public:
-        static constexpr uint32_t getMaxSize() {
+        static constexpr uint32_t GetMaxSize() {
             return MaxSize;
         }
 
-        uint32_t getSize() const {
+        uint32_t GetSize() const {
             return headIndex;
         }
 
-        bool isEmpty() const {
+        bool IsEmpty() const {
             return headIndex == 0;
         }
 
         // Returns true if succeeds
-        bool add(const ContentType& element) {
+        bool Add(const ContentType& element) {
             if (headIndex >= MaxSize) {
                 return false;
             }
@@ -40,7 +40,7 @@ namespace ProjectNomad {
             return true;
         }
 
-        const ContentType& get(uint32_t index) {
+        const ContentType& Get(uint32_t index) {
             // Check index in bounds
             if (index > MaxSize - 1) {
                 return array[0];
@@ -53,12 +53,28 @@ namespace ProjectNomad {
             return array[index];
         }
 
+        /**
+        * Checks if array currently contains a given element
+        * @param checkValue - Value to check for
+        * @returns true if array contains element, false otherwise
+        **/
+        bool Contains(const ContentType& checkValue) const {
+            // Simple linear search
+            for (uint32_t i = 0; i < headIndex; i++) {
+                if (array[i] == checkValue) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
         /// <summary>
         /// Removes the element at the given index and moves last element to index.
         /// FUTURE: Supply iterator and erase functions. Consumer should not need to know to decrement index if looping and removing
         /// </summary>
         /// <returns>Returns true if succeeds in removing element at given index</returns>
-        bool remove(uint32_t index) {
+        bool Remove(uint32_t index) {
             // Check index in bounds
             if (index > MaxSize - 1) {
                 return false;
