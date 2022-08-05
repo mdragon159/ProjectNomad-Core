@@ -1,20 +1,20 @@
 #pragma once
 
-#include "BaseComponent.h"
+#include <CRCpp/CRC.h>
+
 #include "Math/FPQuat.h"
 #include "Math/FPVector.h"
 #include "Physics/Collider.h"
+#include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
     // CoreComponents.h simply contains definition of components which both ProjectNomadCore and the main ProjectNomad projects need
     
-    struct TransformComponent : BaseComponent {
+    struct TransformComponent {
         FPVector location;
         FPQuat rotation;
 
-        ~TransformComponent() override {}
-
-        void CalculateCRC32(uint32_t& resultThusFar) override {
+        void CalculateCRC32(uint32_t& resultThusFar) {
             location.CalculateCRC32(resultThusFar);
             rotation.CalculateCRC32(resultThusFar);
         }
@@ -25,45 +25,37 @@ namespace ProjectNomad {
         }
     };
 
-    struct PhysicsComponent : BaseComponent {
+    struct PhysicsComponent {
         uint16_t mass = 100;
         FPVector velocity;
 
-        ~PhysicsComponent() override {}
-        
-        void CalculateCRC32(uint32_t& resultThusFar) override {
+        void CalculateCRC32(uint32_t& resultThusFar) {
             resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
             velocity.CalculateCRC32(resultThusFar);
         }
     };
 
-    struct DynamicColliderComponent : BaseComponent {
+    struct DynamicColliderComponent {
         Collider collider;
 
-        ~DynamicColliderComponent() override {}
-        
-        void CalculateCRC32(uint32_t& resultThusFar) override {
+        void CalculateCRC32(uint32_t& resultThusFar) {
             collider.CalculateCRC32(resultThusFar);
         }
     };
 
-    struct StaticColliderComponent : BaseComponent {
+    struct StaticColliderComponent {
         Collider collider;
-
-        ~StaticColliderComponent() override {}
         
-        void CalculateCRC32(uint32_t& resultThusFar) override {
+        void CalculateCRC32(uint32_t& resultThusFar) {
             collider.CalculateCRC32(resultThusFar);
         }
     };
 
-    struct HitfreezeComponent : BaseComponent {
-        uint32_t startingFrame = 0;
-        uint32_t totalLength = 15;
+    struct HitfreezeComponent {
+        FrameType startingFrame = 0;
+        FrameType totalLength = 15;
 
-        ~HitfreezeComponent() override {}
-        
-        void CalculateCRC32(uint32_t& resultThusFar) override {
+        void CalculateCRC32(uint32_t& resultThusFar) {
             resultThusFar = CRC::Calculate(&startingFrame, sizeof(startingFrame), CRC::CRC_32(), resultThusFar);
             resultThusFar = CRC::Calculate(&totalLength, sizeof(totalLength), CRC::CRC_32(), resultThusFar);
         }
