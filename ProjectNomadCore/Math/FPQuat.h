@@ -67,7 +67,7 @@ namespace ProjectNomad {
             return input + vCrossInput * (2 * w) + v.cross(vCrossInput) * fp{2};
         }
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&w, sizeof(w), CRC::CRC_32(), resultThusFar);
             v.CalculateCRC32(resultThusFar);
         }

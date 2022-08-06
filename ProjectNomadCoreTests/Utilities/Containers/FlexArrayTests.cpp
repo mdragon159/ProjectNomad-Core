@@ -1,5 +1,6 @@
 #include "pchNCT.h"
 
+#include "GameCore/PlayerInput.h"
 #include "TestHelpers/TestHelpers.h"
 #include "Utilities/Containers/FlexArray.h"
 
@@ -144,4 +145,96 @@ namespace FlexArrayTests {
 
         ASSERT_TRUE(didSecondPassOnRemovedIndex);
     }
+    
+    TEST_F(FlexArrayTests, CalculateCRC32_whenSameValues_givenIntType_thenChecksumAreEquivalent) {
+        FlexArray<int, 100> firstTest;
+        firstTest.Add(123);
+        firstTest.Add(456);
+        firstTest.Add(789);
+        firstTest.Remove(1);
+        firstTest.Add(234);
+
+        FlexArray<int, 100> secondTest;
+        secondTest.Add(123);
+        secondTest.Add(456);
+        secondTest.Add(789);
+        secondTest.Remove(1);
+        secondTest.Add(234);
+
+        uint32_t firstChecksum = 0;
+        firstTest.CalculateCRC32(firstChecksum);
+        uint32_t secondChecksum = 0;
+        secondTest.CalculateCRC32(secondChecksum);
+        
+        EXPECT_EQ(firstChecksum, secondChecksum);
+    }
+
+    TEST_F(FlexArrayTests, CalculateCRC32_whenDifferentValues_givenIntType_thenChecksumAreDifferent) {
+        FlexArray<int, 100> firstTest;
+        firstTest.Add(123);
+        firstTest.Add(456);
+        firstTest.Add(789);
+        firstTest.Remove(0);
+        firstTest.Add(234);
+
+        FlexArray<int, 100> secondTest;
+        secondTest.Add(123);
+        secondTest.Add(456);
+        secondTest.Add(789);
+        secondTest.Remove(1);
+        secondTest.Add(234);
+
+        uint32_t firstChecksum = 0;
+        firstTest.CalculateCRC32(firstChecksum);
+        uint32_t secondChecksum = 0;
+        secondTest.CalculateCRC32(secondChecksum);
+        
+        EXPECT_NE(firstChecksum, secondChecksum);
+    }
+
+    TEST_F(FlexArrayTests, CalculateCRC32_whenSameValues_givenComplexType_thenChecksumAreEquivalent) {
+        FlexArray<PlayerInput, 100> firstTest;
+        PlayerInput inputA = {};
+        inputA.moveForward = fp{0.5f};
+        inputA.isJumpPressed = true;
+        inputA.isSecondaryAttackPressed = true;
+        firstTest.Add(inputA);
+
+        FlexArray<PlayerInput, 100> secondTest;
+        PlayerInput inputB = {};
+        inputB.moveForward = fp{0.5f};
+        inputB.isJumpPressed = true;
+        inputB.isSecondaryAttackPressed = true;
+        secondTest.Add(inputB);
+
+        uint32_t firstChecksum = 0;
+        firstTest.CalculateCRC32(firstChecksum);
+        uint32_t secondChecksum = 0;
+        secondTest.CalculateCRC32(secondChecksum);
+        
+        EXPECT_EQ(firstChecksum, secondChecksum);
+    }
+
+    TEST_F(FlexArrayTests, CalculateCRC32_whenDifferentValues_givenComplexType_thenChecksumAreDifferent) {
+        FlexArray<PlayerInput, 100> firstTest;
+        PlayerInput inputA = {};
+        inputA.moveForward = fp{0.5f};
+        inputA.isJumpPressed = true;
+        inputA.isSecondaryAttackPressed = true;
+        firstTest.Add(inputA);
+
+        FlexArray<PlayerInput, 100> secondTest;
+        PlayerInput inputB = {};
+        inputB.moveForward = fp{0.25f};
+        inputB.isGrappleAimPressed = true;
+        secondTest.Add(inputB);
+
+        uint32_t firstChecksum = 0;
+        firstTest.CalculateCRC32(firstChecksum);
+        uint32_t secondChecksum = 0;
+        secondTest.CalculateCRC32(secondChecksum);
+        
+        EXPECT_NE(firstChecksum, secondChecksum);
+    }
+    
 }

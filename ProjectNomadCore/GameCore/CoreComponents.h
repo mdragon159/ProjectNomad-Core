@@ -14,7 +14,7 @@ namespace ProjectNomad {
         FPVector location;
         FPQuat rotation;
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             location.CalculateCRC32(resultThusFar);
             rotation.CalculateCRC32(resultThusFar);
         }
@@ -29,7 +29,7 @@ namespace ProjectNomad {
         uint16_t mass = 100;
         FPVector velocity;
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
             velocity.CalculateCRC32(resultThusFar);
         }
@@ -38,7 +38,7 @@ namespace ProjectNomad {
     struct DynamicColliderComponent {
         Collider collider;
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             collider.CalculateCRC32(resultThusFar);
         }
     };
@@ -46,7 +46,7 @@ namespace ProjectNomad {
     struct StaticColliderComponent {
         Collider collider;
         
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             collider.CalculateCRC32(resultThusFar);
         }
     };
@@ -55,7 +55,7 @@ namespace ProjectNomad {
         FrameType startingFrame = 0;
         FrameType totalLength = 15;
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&startingFrame, sizeof(startingFrame), CRC::CRC_32(), resultThusFar);
             resultThusFar = CRC::Calculate(&totalLength, sizeof(totalLength), CRC::CRC_32(), resultThusFar);
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CRCpp/CRC.h>
 #include "FixedPoint.h"
 
 /* TODO
@@ -33,6 +34,12 @@ namespace ProjectNomad {
             result.yaw = -yaw;
 
             return result;
+        }
+
+        void CalculateCRC32(uint32_t& resultThusFar) const {
+            resultThusFar = CRC::Calculate(&roll, sizeof(roll), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&pitch, sizeof(pitch), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&yaw, sizeof(yaw), CRC::CRC_32(), resultThusFar);
         }
 
         std::string toString() const {

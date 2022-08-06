@@ -1,4 +1,6 @@
 #pragma once
+
+#include <CRCpp/CRC.h>
 #include "Math/FixedPoint.h"
 
 namespace ProjectNomad {
@@ -29,6 +31,27 @@ namespace ProjectNomad {
             ar(moveForward, moveRight, mouseTurn, mouseLookUp, controllerTurn, controllerLookUp, isJumpPressed,
                 isBlockPressed, isDodgePressed, isGrapplePressed, isGrappleAimPressed, isAttackPressed,
                 isSecondaryAttackPressed, isCrouchPressed, isSwitchWeaponPressed);
+        }
+
+        void CalculateCRC32(uint32_t& resultThusFar) const {
+            resultThusFar = CRC::Calculate(&moveForward, sizeof(moveForward), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&moveRight, sizeof(moveRight), CRC::CRC_32(), resultThusFar);
+            
+            resultThusFar = CRC::Calculate(&mouseTurn, sizeof(mouseTurn), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&mouseLookUp, sizeof(mouseLookUp), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&controllerTurn, sizeof(controllerTurn), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&controllerLookUp, sizeof(controllerLookUp), CRC::CRC_32(), resultThusFar);
+
+            resultThusFar = CRC::Calculate(&isInteractPressed, sizeof(isInteractPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isJumpPressed, sizeof(isJumpPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isDodgePressed, sizeof(isDodgePressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isBlockPressed, sizeof(isBlockPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isGrapplePressed, sizeof(isGrapplePressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isGrappleAimPressed, sizeof(isGrappleAimPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isAttackPressed, sizeof(isAttackPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isSecondaryAttackPressed, sizeof(isSecondaryAttackPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isCrouchPressed, sizeof(isCrouchPressed), CRC::CRC_32(), resultThusFar);
+            resultThusFar = CRC::Calculate(&isSwitchWeaponPressed, sizeof(isSwitchWeaponPressed), CRC::CRC_32(), resultThusFar);
         }
     };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utilities/ILogger.h"
+#include <CRCpp/CRC.h>
 
 namespace ProjectNomad {
     /// <summary>
@@ -13,44 +13,41 @@ namespace ProjectNomad {
     class FlexArray {
         static_assert(MaxSize > 0, "MaxSize must be greater than 0");
 
-        ContentType array[MaxSize] = {};
-        uint32_t headIndex = 0; // Points to where next element should be added
-
-    public:
+      public:
         static constexpr uint32_t GetMaxSize() {
             return MaxSize;
         }
 
         uint32_t GetSize() const {
-            return headIndex;
+            return mHeadIndex;
         }
 
         bool IsEmpty() const {
-            return headIndex == 0;
+            return mHeadIndex == 0;
         }
 
         // Returns true if succeeds
         bool Add(const ContentType& element) {
-            if (headIndex >= MaxSize) {
+            if (mHeadIndex >= MaxSize) {
                 return false;
             }
             
-            array[headIndex] = element;
-            headIndex++;
+            mArray[mHeadIndex] = element;
+            mHeadIndex++;
             return true;
         }
 
         const ContentType& Get(uint32_t index) {
             // Check index in bounds
             if (index > MaxSize - 1) {
-                return array[0];
+                return mArray[0];
             }
-            if (index >= headIndex) {
-                return array[0];
+            if (index >= mHeadIndex) {
+                return mArray[0];
             }
 
             // Return desired element
-            return array[index];
+            return mArray[index];
         }
 
         /**
@@ -60,8 +57,8 @@ namespace ProjectNomad {
         **/
         bool Contains(const ContentType& checkValue) const {
             // Simple linear search
-            for (uint32_t i = 0; i < headIndex; i++) {
-                if (array[i] == checkValue) {
+            for (uint32_t i = 0; i < mHeadIndex; i++) {
+                if (mArray[i] == checkValue) {
                     return true;
                 }
             }
@@ -79,18 +76,42 @@ namespace ProjectNomad {
             if (index > MaxSize - 1) {
                 return false;
             }
-            if (index >= headIndex) {
+            if (index >= mHeadIndex) {
                 return false;
             }
             
             // If not at end, then move element at end into current spot (not retaining order so no need to move all elements around)
-            if (index != headIndex - 1) {
+            if (index != mHeadIndex - 1) {
                 // FUTURE: Swap may be faster...? At least in some cases?
-                array[index] = array[headIndex - 1];
+                mArray[index] = mArray[mHeadIndex - 1];
             }
-            headIndex--; // Decrease active size of array by one; element pointed by head is now "invalid"/unused
+            mHeadIndex--; // Decrease active size of array by one; element pointed by head is now "invalid"/unused
 
             return true;
         }
+
+        void CalculateCRC32(uint32_t& resultThusFar) const {
+            resultThusFar = CRC::Calculate(&mHeadIndex, sizeof(mHeadIndex), CRC::CRC_32(), resultThusFar);
+
+            // Check if ContentTyPpe has CalculateCRC32 method. From https://stackoverflow.com/a/22014784/3735890
+            // This is vital as otherwise checksum will use padding bits. See BaseComponent.h comments for more info
+            // constexpr bool HasCalculateCRC32 = requires(ContentType element) { element = {}; };
+            constexpr bool HasCalculateCRC32 = requires(const ContentType& element, uint32_t& result) {
+                element.CalculateCRC32(result);
+            };
+            
+            for (uint32_t i = 0; i < mHeadIndex; i++) {
+                if constexpr (HasCalculateCRC32) {
+                    mArray[i].CalculateCRC32(resultThusFar);
+                }
+                else {
+                    resultThusFar = CRC::Calculate(&mArray[i], sizeof(mArray[i]), CRC::CRC_32(), resultThusFar);
+                }
+            }
+        }
+
+      private:
+        ContentType mArray[MaxSize] = {};
+        uint32_t mHeadIndex = 0; // Points to where next element should be added
     };
 }

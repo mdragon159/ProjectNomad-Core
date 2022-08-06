@@ -1,10 +1,10 @@
 #pragma once
 
 #include <iostream>
+#include <CRCpp/CRC.h>
 
 #include "FixedPoint.h"
 #include "FPMath.h"
-#include "CRCpp/CRC.h"
 
 namespace ProjectNomad {
     class FPVector {
@@ -163,7 +163,7 @@ namespace ProjectNomad {
                 && FPMath::isNear(z, other.z, positiveErrorRange);
         }
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&x, sizeof(x), CRC::CRC_32(), resultThusFar);
             resultThusFar = CRC::Calculate(&y, sizeof(y), CRC::CRC_32(), resultThusFar);
             resultThusFar = CRC::Calculate(&z, sizeof(z), CRC::CRC_32(), resultThusFar);

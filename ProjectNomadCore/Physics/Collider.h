@@ -218,7 +218,7 @@ namespace ProjectNomad {
             return rotation.inverted() * value;
         }
 
-        void CalculateCRC32(uint32_t& resultThusFar) {
+        void CalculateCRC32(uint32_t& resultThusFar) const {
             center.CalculateCRC32(resultThusFar);
             rotation.CalculateCRC32(resultThusFar);
 
