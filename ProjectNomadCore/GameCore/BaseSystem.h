@@ -1,4 +1,5 @@
 #pragma once
+#include "Context/SimContext.h"
 
 namespace ProjectNomad {
     /// <summary>
@@ -10,6 +11,6 @@ namespace ProjectNomad {
     public:
         virtual ~BaseSystem() {}
 
-        virtual void Update(entt::registry& registry) {}
+        virtual void Update(SimContext& simContext) {}
     };
 }

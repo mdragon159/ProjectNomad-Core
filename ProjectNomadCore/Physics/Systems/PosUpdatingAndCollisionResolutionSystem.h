@@ -23,14 +23,14 @@ namespace ProjectNomad {
         : logger(logger), physicsManager(physicsManager), collisionResolutionHelper(logger) {}
         ~PosUpdatingAndCollisionResolutionSystem() override {}
         
-        void Update(entt::registry& registry) override {
+        void Update(SimContext& simContext) override {
             // Iterate over all (currently) physics supported actors...
-            auto view = registry.view<TransformComponent, PhysicsComponent, DynamicColliderComponent>();
+            auto view = simContext.registry.view<TransformComponent, PhysicsComponent, DynamicColliderComponent>();
             for (auto &&[entityId, transform, physicsComp, colliderComp] : view.each()) {
                 // Calculate new position then check for collisions with that new position
-                FPVector newIntendedPos = calculateNewPositionFromVelocity(registry, entityId, transform, physicsComp);
+                FPVector newIntendedPos = calculateNewPositionFromVelocity(simContext, entityId, transform, physicsComp);
                 FPVector correctedPos =
-                    assureNoCollisionsWithNewPos(registry, entityId, colliderComp.collider, physicsComp, newIntendedPos);
+                    assureNoCollisionsWithNewPos(simContext, entityId, colliderComp.collider, physicsComp, newIntendedPos);
 
                 // Set the post-collision check position
                 setEntityPosition(transform, colliderComp.collider, correctedPos);
@@ -38,12 +38,12 @@ namespace ProjectNomad {
         }
 
     private:
-        static FPVector calculateNewPositionFromVelocity(entt::registry& registry,
+        static FPVector calculateNewPositionFromVelocity(SimContext& simContext,
                                                         const entt::entity& entityId,
                                                         const TransformComponent& transform,
                                                         const PhysicsComponent& physicsComp) {
 
-            if (!registry.any_of<HitfreezeComponent>(entityId)) { // Preferably this system wouldn't need to care about hitfreeze for performance, but quick and dirty way to prevent movement during hitfreeze
+            if (!simContext.registry.any_of<HitfreezeComponent>(entityId)) { // Preferably this system wouldn't need to care about hitfreeze for performance, but quick and dirty way to prevent movement during hitfreeze
                 const FPVector& playerVel = physicsComp.velocity;
                 fp changeInXPos = playerVel.x * CoreConstants::GetTimePerFrameInSec();
                 fp changeInYPos = playerVel.y * CoreConstants::GetTimePerFrameInSec();
@@ -60,7 +60,7 @@ namespace ProjectNomad {
             return transform.location; // If in hitfreeze, don't move player at all
         }
 
-        FPVector assureNoCollisionsWithNewPos(entt::registry& registry,
+        FPVector assureNoCollisionsWithNewPos(SimContext& simContext,
                                              const entt::entity& selfId,
                                              const Collider& collider,
                                              PhysicsComponent& physicsComp,
@@ -70,7 +70,7 @@ namespace ProjectNomad {
             // Thus, keep retrying collision resolution until no collision (or until hit limit)
             uint8_t totalCollisionsSoFar = 0;
             while(true) { // TODO: Determine if this is actually important AND useful. (Eg, actually works well in cases where colliding with multiple objects)
-                bool wasCollisionFound = checkForAndResolveCollisions(registry, selfId, collider, physicsComp, newIntendedPos);
+                bool wasCollisionFound = checkForAndResolveCollisions(simContext, selfId, collider, physicsComp, newIntendedPos);
                 if (!wasCollisionFound) {
                     break;
                 }
@@ -85,7 +85,7 @@ namespace ProjectNomad {
             return newIntendedPos;
         }
 
-        bool checkForAndResolveCollisions(entt::registry& registry,
+        bool checkForAndResolveCollisions(SimContext& simContext,
                                 const entt::entity& selfId,
                                 const Collider& currentCollider,
                                 PhysicsComponent& physicsComp,
@@ -99,7 +99,7 @@ namespace ProjectNomad {
             bool wasCollisionEverFound = false;
             
             // Check if new desired position is colliding with any static objects
-            auto staticView = registry.view<StaticColliderComponent>();
+            auto staticView = simContext.registry.view<StaticColliderComponent>();
             for (auto &&[entityId, staticColliderComp] : staticView.each()) {
                 bool collisionFound =
                     checkAndResolveIndividualCollision(futureBoundingShape, staticColliderComp.collider, physicsComp);
@@ -109,7 +109,7 @@ namespace ProjectNomad {
             }
 
             // Check if new desired position is colliding with any dynamic objects
-            auto dynamicView = registry.view<DynamicColliderComponent>();
+            auto dynamicView = simContext.registry.view<DynamicColliderComponent>();
             for (auto &&[entityId, otherColliderComp] : dynamicView.each()) {
                 if (entityId == selfId) {
                     continue;
