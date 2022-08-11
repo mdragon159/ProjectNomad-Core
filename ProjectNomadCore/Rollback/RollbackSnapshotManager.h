@@ -42,7 +42,7 @@ namespace ProjectNomad {
                 mSnapshotBuffer.SwapReplace(offset, snapshot);
             }
             else { // Invalid input!
-                mLogger.logErrorMessage(
+                Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackSnapshotManager::StoreSnapshot",
                     "Unexpected currentFrame value! Latest stored frame: " + std::to_string(mLatestStoredFrame)
                         + ", input frame: " + std::to_string(targetFrame)
@@ -52,7 +52,7 @@ namespace ProjectNomad {
 
         const SnapshotType& GetSnapshot(FrameType frameToRetrieveSnapshotFor) {
             if (frameToRetrieveSnapshotFor > mLatestStoredFrame) {
-                mLogger.logErrorMessage(
+                Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackSnapshotManager::GetSnapshot",
                     "Provided retrieval frame greater than latest frame, input frame: " +
                     std::to_string(frameToRetrieveSnapshotFor)
@@ -74,7 +74,7 @@ namespace ProjectNomad {
 
             // Sanity check to help catch bugs
             if (frameOffset > RollbackStaticSettings::kMaxRollbackFrames) {
-                mLogger.logErrorMessage(
+                Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackSnapshotManager::CalculateOffset",
                     "Provided retrieval frame beyond buffer size (rollback window), input frame: " +
                     std::to_string(frameForStoredSnapshot)
@@ -84,8 +84,6 @@ namespace ProjectNomad {
             
             return mLatestStoredFrame - frameForStoredSnapshot;
         }
-        
-        LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
         
         FrameType mLatestStoredFrame = std::numeric_limits<FrameType>::max(); // Next frame to store is 0 (max + 1 = 0 with overflow)
         RingBuffer<SnapshotType, RollbackStaticSettings::kMaxRollbackFrames> mSnapshotBuffer = {};

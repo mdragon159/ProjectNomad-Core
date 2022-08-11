@@ -3,7 +3,7 @@
 #include "InputBuffer.h"
 #include "Rollback/InputPredictor.h"
 #include "RollbackCommunicationHandler.h"
-#include "RollbackManagerGameState.h"
+#include "OldRollbackManagerGameState.h"
 #include "Rollback/RollbackSnapshotManager.h"
 #include "OldRollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
@@ -30,7 +30,7 @@ namespace ProjectNomad {
         bool isMultiplayerGame = false;
         
         // Various normal processing state
-        RollbackManagerGameState gameState = {};
+        OldRollbackManagerGameState gameState = {};
         // Technically the below state is part of "GameState" but we should never need the data in snapshots (...supposedly)
         FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> predictedInputs = {};
         bool needToRollback = false;
@@ -193,11 +193,11 @@ namespace ProjectNomad {
         }
 
         // FUTURE: Perhaps rename to something akin to "storeSnapshotData" for clarity vs other snapshot behavior
-        void storeSnapshot(RollbackManagerGameState& output) const {
+        void storeSnapshot(OldRollbackManagerGameState& output) const {
             output = gameState;
         }
 
-        void restoreSnapshot(const RollbackManagerGameState& snapshot) {
+        void restoreSnapshot(const OldRollbackManagerGameState& snapshot) {
             gameState = snapshot;
         }
 

@@ -50,7 +50,7 @@ namespace ProjectNomad {
             
             // Sanity check: We should only be incrementally adding inputs for the local player
             if (targetFrame != mNextLocalFrameToStore) {
-                mLogger.logErrorMessage(
+                Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackInputManager::AddLocalPlayerInput",
                     "Bad frame input! Received target frame " + std::to_string(targetFrame)
                     + " but mNextFrameToStore is " + std::to_string(mNextLocalFrameToStore)
@@ -78,7 +78,7 @@ namespace ProjectNomad {
                 
                 // Otherwise invalid situation:
                 // Expecting calling code to always add input for a frame before trying to retrieve it
-                mLogger.logErrorMessage(
+                Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackInputManager::GetLocalPlayerInput",
                     "Bad frame input! Received target frame " + std::to_string(targetFrame)
                     + " but mNextFrameToStore is " + std::to_string(mNextLocalFrameToStore)
@@ -170,7 +170,7 @@ namespace ProjectNomad {
             // If target frame is outside intended window of inputs, then there's likely a higher level logic issue
             FrameType maxIntendedStoredInputs = RollbackStaticSettings::kMaxRollbackFrames + mPositiveLocalInputDelay + 1;
             if (offset > maxIntendedStoredInputs) {
-                mLogger.logWarnMessage(
+                Singleton<LoggerSingleton>::get().logWarnMessage(
                     "RollbackInputManager::TargetFrameToStoredInputBufferOffset",
                     "Trying to retrieve inputs outside expected range! Given target frame: " + std::to_string(targetFrame)
                     + ", offset: " + std::to_string(offset)
@@ -179,7 +179,7 @@ namespace ProjectNomad {
             }
             // If target frame is outside max rollback buffer window entirely, then there's a very serious issue (out of bounds)
             if (offset > RollbackStaticSettings::kMaxBufferWindow) {
-                mLogger.logWarnMessage(
+                Singleton<LoggerSingleton>::get().logWarnMessage(
                     "RollbackInputManager::TargetFrameToStoredInputBufferOffset",
                     "Offset is outside max buffer window! Target frame: " + std::to_string(targetFrame)
                     + ", offset: " + std::to_string(offset)
@@ -191,8 +191,6 @@ namespace ProjectNomad {
             return offset;
         }
         
-        LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
-
         RingBuffer<PlayerInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs;
         FrameType mNextLocalFrameToStore = 1000; // Starting session should set this back to 0. Cheap way for enforcing session start
         

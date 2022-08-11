@@ -4,6 +4,7 @@
 #include "RollbackSnapshotManager.h"
 #include "Interface/RollbackUser.h"
 #include "Model/BaseSnapshot.h"
+#include "Model/RollbackManagerSnapshot.h"
 #include "Model/RollbackSessionInfo.h"
 #include "Model/RollbackSettings.h"
 #include "Utilities/LoggerSingleton.h"
@@ -12,11 +13,11 @@
 namespace ProjectNomad {
     /**
     * Ingress point for all rollback behavior.
-    * ie, this class encapsulates all necessary logic for rollback-related features
+    * ie, this class encapsulates all necessary logic for rollback-related features.
     *
     * Also, useful high level general rollback logic outline: https://gist.github.com/rcmagic/f8d76bca32b5609e85ab156db38387e9
     * @tparam SnapshotType - defines struct used for frame snapshot. "Restoring" this should effectively return to a 
-                             prior frame. Furthermore, this is expected to support comparison operator for debug tools.
+                             prior frame.
     **/
     template <typename SnapshotType>
     class RollbackManager {
@@ -111,6 +112,33 @@ namespace ProjectNomad {
         // FUTURE: Advanced - Manual snapshot support! Eg, for debugging purposes, if a manual snapshot restoration occurs
         //                   outside of rollback manager, then need to restore rollback manager as well!
         //                  Could potentially be used for replay rewinding as well.
+
+        /**
+        * Creates a snapshot to restore the internal state of the manager itself.
+        * Useful for restoring snapshots outside of rollback process itself, such as during advanced offline replay
+        * playback features.
+        *
+        * Note that this is necessary as restoring "arbitrary" snapshots may result in restoring state outside of the
+        * ordinary rollback window.
+        * @param result - Resulting snapshot
+        **/
+        void CreateInternalStateSnapshot(RollbackManagerSnapshot<SnapshotType>& result) {
+            result = {}; // Just in case. Should be cheap to do anyways
+
+            result.lastProcessedFrame = mLastProcessedFrame;
+            result.inputManager = mInputManager;
+            result.snapshotManager = mSnapshotManager; // TODO: This is broken as heck! Well, with FrameSnapshot type at least
+        }
+
+        /**
+        * Restores internal state of this manager
+        * @param snapshot - Snapshot to restore
+        **/
+        void RestoreInternalStateSnapshot(const RollbackManagerSnapshot<SnapshotType>& snapshot) {
+            mLastProcessedFrame = snapshot.lastProcessedFrame;
+            mInputManager = snapshot.inputManager;
+            mSnapshotManager = snapshot.snapshotManager;
+        }
 
       private:
         void AssureSettingsAreValid(RollbackSettings& rollbackSettings, RollbackSessionInfo& rollbackSessionInfo) {
@@ -365,11 +393,15 @@ namespace ProjectNomad {
         RollbackUser<SnapshotType>& mRollbackUser;
         RollbackSessionInfo mRollbackSessionInfo;
 
+        #pragma region Session Settings
+        
         bool mDoLocalSyncTest = false;
         FrameType mSyncTestRollbackAmount = 0;
         
         bool mIsUsingLocalNegativeInputDelay = false;
         FrameType mLocalPredictionAmount = 0;
+
+        #pragma endregion
         
         RollbackInputManager mInputManager;
         RollbackSnapshotManager<SnapshotType> mSnapshotManager;

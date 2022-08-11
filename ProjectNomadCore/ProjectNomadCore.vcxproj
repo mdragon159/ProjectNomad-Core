@@ -132,6 +132,7 @@
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Physics\Utility\CollisionResolutionHelper.h" />
     <ClInclude Include="Rollback\Model\BaseSnapshot.h" />
+    <ClInclude Include="Rollback\Model\RollbackManagerSnapshot.h" />
     <ClInclude Include="Rollback\RollbackInputManager.h" />
     <ClInclude Include="Rollback\InputPredictor.h" />
     <ClInclude Include="Rollback\Model\RollbackSessionInfo.h" />
@@ -142,7 +143,7 @@
     <ClInclude Include="Rollback\Old\InputBuffer.h" />
     <ClInclude Include="Rollback\Old\RollbackCommunicationHandler.h" />
     <ClInclude Include="Rollback\Old\OldRollbackManager.h" />
-    <ClInclude Include="Rollback\Old\RollbackManagerGameState.h" />
+    <ClInclude Include="Rollback\Old\OldRollbackManagerGameState.h" />
     <ClInclude Include="Rollback\Old\OldRollbackStaticSettings.h" />
     <ClInclude Include="Rollback\Old\RollbackUpdateResult.h" />
     <ClInclude Include="Rollback\RollbackSnapshotManager.h" />

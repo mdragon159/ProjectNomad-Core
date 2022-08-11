@@ -3,7 +3,7 @@
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
-    struct RollbackManagerGameState {
+    struct OldRollbackManagerGameState {
         InputBuffer inputBufferForPlayer1;
         InputBuffer inputBufferForPlayer2;
         
