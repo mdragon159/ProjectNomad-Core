@@ -12,7 +12,7 @@ namespace ProjectNomad {
     public:
         PlayerInput predictInput(FrameType frameToRetrieveInputFor,
                                  FrameType latestStoredInputFrame,
-                                 const InputBuffer& inputBuffer) {
+                                 const OldRollbackInputBuffer& inputBuffer) {
 
             // Simply retrieve the latest input we know about
             return inputBuffer.Get(0);

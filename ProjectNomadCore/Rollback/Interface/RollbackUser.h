@@ -1,5 +1,5 @@
 #pragma once
-#include "GameCore/PlayerInput.h"
+#include "Input/PlayerInput.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {

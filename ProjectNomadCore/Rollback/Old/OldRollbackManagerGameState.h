@@ -4,8 +4,8 @@
 
 namespace ProjectNomad {
     struct OldRollbackManagerGameState {
-        InputBuffer inputBufferForPlayer1;
-        InputBuffer inputBufferForPlayer2;
+        OldRollbackInputBuffer inputBufferForPlayer1;
+        OldRollbackInputBuffer inputBufferForPlayer2;
         
         FrameType latestLocalStoredInputFrame = 0;
         FrameType latestLocalFrame = 0;

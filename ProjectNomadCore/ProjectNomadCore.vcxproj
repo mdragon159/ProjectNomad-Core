@@ -100,7 +100,11 @@
     <ClInclude Include="GameCore\CoreComponents.h" />
     <ClInclude Include="GameCore\CoreConstants.h" />
     <ClInclude Include="GameCore\PlayerId.h" />
-    <ClInclude Include="GameCore\PlayerInput.h" />
+    <ClInclude Include="Input\BufferedInputData.h" />
+    <ClInclude Include="Input\CommandSetList.h" />
+    <ClInclude Include="Input\CommandInputBuffer.h" />
+    <ClInclude Include="Input\InputCommand.h" />
+    <ClInclude Include="Input\PlayerInput.h" />
     <ClInclude Include="Math\FixedPoint.h" />
     <ClInclude Include="Math\FPEulerAngles.h" />
     <ClInclude Include="Math\FPMath.h" />
@@ -161,7 +165,9 @@
     <ClInclude Include="Utilities\ILogger.h" />
     <ClInclude Include="Utilities\LoggerSingleton.h" />
     <ClInclude Include="Utilities\NetLogMessage.h" />
+    <ClInclude Include="Utilities\PlatformSupport\UnrealReplacements.h" />
     <ClInclude Include="Utilities\Randomizer.h" />
+    <ClInclude Include="Utilities\SanityTesting\TestUnrealCompatibleEnum.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
     <ClInclude Include="Utilities\Singleton.h" />
     <ClInclude Include="Vendor\CRCpp\CRC.h" />

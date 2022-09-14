@@ -13,7 +13,7 @@ namespace ProjectNomad {
             return networkManager.isConnectedToPlayer();
         }
 
-        void sendInputsToRemotePlayer(FrameType currentFrame, const InputBuffer& remoteInputs) {
+        void sendInputsToRemotePlayer(FrameType currentFrame, const OldRollbackInputBuffer& remoteInputs) {
             // TODO: Only send inputs up to what was last ack'd
             // eg, if other player ack'd up to 5 frames ago, then send the last 5 frames of data only
             // (need to figure out how to flexibly size the struct though, should be fairly straightforward)

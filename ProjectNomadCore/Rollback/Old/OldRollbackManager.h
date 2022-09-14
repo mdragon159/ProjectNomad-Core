@@ -8,7 +8,7 @@
 #include "OldRollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
-#include "GameCore/PlayerInput.h"
+#include "Input/PlayerInput.h"
 #include "Utilities/FrameType.h"
 #include "Utilities/LoggerSingleton.h"
 #include "Utilities/Singleton.h"
@@ -220,7 +220,7 @@ namespace ProjectNomad {
             }
         }
 
-        InputBuffer& getLocalPlayerInputBuffer() {
+        OldRollbackInputBuffer& getLocalPlayerInputBuffer() {
             if (isLocalPlayer1) {
                 return gameState.inputBufferForPlayer1;
             }
@@ -229,7 +229,7 @@ namespace ProjectNomad {
             }
         }
 
-        InputBuffer& getRemotePlayerInputBuffer() {
+        OldRollbackInputBuffer& getRemotePlayerInputBuffer() {
             if (isLocalPlayer1) {
                 return gameState.inputBufferForPlayer2;
             }
@@ -249,7 +249,7 @@ namespace ProjectNomad {
             }
             
             // Store player input to be retrieved on the appropriate frame (which may be a latter frame due to input lag)
-            InputBuffer& localInputsBuffer = getLocalPlayerInputBuffer();
+            OldRollbackInputBuffer& localInputsBuffer = getLocalPlayerInputBuffer();
             localInputsBuffer.Add(localPlayerInput);
 
             if (isMultiplayerGame) {
@@ -337,7 +337,7 @@ namespace ProjectNomad {
             // Add missing data
             // FUTURE: Have two separate variables here, INPUTS_HISTORY_SIZE and MaxRollbackFrames. Right now they're equal,
             //          but in future they could be different. At risk here to have a bug when those don't equal
-            InputBuffer& remoteInputsBuffer = getRemotePlayerInputBuffer();
+            OldRollbackInputBuffer& remoteInputsBuffer = getRemotePlayerInputBuffer();
             for (FrameType i = 0; i < amountOfNewInputs; i++) {
                 // index 0 is the latest frame so add backwards
                 const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfNewInputs - i);

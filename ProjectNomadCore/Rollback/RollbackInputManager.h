@@ -1,5 +1,5 @@
 #pragma once
-#include "GameCore/PlayerInput.h"
+#include "Input/PlayerInput.h"
 #include "Model/RollbackSessionInfo.h"
 #include "Model/RollbackSettings.h"
 #include "Utilities/LoggerSingleton.h"

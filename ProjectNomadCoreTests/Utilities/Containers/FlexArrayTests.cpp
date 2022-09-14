@@ -1,6 +1,6 @@
 #include "pchNCT.h"
 
-#include "GameCore/PlayerInput.h"
+#include "Input/PlayerInput.h"
 #include "TestHelpers/TestHelpers.h"
 #include "Utilities/Containers/FlexArray.h"
 
@@ -196,15 +196,15 @@ namespace FlexArrayTests {
         FlexArray<PlayerInput, 100> firstTest;
         PlayerInput inputA = {};
         inputA.moveForward = fp{0.5f};
-        inputA.isJumpPressed = true;
-        inputA.isSecondaryAttackPressed = true;
+        inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
+        inputA.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
         firstTest.Add(inputA);
-
+        
         FlexArray<PlayerInput, 100> secondTest;
         PlayerInput inputB = {};
         inputB.moveForward = fp{0.5f};
-        inputB.isJumpPressed = true;
-        inputB.isSecondaryAttackPressed = true;
+        inputB.commandInputs.SetCommandValue(InputCommand::Jump, true);
+        inputB.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
         secondTest.Add(inputB);
 
         uint32_t firstChecksum = 0;
@@ -219,14 +219,14 @@ namespace FlexArrayTests {
         FlexArray<PlayerInput, 100> firstTest;
         PlayerInput inputA = {};
         inputA.moveForward = fp{0.5f};
-        inputA.isJumpPressed = true;
-        inputA.isSecondaryAttackPressed = true;
+        inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
+        inputA.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
         firstTest.Add(inputA);
 
         FlexArray<PlayerInput, 100> secondTest;
         PlayerInput inputB = {};
         inputB.moveForward = fp{0.25f};
-        inputB.isGrappleAimPressed = true;
+        inputB.commandInputs.SetCommandValue(InputCommand::Grapple, true);
         secondTest.Add(inputB);
 
         uint32_t firstChecksum = 0;
