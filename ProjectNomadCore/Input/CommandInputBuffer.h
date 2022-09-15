@@ -23,7 +23,7 @@ namespace ProjectNomad {
             return mBufferedInputs[static_cast<size_t>(command)].GetAndConsumeInput();
         }
 
-        bool IsCommandHeld(InputCommand command) {
+        bool IsCommandHeld(InputCommand command) const {
             // "Held" originates from "Is button held?", albeit doesn't exactly make sense with commands.
             // However, logic may want to check if command is still being actively given (eg, hold jump to go higher).
             // Thus, just return raw input value rather than going through input buffer.

@@ -16,7 +16,7 @@ namespace ProjectNomad {
             commandInputs[static_cast<size_t>(command)] = value;
         }
 
-        bool IsCommandSet(InputCommand command) {
+        bool IsCommandSet(InputCommand command) const {
             return commandInputs[static_cast<size_t>(command)];
         }
 
