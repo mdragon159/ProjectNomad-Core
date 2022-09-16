@@ -15,7 +15,7 @@ namespace ProjectNomad {
     * - Remembers if input used in a given frame so can later clear it. (So one press == one activation)
     * - Remembers when input given so can clear it if too long passes without being used. (So limited buffer time)
     *
-    * Note that there's no circular buffer in here or CommandInputBuffer as NOT supporting the same command being buffered
+    * Note that there's no circular buffer in CommandInputBuffer or here as NOT supporting the same command being buffered
     * multiple times. Can't see a need for it atm and may even get in way of intended behavior for player (eg, rapidly spamming
     * jump but only meaning to jump once)
     **/
@@ -33,12 +33,17 @@ namespace ProjectNomad {
             mWasUsed = false;
         }
 
-        void ClearIfConsumedOrExpired(FrameType curFrame) {
+        /**
+        * Clears any inputs which have been already used OR were stored too long ago in the past
+        * @param latestCompletedFrame - Latest frame which has already finished using this buffer. Note that this is
+        *                               expected to be safe to call at beginning of game with FrameType's max value.
+        **/
+        void ClearIfConsumedOrExpired(FrameType latestCompletedFrame) {
             if (!mIsSet) { // Nothing to do if input not even set
                 return;
             }
 
-            if (mWasUsed || curFrame - mSetFrame >= kBufferedInputLifetime) {
+            if (mWasUsed || latestCompletedFrame - mSetFrame >= kBufferedInputLifetime) {
                 mIsSet = false;
             }
         }

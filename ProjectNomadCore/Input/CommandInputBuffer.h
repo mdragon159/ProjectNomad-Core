@@ -15,6 +15,8 @@ namespace ProjectNomad {
     class CommandInputBuffer {
       public:
         void UpdateCommands(FrameType curFrame, const CommandSetList& curFrameCommands) {
+            ClearConsumedOrExpiredInputs(curFrame - 1); // Note that this is safe to do at frame 0 with current implementation
+            
             AddNewCommandsToInputBuffer(curFrame, mRawCommandInputs, curFrameCommands);
             mRawCommandInputs = curFrameCommands;
         }
@@ -28,12 +30,6 @@ namespace ProjectNomad {
             // However, logic may want to check if command is still being actively given (eg, hold jump to go higher).
             // Thus, just return raw input value rather than going through input buffer.
             return mRawCommandInputs.IsCommandSet(command);
-        }
-
-        void ClearConsumedOrExpiredInputs(FrameType curFrame) {
-            for (auto& bufferedInput : mBufferedInputs) {
-                bufferedInput.ClearIfConsumedOrExpired(curFrame);
-            }
         }
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
@@ -60,6 +56,12 @@ namespace ProjectNomad {
 
         bool GetAndConsumeInput(InputCommand command) {
             return mBufferedInputs[static_cast<size_t>(command)].GetAndConsumeInput();
+        }
+
+        void ClearConsumedOrExpiredInputs(FrameType latestCompletedFrame) {
+            for (auto& bufferedInput : mBufferedInputs) {
+                bufferedInput.ClearIfConsumedOrExpired(latestCompletedFrame);
+            }
         }
         
         CommandSetList mRawCommandInputs = {};
