@@ -167,7 +167,7 @@ namespace ProjectNomad {
                     mLocalPredictionAmount = static_cast<FrameType>(rollbackSettings.localInputDelay * -1);
                 }
 
-                mDoLocalSyncTest = rollbackSettings.syncTestFrames > 0;
+                mDoLocalSyncTest = rollbackSettings.useSyncTest && rollbackSettings.syncTestFrames > 0;
                 mSyncTestRollbackAmount = rollbackSettings.syncTestFrames;
             }
             else {
