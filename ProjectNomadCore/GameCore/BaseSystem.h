@@ -11,6 +11,6 @@ namespace ProjectNomad {
     public:
         virtual ~BaseSystem() {}
 
-        virtual void Update(SimContext& simContext) {}
+        virtual void Update(CoreContext& coreContext) {}
     };
 }

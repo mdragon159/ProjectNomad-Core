@@ -93,7 +93,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Context\SimContext.h" />
+    <ClInclude Include="Context\CoreContext.h" />
     <ClInclude Include="Context\SimFrame.h" />
     <ClInclude Include="GameCore\BaseComponent.h" />
     <ClInclude Include="GameCore\BaseSystem.h" />
