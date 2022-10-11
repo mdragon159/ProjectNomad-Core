@@ -160,7 +160,7 @@ namespace ProjectNomad {
         * @param targetFrame - desired frame to retrieve input from storage 
         * @returns offset to lookup desired input from relevant RingBuffer
         **/
-        uint32_t TargetFrameToLocalPlayerInputBufferOffset(const FrameType targetFrame) {
+        int TargetFrameToLocalPlayerInputBufferOffset(const FrameType targetFrame) {
             // 
 
             FrameType offsetWithoutInputDelay = mNextLocalFrameToStore - targetFrame - 1; // Should result in 0 when targetFrame is one less than next frame to store
@@ -188,7 +188,8 @@ namespace ProjectNomad {
             }
 
             // No issues with calculated offset so finally return it
-            return offset;
+            // Note that negative values represent the past in RingBuffer so flip the sign
+            return static_cast<int>(offset) * -1;
         }
         
         RingBuffer<PlayerInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs;

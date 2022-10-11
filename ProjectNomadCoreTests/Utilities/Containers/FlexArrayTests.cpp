@@ -145,6 +145,43 @@ namespace FlexArrayTests {
 
         ASSERT_TRUE(didSecondPassOnRemovedIndex);
     }
+
+    TEST_F(FlexArrayTests, AddAll_whenOneListEmpty_thenAddsNothing) {
+        FlexArray<int, 1> firstTest;
+        firstTest.Add(123);
+
+        FlexArray<int, 1> secondTest;
+
+        bool didAdd = firstTest.AddAll(secondTest);
+        EXPECT_TRUE(didAdd);
+    }
+
+    TEST_F(FlexArrayTests, AddAll_whenAddingMultipleElements_addsExpectedElements) {
+        FlexArray<int, 100> firstTest;
+        firstTest.Add(123);
+        firstTest.Add(456);
+        firstTest.Add(789);
+        firstTest.Remove(1);
+        firstTest.Add(234);
+
+        FlexArray<int, 100> secondTest;
+        secondTest.Add(111);
+        secondTest.Add(222);
+        secondTest.Add(333);
+        secondTest.Remove(1);
+        secondTest.Add(444);
+
+        bool didAdd = firstTest.AddAll(secondTest);
+        EXPECT_TRUE(didAdd);
+
+        EXPECT_EQ(6, firstTest.GetSize());
+        EXPECT_EQ(123, firstTest.Get(0));
+        EXPECT_EQ(789, firstTest.Get(1));
+        EXPECT_EQ(234, firstTest.Get(2));
+        EXPECT_EQ(111, firstTest.Get(3));
+        EXPECT_EQ(333, firstTest.Get(4));
+        EXPECT_EQ(444, firstTest.Get(5));
+    }
     
     TEST_F(FlexArrayTests, CalculateCRC32_whenSameValues_givenIntType_thenChecksumAreEquivalent) {
         FlexArray<int, 100> firstTest;

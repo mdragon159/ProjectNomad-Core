@@ -37,7 +37,29 @@ namespace ProjectNomad {
             return true;
         }
 
-        const ContentType& Get(uint32_t index) {
+        /**
+        * Adds all elements from another array to this array
+        * @param other - Array to add elements from
+        * @returns true if add succeeds, false otherwise
+        **/
+        bool AddAll(const FlexArray<ContentType, MaxSize>& other) {
+            // Safety check to prevent going beyond max size
+            if (GetSize() + other.GetSize() > MaxSize) {
+                return false;
+            }
+
+            // Simply add each element one by one
+            bool didAnyAddFail = false;
+            for (uint32_t i = 0; i < other.GetSize(); i++) {
+                if (!Add(other.Get(i))) {
+                    didAnyAddFail = true;
+                }
+            }
+
+            return !didAnyAddFail;
+        }
+
+        const ContentType& Get(uint32_t index) const {
             // Check index in bounds
             if (index > MaxSize - 1) {
                 return mArray[0];
@@ -95,7 +117,6 @@ namespace ProjectNomad {
 
             // Check if ContentTyPpe has CalculateCRC32 method. From https://stackoverflow.com/a/22014784/3735890
             // This is vital as otherwise checksum will use padding bits. See BaseComponent.h comments for more info
-            // constexpr bool HasCalculateCRC32 = requires(ContentType element) { element = {}; };
             constexpr bool HasCalculateCRC32 = requires(const ContentType& element, uint32_t& result) {
                 element.CalculateCRC32(result);
             };

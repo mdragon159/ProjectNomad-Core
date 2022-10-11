@@ -20,8 +20,9 @@ namespace ProjectNomad {
     class RollbackSnapshotManager {
       public:
         void OnSessionStart() {
-            // Reset necessary. Note that don't need to 
             mLatestStoredFrame = std::numeric_limits<FrameType>::max(); // Next frame to store is 0 (max + 1 = 0 with overflow)
+
+            // No need to reset RingBuffer as we just expect existing data in the buffer to be "noise"
         }
         
         /// <summary>Inserts provided snapshot into buffer</summary>
@@ -38,7 +39,7 @@ namespace ProjectNomad {
             }
             // Trying to replace a previously stored frame?
             else if (targetFrame <= mLatestStoredFrame && mLatestStoredFrame != std::numeric_limits<FrameType>::max()) {
-                uint32_t offset = CalculateOffset(targetFrame);
+                int offset = CalculateOffset(targetFrame);
                 mSnapshotBuffer.SwapReplace(offset, snapshot);
             }
             else { // Invalid input!
@@ -60,7 +61,7 @@ namespace ProjectNomad {
                 return mSnapshotBuffer.Get(0);
             }
 
-            uint32_t offset = CalculateOffset(frameToRetrieveSnapshotFor);
+            int offset = CalculateOffset(frameToRetrieveSnapshotFor);
             return mSnapshotBuffer.Get(offset);
         }
 
@@ -69,7 +70,7 @@ namespace ProjectNomad {
             return mLatestStoredFrame == std::numeric_limits<FrameType>::max() && frameToInsert +  1;
         }
         
-        FrameType CalculateOffset(FrameType frameForStoredSnapshot) {
+        int CalculateOffset(FrameType frameForStoredSnapshot) {
             FrameType frameOffset = mLatestStoredFrame - frameForStoredSnapshot;
 
             // Sanity check to help catch bugs
@@ -81,8 +82,9 @@ namespace ProjectNomad {
                 );
                 return 0;
             }
-            
-            return mLatestStoredFrame - frameForStoredSnapshot;
+
+            // Negative values represent the past in RingBuffer so flip the sign
+            return static_cast<int>(frameOffset) * -1;
         }
         
         FrameType mLatestStoredFrame = std::numeric_limits<FrameType>::max(); // Next frame to store is 0 (max + 1 = 0 with overflow)

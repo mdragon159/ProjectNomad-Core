@@ -9,7 +9,10 @@
 
 namespace ProjectNomad {
     // CoreComponents.h simply contains definition of components which both ProjectNomadCore and the main ProjectNomad projects need
-    
+
+    /**
+    * Anything that has a location and rotation aside from special cases (eg, static level entities) should have this comp
+    **/
     struct TransformComponent {
         FPVector location;
         FPQuat rotation;

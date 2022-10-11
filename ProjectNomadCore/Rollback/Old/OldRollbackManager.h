@@ -146,9 +146,9 @@ namespace ProjectNomad {
             
             switch(playerId.playerSpot) {
                 case PlayerSpot::Player1:
-                    return gameState.inputBufferForPlayer1.Get(frameOffset);
+                    return gameState.inputBufferForPlayer1.Get(static_cast<int>(frameOffset) * -1);
                 case PlayerSpot::Player2:
-                    return gameState.inputBufferForPlayer2.Get(frameOffset);
+                    return gameState.inputBufferForPlayer2.Get(static_cast<int>(frameOffset) * -1);
 
                 default:
                     logger.logWarnMessage(
