@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RenderEvent.h"
 #include "RenderEventsForFrame.h"
 #include "Rollback/Model/RollbackSettings.h"
 #include "Utilities/FrameType.h"
@@ -20,7 +19,10 @@ namespace ProjectNomad {
     *     -10 to -1 to represent history while +1 to +10 represent future.
     * - Note that this only uses in-place memory for ease of copying around... which isn't strictly necessary as not
     *     part of entt::registry, but ah well this works well atm
+    *     
+    * @tparam RenderEventType - Stored type for render events
     **/
+    template <typename RenderEventType>
     class RenderEventTracker {
       public:
         /**
@@ -41,7 +43,7 @@ namespace ProjectNomad {
         * @param renderEvent - new event to add
         * @param lifetime - how many frames this event is expected to "live" (or at least worth recreating if missed pre-rollback)
         **/
-        void AddNewFxForCurrentFrame(RenderEvent renderEvent, FrameType lifetime) {
+        void AddNewFxForCurrentFrame(RenderEventType renderEvent, FrameType lifetime) {
             // Add event to new event tracking
             mRenderEventTrackRingBuffer.Get(0).newEvents.Add(renderEvent);
 
@@ -57,7 +59,7 @@ namespace ProjectNomad {
         * Retrieve render events for the current frame. Currently const as see no reason to *not* be const at the moment.
         * @returns reference to current frame's render events
         **/
-        const RenderEventsForFrame& GetCurrentFrameEvents() const {
+        const RenderEventsForFrame<RenderEventType>& GetCurrentFrameEvents() const {
             return mRenderEventTrackRingBuffer.Get(0);
         }
         
@@ -76,6 +78,6 @@ namespace ProjectNomad {
         // 0 = head or current frame,
         // -1 = one previous frame's data up to -10 prior frames, and
         // +1 = next frame's data up to +10 future frames.
-        RingBuffer<RenderEventsForFrame, kMaxFramesToTrack> mRenderEventTrackRingBuffer = {};
+        RingBuffer<RenderEventsForFrame<RenderEventType>, kMaxFramesToTrack> mRenderEventTrackRingBuffer = {};
     };
 }

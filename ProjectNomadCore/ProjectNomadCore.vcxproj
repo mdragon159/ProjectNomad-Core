@@ -141,7 +141,6 @@
     <ClInclude Include="Rollback\RenderEvents\RenderEventTracker.h" />
     <ClInclude Include="Rollback\RenderEvents\RenderEvent.h" />
     <ClInclude Include="Rollback\RenderEvents\RenderEventsForFrame.h" />
-    <ClInclude Include="Rollback\RenderEvents\RenderEventType.h" />
     <ClInclude Include="Rollback\RollbackInputManager.h" />
     <ClInclude Include="Rollback\InputPredictor.h" />
     <ClInclude Include="Rollback\Model\RollbackSessionInfo.h" />
