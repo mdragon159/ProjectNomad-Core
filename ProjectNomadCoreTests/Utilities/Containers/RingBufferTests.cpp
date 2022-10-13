@@ -10,7 +10,7 @@ namespace RingBufferTests {
 
     TEST_F(RingBufferTests, Initialization_initializesAllValuesToDefault) {
         // Sanity check unit test to assure initialization works as expected for RenderEventTracker
-        RingBuffer<RenderEventsForFrame, 4> toTest;
+        RingBuffer<RenderEventsForFrame<int>, 4> toTest;
 
         EXPECT_TRUE(toTest.Get(0).IsEmpty());
         EXPECT_TRUE(toTest.Get(1).IsEmpty());

@@ -14,8 +14,8 @@ namespace ProjectNomad {
     * Anything that has a location and rotation aside from special cases (eg, static level entities) should have this comp
     **/
     struct TransformComponent {
-        FPVector location;
-        FPQuat rotation;
+        FPVector location = FPVector::zero();
+        FPQuat rotation = FPQuat::identity();
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
             location.CalculateCRC32(resultThusFar);
@@ -30,7 +30,7 @@ namespace ProjectNomad {
 
     struct PhysicsComponent {
         uint16_t mass = 100;
-        FPVector velocity;
+        FPVector velocity = FPVector::zero();
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
