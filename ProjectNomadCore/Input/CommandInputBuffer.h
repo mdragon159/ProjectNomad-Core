@@ -21,8 +21,20 @@ namespace ProjectNomad {
             mRawCommandInputs = curFrameCommands;
         }
 
-        bool IsCommandInitiallyPressed(InputCommand command) {
+        bool IsCommandInitiallyPressedWithConsumption(InputCommand command) {
             return mBufferedInputs[static_cast<size_t>(command)].GetAndConsumeInput();
+        }
+
+        bool IsCommandInitiallyPressedWithoutConsumption(InputCommand command) const {
+            return mBufferedInputs[static_cast<size_t>(command)].GetWithoutConsumingInput();
+        }
+
+        void ConsumeInputInitialPress(InputCommand command) {
+            mBufferedInputs[static_cast<size_t>(command)].MarkConsumed();
+        }
+
+        void ImmediatelyResetInputPress(InputCommand command) {
+            mBufferedInputs[static_cast<size_t>(command)].ImmediatelyResetInputPress();
         }
 
         bool IsCommandHeld(InputCommand command) const {

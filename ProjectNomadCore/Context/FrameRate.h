@@ -16,7 +16,8 @@ namespace ProjectNomad {
             return fp{1000} / fp{kGameplayFrameRate};
         }
 
-        static consteval fp TimePerFrameInSec() {
+        // TODO: Figure out the constexpr/consteval issues with fp!
+        static fp TimePerFrameInSec() {
             return fp{1} / fp{kGameplayFrameRate};
         }
 
@@ -32,6 +33,8 @@ namespace ProjectNomad {
         * @returns input frame in current frame rate
         **/
         static consteval FrameType As30FpsFrame(FrameType valueAs30Fps) {
+            // Note that there's a concerning edge case when kGameplayFrameRate < 30.
+            // Namely, an input of 1 will round down to a 0. However, there are no intentions of testing an fps < 30
             return valueAs30Fps * kGameplayFrameRate / 30;
         }
     };

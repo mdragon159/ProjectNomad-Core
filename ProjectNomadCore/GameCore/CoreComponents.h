@@ -32,6 +32,10 @@ namespace ProjectNomad {
         uint16_t mass = 100;
         FPVector velocity = FPVector::zero();
 
+        bool HasAnyVelocity() const {
+            return velocity.getLengthSquared() != fp{0};
+        }
+
         void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
             velocity.CalculateCRC32(resultThusFar);

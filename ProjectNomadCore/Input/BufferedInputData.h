@@ -20,7 +20,22 @@ namespace ProjectNomad {
     * jump but only meaning to jump once)
     **/
     class BufferedInputData {
-      public:        
+      public:
+        // GetWithoutConsumingInput + MarkConsumed support checking without consuming for a bit of flexibility with coding styles
+        bool GetWithoutConsumingInput() const {
+            return mIsSet;
+        }
+        void MarkConsumed() {
+            mWasUsed = true;
+        }
+        // This is intended to support a single input not, say, re-toggling an action instantly
+        // Eg, pressing crouch once should not go into crouch state then exit crouch state in same frame regardless of
+        // order of relevant systems/logic processing
+        void ImmediatelyResetInputPress() {
+            mIsSet = false;
+        }
+        
+        // Likely preferred way to get inputs for actions, as calling code doesn't need to worry about a second call
         bool GetAndConsumeInput() {
             mWasUsed = true;
             return mIsSet;
