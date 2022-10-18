@@ -12,7 +12,6 @@ namespace ProjectNomad {
         Crouch,
         Jump,
         Dash,
-        DownDodge,
 
         Block,
         Grapple,
