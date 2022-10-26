@@ -72,7 +72,7 @@ namespace FPMath2Tests {
     TEST(FPMath2, quatToEuler_givenIdentityQuat_returnsZeroEulers) {
         FPQuat input = FPQuat::identity();
 
-        EulerAngles result = FPMath2::quatToEuler(input);
+        EulerAngles result = FPMath2::QuatToEuler(input);
 
         ASSERT_EQ(EulerAngles::zero(), result);
     }

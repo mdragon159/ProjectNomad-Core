@@ -179,7 +179,7 @@ namespace VectorUtilitiesTests {
         ASSERT_TRUE(isParallelOppDirResult);
     }
 
-    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenSameDirection_returnsZero) {;
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenSameDirection_returnsZero) {
         FPVector secondDir = FPVector::forward();
 
         fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
@@ -187,7 +187,7 @@ namespace VectorUtilitiesTests {
         TestHelpers::expectNear(fp{0}, result, fp{0.01f});
     }
 
-    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToLeftDirection_returnsPositive90) {;
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToLeftDirection_returnsPositive90) {
         FPVector secondDir = FPVector::right() * fp{-1};
 
         fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
@@ -195,7 +195,7 @@ namespace VectorUtilitiesTests {
         TestHelpers::expectNear(fp{90}, result, fp{0.01f});
     }
 
-    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToRightDirection_returnsPositive90) {;
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenToRightDirection_returnsPositive90) {
         FPVector secondDir = FPVector::right();
 
         fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
@@ -203,7 +203,7 @@ namespace VectorUtilitiesTests {
         TestHelpers::expectNear(fp{90}, result, fp{0.01f});
     }
 
-    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenOppositeDirection_returns180) {;
+    TEST(getAngleBetweenVectorsInDegrees, forwardComparison_whenOppositeDirection_returns180) {
         FPVector secondDir = FPVector::forward() * fp{-1};
 
         fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(FPVector::forward(), secondDir);
@@ -221,7 +221,19 @@ namespace VectorUtilitiesTests {
         TestHelpers::expectNear(fp{178}, result, fp{0.01f});
     }
 
-    TEST(isXYCrossDotPositive, forwardComparison_whenSameDirection_returnsTrue) {;
+    TEST(getAngleBetweenVectorsInDegrees, whenNormalizedDotProductBetweenVectorsIsSlightlyGreaterThanOne_thenStillReturnsExpectedValue) {
+        // Real world case where first step in process results in a value SLIGHTLY greater than magnitude of one (-1.00001526).
+        // This seems to have an imaginary component for inverse cosine and thus the underlying calculation previously failed.
+        // Pass in the same values to the function to assure this edge case is fixed.
+        FPVector firstDir = FPVector(fp{-0.191650f}, fp{-0.982468f}, fp{0});
+        FPVector secondDir = FPVector(fp{0.190933f}, fp{0.981598f}, fp{0});
+
+        fp result = VectorUtilities::getAngleBetweenVectorsInDegrees(firstDir, secondDir);
+
+        TestHelpers::expectNear(fp{180}, result, fp{0.01f});
+    }
+
+    TEST(isXYCrossDotPositive, forwardComparison_whenSameDirection_returnsTrue) {
         FPVector secondDir = FPVector::forward();
 
         bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
@@ -229,7 +241,7 @@ namespace VectorUtilitiesTests {
         EXPECT_TRUE(result);
     }
 
-    TEST(isXYCrossDotPositive, forwardComparison_whenToLeftDirection_returnsFalse) {;
+    TEST(isXYCrossDotPositive, forwardComparison_whenToLeftDirection_returnsFalse) {
         FPVector secondDir = FPVector::right() * fp{-1};
 
         bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
@@ -237,7 +249,7 @@ namespace VectorUtilitiesTests {
         EXPECT_FALSE(result);
     }
 
-    TEST(isXYCrossDotPositive, forwardComparison_whenToRightDirection_returnsTrue) {;
+    TEST(isXYCrossDotPositive, forwardComparison_whenToRightDirection_returnsTrue) {
         FPVector secondDir = FPVector::right();
 
         bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);
@@ -245,7 +257,7 @@ namespace VectorUtilitiesTests {
         EXPECT_TRUE(result);
     }
 
-    TEST(isXYCrossDotPositive, forwardComparison_whenOppositeDirection_returnsTrue) {;
+    TEST(isXYCrossDotPositive, forwardComparison_whenOppositeDirection_returnsTrue) {
         FPVector secondDir = FPVector::forward() * fp{-1};
 
         bool result = VectorUtilities::isXYCrossDotPositive(FPVector::forward(), secondDir);

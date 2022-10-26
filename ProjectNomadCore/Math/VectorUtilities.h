@@ -73,6 +73,12 @@ namespace ProjectNomad {
         static fp getAngleBetweenVectorsInDegrees(const FPVector& a, const FPVector& b) {
             // TODO: I don't even remember what formula I used. A reference here would be nice
             fp value = a.normalized().dot(b.normalized());
+
+            // Slight errors may still result in a value very slightly greater than magnitude of 1, which would result in
+            // erroneous output (due to somehow having an imaginary component for those values w/ inverse cosine?).
+            // Avoid this issue by clamping to valid range.
+            value = FPMath::clamp(value, fp{-1}, fp{1});
+            
             return FPMath::acosD(value);
         }
 
