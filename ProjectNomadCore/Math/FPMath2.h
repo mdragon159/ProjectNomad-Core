@@ -57,9 +57,13 @@ namespace ProjectNomad {
             return current + deltaMove;
         }
 
-        // TODO: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Quaternion_to_Euler_angles_conversion
-        static EulerAngles quatToEuler(const FPQuat& quat) {
-            return EulerAngles::zero();
+        static EulerAngles QuatToEuler(const FPQuat& quat) {
+            // "Proper" way to do so: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Quaternion_to_Euler_angles_conversion
+            // However, we already implemented quat to dir vector and dir vector to euler. Thus, just reuse that.
+            // NOTE: It'd likely be far more efficient to work in dir vector space than to work in euler space, esp if
+            //       converting back to quat
+            
+            return dirVectorToEuler(QuatToDirVector(quat));
         }
 
         static FPQuat eulerToQuat(const EulerAngles& euler) {
@@ -115,6 +119,15 @@ namespace ProjectNomad {
             // Note that we don't care about roll here, as it doesn't affect the direction the vector is pointing in
             // (given that we're following yaw -> pitch -> roll rotation order)
             return result;
+        }
+
+        /**
+        * Simple method to show how to convert a quat to direction vector notation
+        * @param input - rotation to represent as a direction vector
+        * @returns direction vector with provided input rotation
+        **/
+        static FPVector QuatToDirVector(const FPQuat& input) {
+            return input * FPVector::forward();
         }
 
         /// <returns>
