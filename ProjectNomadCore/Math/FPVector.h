@@ -157,6 +157,10 @@ namespace ProjectNomad {
             return result;
         }
 
+        bool IsZero() const {
+            return x == fp{0} && y == fp{0} && z == fp{0};
+        }
+
         bool isNear(const FPVector& other, const fp& positiveErrorRange) {
             return FPMath::isNear(x, other.x, positiveErrorRange)
                 && FPMath::isNear(y, other.y, positiveErrorRange)

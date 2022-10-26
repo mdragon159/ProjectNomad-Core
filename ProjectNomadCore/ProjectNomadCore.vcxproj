@@ -164,6 +164,7 @@
     <ClInclude Include="Utilities\CoreEnumType.h" />
     <ClInclude Include="Utilities\CoreTypeShortcuts.h" />
     <ClInclude Include="Utilities\DebugMessage.h" />
+    <ClInclude Include="Utilities\DefineNomadDebug.h" />
     <ClInclude Include="Utilities\FakeLogger.h" />
     <ClInclude Include="Utilities\FrameType.h" />
     <ClInclude Include="Utilities\ILogger.h" />
