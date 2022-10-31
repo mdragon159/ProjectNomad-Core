@@ -49,6 +49,28 @@ namespace FlexArrayTests {
         EXPECT_TRUE(toTest.IsEmpty());
     }
 
+    TEST_F(FlexArrayTests, IsFull_whenEmpty_returnsFalse) {
+        FlexArray<int, 3> toTest;
+        
+        EXPECT_FALSE(toTest.IsFull());
+    }
+
+    TEST_F(FlexArrayTests, IsFull_whenSingleElementAdded_returnsFalse) {
+        FlexArray<int, 3> toTest;
+        toTest.Add(123);
+        
+        EXPECT_FALSE(toTest.IsFull());
+    }
+
+    TEST_F(FlexArrayTests, IsFull_whenMaxCapacityElementsAdded_returnsTrue) {
+        FlexArray<int, 3> toTest;
+        toTest.Add(123);
+        toTest.Add(123);
+        toTest.Add(123);
+        
+        EXPECT_TRUE(toTest.IsFull());
+    }
+
     TEST_F(FlexArrayTests, GetSize_whenOneElementAddedThenRemoved_returnsZero) {
         FlexArray<int, 100> toTest;
         toTest.Add(100);

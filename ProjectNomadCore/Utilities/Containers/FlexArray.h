@@ -26,6 +26,10 @@ namespace ProjectNomad {
             return mHeadIndex == 0;
         }
 
+        bool IsFull() const {
+            return GetSize() == GetMaxSize();
+        }
+
         // Returns true if succeeds
         bool Add(const ContentType& element) {
             if (mHeadIndex >= MaxSize) {

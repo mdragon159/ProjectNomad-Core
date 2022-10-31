@@ -99,6 +99,35 @@ namespace ProjectNomad {
             return a.cross(b).dot(FPVector::up()) >= fp{0};
         }
 
+        /**
+        * Checks if given direction is within angleRangeInclusive degrees of horizontal plane.
+        * ie, this answers the question "Is this direction close to pointing horizontally?"
+        * @param inputDir - Input direction to check against horizontal plane
+        * @param angleRangeInclusive - allowed angle difference. Must be >= 0
+        * @returns true if given direction is close to horizontal, false otherwise
+        **/
+        static bool IsDirectionCloseToHorizontal(const FPVector& inputDir, fp angleRangeInclusive) {
+            // FUTURE NOTE: There *is* some sort of optimization checking just the magnitude of the z value
+            // (as x-y vs z ratio varies in conjunction with angle), BUT current implementation certainly works and
+            // don't want to superficially think about all this math and waste time on pre-optimizing
+            
+            // Necessary early check: Make sure there are any horizontal components.
+            // If we don't do this check first, then computing horizontal project direction later on may fail due to no horizontal components 
+            if (inputDir.x == fp{0} && inputDir.y == fp{0}) {
+                return false;
+            }
+            // Perhaps more harmful than useful pre-optimization check
+            if (inputDir.z == fp{0}) {
+                return true;
+            }
+
+            // Project input direction to horizontal plane to get corresponding horizontal vector
+            const FPVector horizontalProjectionDir = zeroOutZ(inputDir).normalized();
+            
+            // Now we can simply check if angle is within range for input direction vs horizontal plane
+            return isAngleBetweenVectorsInRange(inputDir, horizontalProjectionDir, angleRangeInclusive);
+        }
+
         static FPVector zeroOutZ(const FPVector& vector) {
             return FPVector(vector.x, vector.y, fp{0});
         }

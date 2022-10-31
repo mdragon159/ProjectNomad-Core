@@ -265,6 +265,33 @@ namespace VectorUtilitiesTests {
         EXPECT_TRUE(result);
     }
 
+    TEST(IsDirectionCloseToHorizontal, whenHorizontalDirection_returnsTrue) {
+        bool result = VectorUtilities::IsDirectionCloseToHorizontal(FPVector::forward(), fp{0});
+
+        EXPECT_TRUE(result);
+    }
+
+    TEST(IsDirectionCloseToHorizontal, whenVerticalDirection_returnsFalse) {
+        bool result = VectorUtilities::IsDirectionCloseToHorizontal(FPVector::up(), fp{30});
+
+        EXPECT_FALSE(result);
+    }
+
+    TEST(IsDirectionCloseToHorizontal, whenDiagonalDirectionOutsideInputRange_returnsFalse) {
+        FPVector checkDir = FPVector(fp{1}, fp{1}, fp{0.5f}).normalized();
+        bool result = VectorUtilities::IsDirectionCloseToHorizontal(checkDir, fp{10});
+
+        EXPECT_FALSE(result);
+    }
+    
+    TEST(IsDirectionCloseToHorizontal, whenDiagonalDirectionWithinInputRange_returnsTrue) {
+        FPVector checkDir = FPVector(fp{1}, fp{1}, fp{0.5f}).normalized();
+        bool result = VectorUtilities::IsDirectionCloseToHorizontal(checkDir, fp{30});
+
+        EXPECT_TRUE(result);
+    }
+
+
     // Parallel
     // Opposite parallel
     // Perpendicular
