@@ -14,9 +14,9 @@ namespace ProjectNomad {
         Dash,
 
         Block,
-        Grapple,
-        Attack,
-        SpecialAttack,
+        GrappleAim,
+        AttackLight,
+        AttackHeavy,
 
         Interact,
         SwitchWeapon,

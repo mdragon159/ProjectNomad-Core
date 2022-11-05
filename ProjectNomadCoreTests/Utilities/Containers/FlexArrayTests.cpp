@@ -256,14 +256,14 @@ namespace FlexArrayTests {
         PlayerInput inputA = {};
         inputA.moveForward = fp{0.5f};
         inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
-        inputA.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
+        inputA.commandInputs.SetCommandValue(InputCommand::AttackHeavy, true);
         firstTest.Add(inputA);
         
         FlexArray<PlayerInput, 100> secondTest;
         PlayerInput inputB = {};
         inputB.moveForward = fp{0.5f};
         inputB.commandInputs.SetCommandValue(InputCommand::Jump, true);
-        inputB.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
+        inputB.commandInputs.SetCommandValue(InputCommand::AttackHeavy, true);
         secondTest.Add(inputB);
 
         uint32_t firstChecksum = 0;
@@ -279,13 +279,13 @@ namespace FlexArrayTests {
         PlayerInput inputA = {};
         inputA.moveForward = fp{0.5f};
         inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
-        inputA.commandInputs.SetCommandValue(InputCommand::SpecialAttack, true);
+        inputA.commandInputs.SetCommandValue(InputCommand::AttackHeavy, true);
         firstTest.Add(inputA);
 
         FlexArray<PlayerInput, 100> secondTest;
         PlayerInput inputB = {};
         inputB.moveForward = fp{0.25f};
-        inputB.commandInputs.SetCommandValue(InputCommand::Grapple, true);
+        inputB.commandInputs.SetCommandValue(InputCommand::AttackLight, true);
         secondTest.Add(inputB);
 
         uint32_t firstChecksum = 0;
