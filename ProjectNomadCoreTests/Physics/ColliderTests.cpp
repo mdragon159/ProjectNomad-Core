@@ -168,6 +168,56 @@ namespace ColliderTests {
         ASSERT_EQ(halfHeight, collider.capsuleHalfHeight);
     }
 
+    TEST(setCapsuleBasedOnEndSphereCenters, whenGivenStandardVerticalPoints_thenSetsCapsuleWithNoRotation) {
+        FPVector pointA = FPVector(fp{-1}, fp{-1}, fp{-1});
+        FPVector pointB = FPVector(fp{-1}, fp{-1}, fp{5});
+        fp radius = fp{2};
+        
+        Collider collider;
+        collider.setCapsule(pointA, pointB, radius);
+
+        FPVector expectedCenter = FPVector(fp{-1}, fp{-1}, fp{2});
+        FPQuat expectedRotation = FPQuat::identity();
+        fp expectedHalfHeight = fp{5};
+        
+        ASSERT_TRUE(collider.isCapsule());
+        ASSERT_EQ(ColliderType::Capsule, collider.colliderType);
+        
+        TestHelpers::expectNear(expectedCenter, collider.getCenter(), fp{0.05f});
+        TestHelpers::expectNear(expectedCenter, collider.center, fp{0.05f});
+        TestHelpers::expectNear(expectedRotation, collider.getRotation(), fp{0.05f});
+        TestHelpers::expectNear(expectedRotation, collider.rotation, fp{0.05f});
+        TestHelpers::expectNear(radius, collider.getCapsuleRadius(), fp{0.05f});
+        TestHelpers::expectNear(radius, radius, fp{0.05f});
+        TestHelpers::expectNear(expectedHalfHeight, collider.getCapsuleHalfHeight(), fp{0.05f});
+        TestHelpers::expectNear(expectedHalfHeight, collider.capsuleHalfHeight, fp{0.05f});
+    }
+
+    TEST(setCapsuleBasedOnEndSphereCenters, whenGivenRotatiedVerticalPoints_thenSetsCapsuleWithAppropriateRotation) {
+        FPVector pointA = FPVector(fp{22}, fp{-10}, fp{-2323});
+        FPVector pointB = FPVector(fp{22}, fp{20}, fp{-2323});
+        fp radius = fp{5};
+        
+        Collider collider;
+        collider.setCapsule(pointA, pointB, radius);
+
+        FPVector expectedCenter = FPVector(fp{22}, fp{5}, fp{-2323});
+        FPQuat expectedRotation = FPQuat::fromDegrees(FPVector::forward(), fp{-90}); // What rotation is necessary to get from upwards capsule to rightwards capsule
+        fp expectedHalfHeight = fp{20};
+        
+        ASSERT_TRUE(collider.isCapsule());
+        ASSERT_EQ(ColliderType::Capsule, collider.colliderType);
+        
+        TestHelpers::expectNear(expectedCenter, collider.getCenter(), fp{0.05f});
+        TestHelpers::expectNear(expectedCenter, collider.center, fp{0.05f});
+        TestHelpers::expectNear(expectedRotation, collider.getRotation(), fp{0.05f});
+        TestHelpers::expectNear(expectedRotation, collider.rotation, fp{0.05f});
+        TestHelpers::expectNear(radius, collider.getCapsuleRadius(), fp{0.05f});
+        TestHelpers::expectNear(radius, radius, fp{0.05f});
+        TestHelpers::expectNear(expectedHalfHeight, collider.getCapsuleHalfHeight(), fp{0.05f});
+        TestHelpers::expectNear(expectedHalfHeight, collider.capsuleHalfHeight, fp{0.05f});
+    }
+
     TEST(setSphere, createsExpectedCollider) {
         FPVector center(fp{1}, fp{-2}, fp{0.5f});
         fp radius = fp{2.5f};

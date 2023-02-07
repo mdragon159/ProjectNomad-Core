@@ -28,6 +28,97 @@ namespace VectorUtilitiesTests {
 
         TestHelpers::expectNear(FPVector::forward(), result, fp{0.1f});
     }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenRightVector_returnsDownDir) {
+        FPVector input = FPVector::right();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::down(), result, fp{0.01f});
+    }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenLeftVector_returnsUpDir) {
+        FPVector input = FPVector::left();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenForwardVector_returnsUpDir) {
+        FPVector input = FPVector::forward();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenBackVector_returnsDownDir) {
+        FPVector input = FPVector::backward();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::down(), result, fp{0.01f});
+    }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenUpVector_returnsUpDir) {
+        FPVector input = FPVector::up();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetVerticalPerpendicularDirection, whenGivenDownVector_returnsDownDir) {
+        FPVector input = FPVector::down();
+        FPVector result = VectorUtilities::GetVerticalPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::down(), result, fp{0.01f});
+    }
+    
+    TEST(GetUpwardsPerpendicularDirection, whenGivenRightVector_returnsUpDir) {
+        FPVector input = FPVector::right();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenLeftVector_returnsUpDir) {
+        FPVector input = FPVector::left();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenForwardVector_returnsUpDir) {
+        FPVector input = FPVector::forward();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenBackVector_returnsUpDir) {
+        FPVector input = FPVector::backward();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenUpVector_returnsUpDir) {
+        FPVector input = FPVector::up();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenDownVector_returnsUpDir) {
+        FPVector input = FPVector::down();
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
+
+    TEST(GetUpwardsPerpendicularDirection, whenGivenInexactYAxisDir_thenStillReturnsUpDir) {
+        FPVector input = FPVector(fp{0.000031f}, fp{-1}, fp{0});
+        FPVector result = VectorUtilities::GetUpwardsPerpendicularDirection(input);
+
+        TestHelpers::expectNear(FPVector::up(), result, fp{0.01f});
+    }
     
     TEST(getParallelVectorProjection, whenGivenVectorParallelToDir_returnsInitialVector) {
         FPVector testVector(fp{0}, fp{250.5f}, fp{0});
@@ -109,7 +200,7 @@ namespace VectorUtilitiesTests {
         VectorUtilities::getParallelVectorProjection(testVector, direction, result);
         
         ASSERT_EQ(FPVector(fp{0}, fp{0}, fp{-125}), result);
-    }
+    }    
 
     TEST(getVectorsRelativeToDir_shorthand, whenGivenVectorParallelToDir_returnsExpectedResults) {
         FPVector testVector(fp{0}, fp{250.5f}, fp{0});

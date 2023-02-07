@@ -61,6 +61,10 @@ namespace ProjectNomad {
             return directionNotNormalized(from, to).normalized();
         }
 
+        static FPVector midpoint(const FPVector& a, const FPVector& b) {
+            return (a + b) / fp{2};
+        }
+
         fp getLengthSquared() const {
             return x * x + y * y + z * z;
         }
@@ -165,6 +169,16 @@ namespace ProjectNomad {
             return FPMath::isNear(x, other.x, positiveErrorRange)
                 && FPMath::isNear(y, other.y, positiveErrorRange)
                 && FPMath::isNear(z, other.z, positiveErrorRange);
+        }
+
+        /**
+         * Specifically, this returns true if the current vector has a component opposite to the input vector.
+         * @param other input vector to compare against
+         * @returns true if this vector has a component opposite to input vector 
+         */
+        bool isOppositeDirectionTo(const FPVector& other) const {
+            // Dot product is only negative if vectors are in opposite directions
+            return dot(other) < fp{0};
         }
 
         void CalculateCRC32(uint32_t& resultThusFar) const {

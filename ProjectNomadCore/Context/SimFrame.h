@@ -31,7 +31,7 @@ namespace ProjectNomad {
             return mSimFrameCount;
         }
 
-        FrameType GetActiveFrameCount(FrameType startingFrame) const {
+        FrameType GetFrameCountSince(FrameType startingFrame) const {
             return GetCurrentFrameCount() - startingFrame;
         }
 

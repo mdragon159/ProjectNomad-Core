@@ -96,7 +96,6 @@
     <ClInclude Include="Context\CoreContext.h" />
     <ClInclude Include="Context\FrameRate.h" />
     <ClInclude Include="Context\SimFrame.h" />
-    <ClInclude Include="GameCore\BaseComponent.h" />
     <ClInclude Include="GameCore\BaseSystem.h" />
     <ClInclude Include="GameCore\CoreComponents.h" />
     <ClInclude Include="GameCore\CoreConstants.h" />
@@ -106,6 +105,7 @@
     <ClInclude Include="Input\CommandInputBuffer.h" />
     <ClInclude Include="Input\InputCommand.h" />
     <ClInclude Include="Input\PlayerInput.h" />
+    <ClInclude Include="Input\GameplayInteractiveUIChoice.h" />
     <ClInclude Include="Math\FixedPoint.h" />
     <ClInclude Include="Math\FPEulerAngles.h" />
     <ClInclude Include="Math\FPMath.h" />
@@ -136,6 +136,8 @@
     <ClInclude Include="Physics\Simplex.h" />
     <ClInclude Include="Physics\Systems\PosUpdatingAndCollisionResolutionSystem.h" />
     <ClInclude Include="Physics\Utility\CollisionResolutionHelper.h" />
+    <ClInclude Include="Random\IncrementalRandomizer.h" />
+    <ClInclude Include="Random\SquirrelRNG.h" />
     <ClInclude Include="Rollback\Model\BaseSnapshot.h" />
     <ClInclude Include="Rollback\Model\RollbackManagerSnapshot.h" />
     <ClInclude Include="Rollback\RenderEvents\RenderEventTracker.h" />
@@ -171,7 +173,6 @@
     <ClInclude Include="Utilities\LoggerSingleton.h" />
     <ClInclude Include="Utilities\NetLogMessage.h" />
     <ClInclude Include="Utilities\PlatformSupport\UnrealReplacements.h" />
-    <ClInclude Include="Utilities\Randomizer.h" />
     <ClInclude Include="Utilities\SanityTesting\TestUnrealCompatibleEnum.h" />
     <ClInclude Include="Utilities\SharedUtilities.h" />
     <ClInclude Include="Utilities\Singleton.h" />

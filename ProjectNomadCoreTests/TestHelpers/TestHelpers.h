@@ -19,6 +19,9 @@ public:
 
     static void assertNear(FPVector expected, FPVector actual, fp range);
     static void expectNear(FPVector expected, FPVector actual, fp range);
+
+    static void assertNear(FPQuat expected, FPQuat actual, fp range);
+    static void expectNear(FPQuat expected, FPQuat actual, fp range);
     
     static void expectEq(FPVector expected, FPVector actual);
 

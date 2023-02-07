@@ -10,15 +10,20 @@ namespace ProjectNomad {
     **/
     class FrameRate {
       public:
+        FrameRate() = delete;
+        
         static constexpr FrameType kGameplayFrameRate = 60;
 
-        static consteval fp TimePerFrameInMicroSec() {
-            return fp{1000} / fp{kGameplayFrameRate};
-        }
-
         // TODO: Figure out the constexpr/consteval issues with fp!
+
         static fp TimePerFrameInSec() {
             return fp{1} / fp{kGameplayFrameRate};
+        }
+        static fp TimePerFrameInMilliSec() {
+            return fp{1000} / fp{kGameplayFrameRate};
+        }
+        static fp TimePerFrameInMicroSec() {
+            return fp{1000} * fp{1000} / fp{kGameplayFrameRate};
         }
 
         static consteval float FloatTimePerFrameInSec() { // For ease of use in engine (Unreal) side. Should NEVER be used in SimLayer!
@@ -36,6 +41,17 @@ namespace ProjectNomad {
             // Note that there's a concerning edge case when kGameplayFrameRate < 30.
             // Namely, an input of 1 will round down to a 0. However, there are no intentions of testing an fps < 30
             return valueAs30Fps * kGameplayFrameRate / 30;
+        }
+
+        /**
+         * Convert seconds to number of frames in current frame rate
+         * @param timeInSeconds Input time in seconds
+         * @returns input as number of frames
+         */
+        // TODO: Once fp supports constexpr/consteval, mark this as consteval
+        static FrameType FromSeconds(fp timeInSeconds) {
+            fp resultWithDecimals = timeInSeconds / TimePerFrameInSec();
+            return static_cast<FrameType>(resultWithDecimals);
         }
     };
 }

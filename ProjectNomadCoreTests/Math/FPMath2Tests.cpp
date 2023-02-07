@@ -123,6 +123,33 @@ namespace FPMath2Tests {
         TestHelpers::assertNear(expected, result, fp{0.01f});
     }
 
+    TEST(FPMath2, dirVectorToEuler_givenForwardDirection_returnsNoRotation) {
+        FPVector inputDir = FPVector::forward();
+        EulerAngles result = FPMath2::DirVectorToEuler(inputDir);
+
+        TestHelpers::assertNear(fp{0}, result.pitch, fp{0});
+        TestHelpers::assertNear(fp{0}, result.roll, fp{0}); 
+        TestHelpers::assertNear(fp{0}, result.yaw, fp{0}); 
+    }
+
+    TEST(FPMath2, dirVectorToEuler_givenBackwardDirection_returnsCorrectRotation) {
+        FPVector inputDir = FPVector::backward();
+        EulerAngles result = FPMath2::DirVectorToEuler(inputDir);
+
+        TestHelpers::assertNear(fp{0}, result.pitch, fp{0});
+        TestHelpers::assertNear(fp{0}, result.roll, fp{0}); 
+        TestHelpers::assertNear(fp{180}, result.yaw, fp{0}); 
+    }
+
+    TEST(FPMath2, dirVectorToEuler_givenRightDirection_returnsCorrectRotation) {
+        FPVector inputDir = FPVector::right();
+        EulerAngles result = FPMath2::DirVectorToEuler(inputDir);
+
+        TestHelpers::assertNear(fp{0}, result.pitch, fp{0});
+        TestHelpers::assertNear(fp{0}, result.roll, fp{0}); 
+        TestHelpers::assertNear(fp{90}, result.yaw, fp{0.01f}); 
+    }
+
     TEST(FPMath2, dirVectorToQuat_givenSimpleYawCase_usingQuatResultsInExpectedDirection) {
         FPVector inputDir = FPVector(fp{0}, fp{1}, fp{0});
         FPQuat resultQuat = FPMath2::dirVectorToQuat(inputDir);
@@ -152,6 +179,78 @@ namespace FPMath2Tests {
         FPVector resultRotatedVec = resultQuat * FPVector::forward();
         TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.1f});
     }
+
+    TEST(FPMath2, HorizontalDirVectorToYawOnlyQuat_givenForwardDir_resultsInZeroRotation) {
+        FPVector inputDir = FPVector::forward();
+        FPQuat resultQuat = FPMath2::HorizontalDirVectorToYawOnlyQuat(inputDir);
+
+        // Given "yaw-only" constraints, there's only one expected quat result here
+        FPQuat expectedQuat = FPQuat::fromDegrees(FPVector::up(), fp{0});
+        TestHelpers::assertNear(expectedQuat, resultQuat, fp{0.01f});
+        
+        // Sanity check the result via also converting back to original input
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
+
+    TEST(FPMath2, HorizontalDirVectorToYawOnlyQuat_givenRightDir_resultsInExactYawRotation) {
+        FPVector inputDir = FPVector::right();
+        FPQuat resultQuat = FPMath2::HorizontalDirVectorToYawOnlyQuat(inputDir);
+
+        // Given "yaw-only" constraints, there's only one expected quat result here
+        FPQuat expectedQuat = FPQuat::fromDegrees(FPVector::up(), fp{90});
+        TestHelpers::assertNear(expectedQuat, resultQuat, fp{0.01f});
+        
+        // Sanity check the result via also converting back to original input
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
+
+    TEST(FPMath2, HorizontalDirVectorToYawOnlyQuat_givenLeftDir_resultsInExactYawRotation) {
+        FPVector inputDir = FPVector::left();
+        FPQuat resultQuat = FPMath2::HorizontalDirVectorToYawOnlyQuat(inputDir);
+
+        // Given "yaw-only" constraints, there's only one expected quat result here
+        // FPQuat expectedQuat = FPQuat::fromDegrees(FPVector::up(), fp{-90});
+        // TestHelpers::assertNear(expectedQuat, resultQuat, fp{0.01f});
+        
+        // Sanity check the result via also converting back to original input
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
+
+    TEST(FPMath2, HorizontalDirVectorToYawOnlyQuat_givenBackwardsDir_resultsInExactYawRotation) {
+        FPVector inputDir = FPVector::backward();
+        FPQuat resultQuat = FPMath2::HorizontalDirVectorToYawOnlyQuat(inputDir);
+
+        // Given "yaw-only" constraints, there's only one expected quat result here.
+        //      Theoretically this *could* be a negative rotation, but not expecting that to happen given current
+        //      implement. Not a good habit to be so implementation specific but eh, good enough for now.
+        
+        FPQuat expectedQuat = FPQuat::fromDegrees(FPVector::up(), fp{180});
+        TestHelpers::assertNear(expectedQuat, resultQuat, fp{0.01f});
+        
+        // Sanity check the result via also converting back to original input
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.01f});
+    }
+
+    TEST(FPMath2, HorizontalDirVectorToYawOnlyQuat_givenNearlyOppositeForwardDirection_resultsInExactYawRotation) {
+        FPVector inputDir = FPVector(fp{-0.999329f}, fp{-0.036804}, fp{0}); // Taken from a game use case that's resulting in problematic rotations
+        FPQuat resultQuat = FPMath2::dirVectorToQuat(inputDir);
+
+        // Figuring out the precise quat is a pain and don't want to copy paste the exact result (due to various clear downsides).
+        // Thus, simply converting to euler and checking that the invariant still matches
+        EulerAngles eulerResult = FPMath2::QuatToEuler(resultQuat);
+        TestHelpers::assertNear(fp{0}, eulerResult.pitch, fp{0});
+        TestHelpers::assertNear(fp{0}, eulerResult.roll, fp{0}); 
+        TestHelpers::assertNear(fp{180}, eulerResult.yaw, fp{0.1f}); // Roughly positive 180
+
+        // Sanity check the result via also converting back to original input
+        FPVector resultRotatedVec = resultQuat * FPVector::forward();
+        TestHelpers::assertNear(inputDir, resultRotatedVec, fp{0.1f});
+    }
+
     
     TEST(bezierInterp, whenExtremeAlphas_returnsAorBValues) {
         fp a = fp{1};

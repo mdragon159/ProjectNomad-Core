@@ -36,6 +36,10 @@ namespace ProjectNomad {
             return velocity.getLengthSquared() != fp{0};
         }
 
+        bool HasAnyHorizontalVelocity() const {
+            return velocity.x != fp{0} || velocity.y != fp{0};
+        }
+
         void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
             velocity.CalculateCRC32(resultThusFar);
@@ -65,6 +69,19 @@ namespace ProjectNomad {
         void CalculateCRC32(uint32_t& resultThusFar) const {
             resultThusFar = CRC::Calculate(&startingFrame, sizeof(startingFrame), CRC::CRC_32(), resultThusFar);
             resultThusFar = CRC::Calculate(&totalLength, sizeof(totalLength), CRC::CRC_32(), resultThusFar);
+        }
+    };
+
+    /**
+    * Simply marks if entity is "invulnerable" (ie, that generally cannot be interacted with)
+    * TODO: Actually use this for all combat situations (like hit checks and grapple checks)
+    * FUTURE: MAYBE use this for certain physics situations (like optionally when checking for collisions w/ dynamic entities)
+    **/
+    struct InvulnerableFlagComponent {
+        bool throwaway = false;
+
+        void CalculateCRC32(uint32_t& resultThusFar) const {
+            resultThusFar = CRC::Calculate(&throwaway, sizeof(throwaway), CRC::CRC_32(), resultThusFar);
         }
     };
 }

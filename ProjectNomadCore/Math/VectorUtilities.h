@@ -16,6 +16,57 @@ namespace ProjectNomad {
             // Since input is either up or down direction, choose any non-parallel direction to cross with
             return normalizedInput.cross(FPVector::right());
         }
+
+        /**
+        * Get a perpendicular vector which is "vertical" (pointing upwards or downwards). This is useful for taking
+        * say a wall normal and finding a vertical perpendicular direction to that normal.
+        *
+        * If input is the up or down vector, then input will be returned
+        * @param normalizedInput - Direction to get perpendicular direction to
+        * @returns perpendicular to input direction that is one of two of the more "vertical" perpendicular options
+        **/
+        static FPVector GetVerticalPerpendicularDirection(const FPVector& normalizedInput) {
+            // Edge case: If already perfectly vertical, then nothing to do
+            // NOTE: This almost certainly won't work for up/down directions with minor errors (eg, <0.000031f, 0, 1>)
+            if (normalizedInput == FPVector::up() || normalizedInput == FPVector::down()) {
+                return normalizedInput;
+            }
+
+            // First pick an arbitrary horizontal axis to cross with. This should result in a non-zero result, unless
+            //   the input direction is parallel to this axis. NOTE: Could try to directly check
+            //   if input is ::left() or ::right(), but inexact inputs have led to issues. Ex: <0.000031f, -1, 0>) 
+            FPVector tentativeResult = normalizedInput.cross(FPVector::right()).normalized();
+
+            // If result unexpectedly led to a non-vertical dir (eg, due to being parallel to last cross product), then
+            //   use a different direction
+            if (tentativeResult.z == fp{0}) {
+                return normalizedInput.cross(FPVector::forward()).normalized();
+            }
+
+            // Otherwise our previously computed result is fine and thus return that
+            return tentativeResult;
+        }
+
+        /**
+        * Get the perpendicular vector which is "upwards" (pointing upwards or downwards). This is useful for taking
+        * say a wall normal and finding the "upwards" direction along the wall's face.
+        *
+        * If input is the up or down vector, then up direction will be returned
+        * @param normalizedInput - Direction to get perpendicular direction to
+        * @returns perpendicular to input direction that is most "upwards"
+        **/
+        static FPVector GetUpwardsPerpendicularDirection(const FPVector& normalizedInput) {
+            FPVector verticalPerpVector = GetVerticalPerpendicularDirection(normalizedInput);
+
+            // If facing downwards, then flip to face upwards. Note that need to flip entire vector, as just flipping
+            // z value will result in a non-perpendicular vector
+            if (verticalPerpVector.z < fp{0}) {
+                return verticalPerpVector.flipped();
+            }
+
+            // Otherwise return original perpendicular vec calculation as it's already upwards
+            return verticalPerpVector;
+        }
         
         /// <summary>
         /// Get the projection (length * direction) of a given vector in a given direction
@@ -133,6 +184,19 @@ namespace ProjectNomad {
         }
         static FPVector zeroOutXY(const FPVector& vector) {
             return FPVector(fp{0}, fp{0}, vector.z);
+        }
+
+        static FPVector RemoveParallelButOppositeComponent(const FPVector& velocity, const FPVector& direction) {
+            // Check for any amount that's parallel but opposite to the "taut rope" direction
+            fp curSpeedInRopeDir = velocity.dot(direction);
+            if (curSpeedInRopeDir >= fp{0}) {
+                // No parallel but opposite to direction momentum to remove
+                return velocity;
+            }
+
+            // Remove that parallel but opposite velocity only, just like a taut rope in real life would prevent in real life
+            FPVector velToRemove = direction * curSpeedInRopeDir;
+            return velocity - velToRemove;
         }
     };
 }

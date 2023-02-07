@@ -332,6 +332,49 @@ namespace FPVectorTests {
         ASSERT_FALSE(first.isNear(second, tolerance));
     }
 
+    // partially opposite directions
+    // fully opposite
+    
+    TEST(isOppositeDirectionTo, whenComparedAgainstSelf_returnsFalse) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second = FPVector::up();
+        FPVector third = FPVector::zero();
+
+        ASSERT_FALSE(first.isOppositeDirectionTo(first));
+        ASSERT_FALSE(second.isOppositeDirectionTo(second));
+        ASSERT_FALSE(third.isOppositeDirectionTo(third));
+    }
+
+    TEST(isOppositeDirectionTo, whenSameDirection_returnsFalse) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second(fp{0.95f}, fp{-1}, fp{0});
+
+        ASSERT_FALSE(first.isOppositeDirectionTo(second));
+        ASSERT_FALSE(second.isOppositeDirectionTo(first));
+    }
+
+    TEST(isOppositeDirectionTo, whenPerpendicular_returnsFalse) {
+        ASSERT_FALSE(FPVector::forward().isOppositeDirectionTo(FPVector::up()));
+        ASSERT_FALSE(FPVector::left().isOppositeDirectionTo(FPVector::down()));
+        ASSERT_FALSE(FPVector::right().isOppositeDirectionTo(FPVector::backward()));
+    }
+
+    TEST(isOppositeDirectionTo, whenPartiallyOpposite_returnsTrue) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second(fp{-0.5f}, fp{-0.25f}, fp{0});
+        
+        ASSERT_TRUE(first.isOppositeDirectionTo(second));
+    }
+
+    TEST(isOppositeDirectionTo, whenCompletelyOpposite_returnsTrue) {
+        FPVector first(fp{1}, fp{-1}, fp{0});
+        FPVector second(fp{-0.5f}, fp{-0.25f}, fp{0});
+        
+        ASSERT_TRUE(FPVector::forward().isOppositeDirectionTo(FPVector::backward()));
+        ASSERT_TRUE(FPVector::left().isOppositeDirectionTo(FPVector::right()));
+        ASSERT_TRUE(FPVector::down().isOppositeDirectionTo(FPVector::up()));
+    }
+
     TEST(ostreamOutput, outputsCorrectStringForSimpleFPQuat) {
         FPVector vector(fp{-0.25f}, fp{1000}, fp{2.2f});
 

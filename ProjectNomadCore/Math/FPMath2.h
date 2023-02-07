@@ -63,7 +63,7 @@ namespace ProjectNomad {
             // NOTE: It'd likely be far more efficient to work in dir vector space than to work in euler space, esp if
             //       converting back to quat
             
-            return dirVectorToEuler(QuatToDirVector(quat));
+            return DirVectorToEuler(QuatToDirVector(quat));
         }
 
         static FPQuat eulerToQuat(const EulerAngles& euler) {
@@ -99,7 +99,7 @@ namespace ProjectNomad {
         }
 
         // NOTE: Method is untested (and currently unused). Needs unit tests!
-        static EulerAngles dirVectorToEuler(const FPVector& input) {
+        static EulerAngles DirVectorToEuler(const FPVector& input) {
             // High level approach: Doing the reverse of eulerToDirVector method
             EulerAngles result;
 
@@ -110,9 +110,18 @@ namespace ProjectNomad {
             //    Really doing this for covering divide by zero edge case and thus explicitly checking that,
             //     even though it may be more computationally expensive than just checking pitch or x + y values
             fp cosOfPitch = FPMath::cosD(result.pitch);
-            if (cosOfPitch != fp{0}) {
-                // Could use x or y (with inverse sin), but arbitrarily chose x
-                result.yaw = FPMath::acosD(input.x / cosOfPitch);
+            if (cosOfPitch != fp{0}) { // Divide by zero check
+                fp inverseCosineInput = input.x / cosOfPitch; // // Could use x or y (with inverse sin), but arbitrarily chose x
+                
+                if (FPMath::isNear(inverseCosineInput, fp{1}, fp{0.01f})) { // Edge case where acos operation fails
+                    result.yaw = fp{0};
+                }
+                else if (FPMath::isNear(inverseCosineInput, fp{-1}, fp{0.01f})) { // Edge case where acos operation fails
+                    result.yaw = fp{180};
+                }
+                else {
+                    result.yaw = FPMath::acosD(input.x / cosOfPitch);
+                }
             }
 
             // And done!
@@ -178,6 +187,40 @@ namespace ProjectNomad {
             // And that's it! We have all the info we need to rotate referenceVec into rotationVec
             // by multiplying by the resulting quat
             return FPQuat::fromDegrees(rotationAxis, rotationAmountInDegrees);
+        }
+
+        /**
+        * Returns a quaternion which represents a yaw-only rotation.
+        * Assumes input is a horizontal-only dir (ie, no z value and actual normalized direction).
+        *
+        * Created as a way to workaround certain inputs to dirVectorToQuat() leading to upside down characters...
+        * Which is understandable, as there are many ways to rotate to a certain direction (like backwards forward dir).
+        * This method instead assures we *only* have "yaw" rotation and no other components.
+        * Specifically, this assures that the rotation vector within the quat is FPVector::up().
+        * @param desiredHorizontalDir - Desired direction that FPQuat should rotate a FPVector::forward() direction is.
+        *                               Should have no vertical (z) component and expected to be normalized.
+        * @returns "Yaw"-only quaternion representing the input direction
+        **/
+        static FPQuat HorizontalDirVectorToYawOnlyQuat(const FPVector& desiredHorizontalDir) {
+            // Approach: Basically take dirVectorToQuat() but use constant rotation axis and reference axis
+            
+            /// Define some constants for clarity. Theoretically could replace these for other use cases in future.
+            // Result rotation axis: This is the "yaw-only" part
+            static const FPVector kRotationAxis = FPVector::up();
+            // Reference axis: Want to be explicit that the output is as if applied to this vector (which is the game's standard)
+            static const FPVector kReferenceAxis = FPVector::forward();
+
+            // Rotation amount around axis: Get angle between the vectors.
+            //   Note: Due to both being in horizontal plane (and perpendicular to vertical axis), this represents yaw
+            //              rotation in degrees.
+            //      Using degrees due to personal preference, and I THINK it's more accurate due to less decimal points.
+            fp rotationAmountInDegrees = VectorUtilities::getAngleBetweenVectorsInDegrees(kReferenceAxis, desiredHorizontalDir);
+            if (!VectorUtilities::isXYCrossDotPositive(kReferenceAxis, desiredHorizontalDir)) {
+                rotationAmountInDegrees = -rotationAmountInDegrees;
+            }
+            
+            // Given expectations are met (ie that input is a horizontal dir), then nothing more to do!
+            return FPQuat::fromDegrees(kRotationAxis, rotationAmountInDegrees);
         }
 
     private:

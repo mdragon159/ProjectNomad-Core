@@ -29,6 +29,20 @@ void TestHelpers::expectNear(FPVector expected, FPVector actual, fp range) {
     EXPECT_NEAR(static_cast<float>(expected.z), static_cast<float>(actual.z), static_cast<float>(range));
 }
 
+void TestHelpers::assertNear(FPQuat expected, FPQuat actual, fp range) {
+    ASSERT_NEAR(static_cast<float>(expected.w), static_cast<float>(actual.w), static_cast<float>(range));
+    ASSERT_NEAR(static_cast<float>(expected.v.x), static_cast<float>(actual.v.x), static_cast<float>(range));
+    ASSERT_NEAR(static_cast<float>(expected.v.y), static_cast<float>(actual.v.y), static_cast<float>(range));
+    ASSERT_NEAR(static_cast<float>(expected.v.z), static_cast<float>(actual.v.z), static_cast<float>(range));
+}
+
+void TestHelpers::expectNear(FPQuat expected, FPQuat actual, fp range) {
+    EXPECT_NEAR(static_cast<float>(expected.w), static_cast<float>(actual.w), static_cast<float>(range));
+    EXPECT_NEAR(static_cast<float>(expected.v.x), static_cast<float>(actual.v.x), static_cast<float>(range));
+    EXPECT_NEAR(static_cast<float>(expected.v.y), static_cast<float>(actual.v.y), static_cast<float>(range));
+    EXPECT_NEAR(static_cast<float>(expected.v.z), static_cast<float>(actual.v.z), static_cast<float>(range));
+}
+
 void TestHelpers::expectEq(FPVector expected, FPVector actual) {
     expectNear(expected, actual, fp{0});
 }

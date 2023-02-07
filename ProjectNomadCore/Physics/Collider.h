@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Ray.h"
+#include "Math/FPMath2.h"
 #include "Math/FPQuat.h"
 #include "Physics/Line.h"
 
@@ -44,6 +45,28 @@ namespace ProjectNomad {
 
         void setCapsule(FPVector newCenter, fp newRadius, fp halfHeight) {
             setCapsule(newCenter, FPQuat::identity(), newRadius, halfHeight);
+        }
+
+        /**
+        * Setup capsule based on "point A" and "point B" positions. ie, where is the base sphere and where is the final
+        * sphere centers
+        * @param pointA - start/bottom sphere center
+        * @param pointB - end/top sphere center
+        * @param newRadius - radius of spheres/capsule
+        **/
+        void setCapsule(FPVector pointA, FPVector pointB, fp newRadius) {
+            // Center is halfway position between provided points
+            FPVector newCenter = (pointA + pointB) / fp{2};
+            
+            // Full height = distance between points plus buffer room (radius) on either side of capsule endpoint spheres
+            fp fullHeight = FPVector::distance(pointA, pointB) + newRadius *  2;
+            
+            // Rotation is just direction from A to B, where upwards direction is standard "no rotation" for capsules
+            FPVector aToBDir = FPVector::direction(pointA, pointB);
+            FPQuat newRotation = FPMath2::dirVectorToQuat(aToBDir, FPVector::up());
+
+            // Finally set values with chosen standard format
+            setCapsule(newCenter, newRotation, newRadius, fullHeight / 2);
         }
 
         void setCapsule(FPVector newCenter, FPQuat newRotation, fp newRadius, fp halfHeight) {
@@ -216,6 +239,35 @@ namespace ProjectNomad {
             // Quick wayyyy later note off top of head:
             // This is assuming <0, 0, 0> is center of world. TODO: Redo comments on this and prior two functions
             return rotation.inverted() * value;
+        }
+
+        // Return more or less rough estimate of bounds on horizontal plane
+        fp GetHorizontalPlaneBoundsRadius() const {
+            switch (colliderType) {
+                case ColliderType::Box:
+                    return getBoxHalfSize().x; // TODO: Account for when x and y aren't the same
+                case ColliderType::Capsule:
+                    return getCapsuleRadius();
+                case ColliderType::Sphere:
+                    return getSphereRadius();
+                default:
+                    // Would be nice to log some kinda message here but also not really necessary in context?
+                    return fp{0};
+            }
+        }
+
+        fp GetVerticalHalfHeightBounds() const {
+            switch (colliderType) {
+                case ColliderType::Box:
+                    return getBoxHalfSize().z;
+                case ColliderType::Capsule:
+                    return getCapsuleHalfHeight();
+                case ColliderType::Sphere:
+                    return getSphereRadius();
+                default:
+                    // Would be nice to log some kinda message here but also not really necessary in context?
+                    return fp{0};
+            }
         }
 
         void CalculateCRC32(uint32_t& resultThusFar) const {

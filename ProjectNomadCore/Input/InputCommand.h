@@ -13,10 +13,10 @@ namespace ProjectNomad {
         Jump,
         Dash,
 
-        Block,
+        Guard,
         GrappleAim,
-        AttackLight,
-        AttackHeavy,
+        AttackPrimary,
+        AttackSecondary,
 
         Interact,
         SwitchWeapon,
