@@ -14,23 +14,23 @@ namespace SquirrelRNGTests {
         
         static constexpr uint64_t kTestSeed1 = 0;
         static constexpr uint64_t kSeed1FirstRandomVal = 10502344437570651007u; // The u is unnecessary but quiets a "too big for signed literal" warning
-        static constexpr uint64_t kSeed1SecondRandomVal = 6064126023353466778;
-        static constexpr uint64_t kSeed1ThirdRandomVal = 1705898956019913056;
+        static constexpr uint64_t kSeed1SecondRandomVal = 8378501244249669530;
+        static constexpr uint64_t kSeed1ThirdRandomVal = 734454457915330912;
 
         static constexpr uint64_t kTestSeed2 = 1;
         static constexpr uint64_t kSeed2FirstRandomVal = 12139557187821088049u;
-        static constexpr uint64_t kSeed2SecondRandomVal = 8038976436931458552;
-        static constexpr uint64_t kSeed2ThirdRandomVal = 9256344124556928996u;
+        static constexpr uint64_t kSeed2SecondRandomVal = 10320691743917667832u;
+        static constexpr uint64_t kSeed2ThirdRandomVal = 8288123214050453476;
 
         static constexpr uint64_t kTestSeed3 = 357239;
         static constexpr uint64_t kSeed3FirstRandomVal = 802954267102906604;
-        static constexpr uint64_t kSeed3SecondRandomVal = 6610926942742737789;
-        static constexpr uint64_t kSeed3ThirdRandomVal = 3973623640437532127;
+        static constexpr uint64_t kSeed3SecondRandomVal = 8926357884514694013;
+        static constexpr uint64_t kSeed3ThirdRandomVal = 10775010170493183455u;
 
         static constexpr uint64_t kTestSeed4 = 198491317;
         static constexpr uint64_t kSeed4FirstRandomVal = 15965933769334680138u;
-        static constexpr uint64_t kSeed4SecondRandomVal = 15546551990878019724u;
-        static constexpr uint64_t kSeed4ThirdRandomVal = 17028937911110684102u;
+        static constexpr uint64_t kSeed4SecondRandomVal = 8260785640823660684;
+        static constexpr uint64_t kSeed4ThirdRandomVal = 16248715091042061766u;
     };
 
     TEST_F(SquirrelRNGTests, GetRandom_withFirstTestSeed_returnsExpectedValues) {

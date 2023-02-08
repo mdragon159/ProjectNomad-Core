@@ -11,8 +11,8 @@ namespace ProjectNomad {
     *
     * Based the following excellent RNG talk by Squirrel Eiserloh: https://youtu.be/LWFzPP8ZbdU
     * Javascript reference: https://gist.github.com/psema4/bee2614208944f08f5c4640ff582c611
-    * C# reference: https://gist.github.com/BwdYeti/f9d019bff90139a336b4137c09faa5e2#file-noiserand-cs-L139
-    * Ty BwdYeti for the direction here
+    * C# reference: https://gist.github.com/BwdYeti/f9d019bff90139a336b4137c09faa5e2
+    * Ty to BwdYeti for the direction here
     *
     * IDEA: Perhaps make templatized and provide either uint32_t or uint64_t underlying types. But unclear usage, as
     *       current intended usage (games for modern PC + console) are likely going to have default uint 64bit anyways... I think
@@ -23,8 +23,8 @@ namespace ProjectNomad {
         SquirrelRNG() = delete;
         
         static uint64_t GetRandom(uint64_t seed, uint64_t position) {
-            // Approach summarized: Essentially be a very fast hash function with very good spread of values
-            //                      Hash function == a noise function here and each "seed" is like a unique noise table
+            // Approach summarized: Essentially be a very fast hash function with very good spread of values.
+            //                      Hash function == a noise function here, and each "seed" is like a unique noise table
             
             uint64_t mangledBits = position;
 
@@ -61,12 +61,12 @@ namespace ProjectNomad {
         static constexpr uint32_t kBitNoise_Half3 = 0x1B56C4E9; // 0b0001_1011_0101_0110_1100_0100_1110_1001
         // New: Create 64bit base binary noise as actually trying to generate 64bit random numbers by default
         //   Other primes are from https://bigprimes.org/ with 20 digits and then manually selecting ones within 64bit unsigned range
-        static constexpr uint64_t kBitNoise1 = (kBitNoise_Half2 << 32) + kBitNoise_Half1;
+        static constexpr uint64_t kBitNoise1 = (static_cast<uint64_t>(kBitNoise_Half2) << 32) + kBitNoise_Half1;
         static constexpr uint64_t kBitNoise2 = 0xBC161CC7AD3D0E67;
         static constexpr uint64_t kBitNoise3 = 0x94D46646B8B17C1D;
         // TODO: Actually extensively validate that these prime numbers result in "good" results
         
-        // Nice prime numbers to "space out" additional dimensions before combining into single seed/position
+        // Nice prime numbers to "space out" additional dimensions before combining into single input.
         // (ie, use with <x, y, z> coordinates to transform y and z so not just adding simple numbers in a more predictable manner)
         //      "The large prime numbers should be orders of magnitude different" - https://gist.github.com/BwdYeti/f9d019bff90139a336b4137c09faa5e2#file-noiserand-cs-L74
         static constexpr uint64_t kDimensionPrime1 = 198491317;

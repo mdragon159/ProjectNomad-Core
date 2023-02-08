@@ -24,22 +24,31 @@ namespace IncrementalRandomizerTests {
         static constexpr uint64_t kTest2Min = 5000;
         static constexpr uint64_t kTest2Max = 357239;
         static constexpr uint64_t kTest2FirstRandomVal = 276391;
-        static constexpr uint64_t kTest2SecondRandomVal = 176603;
-        static constexpr uint64_t kTest2ThirdRandomVal = 108770;
+        static constexpr uint64_t kTest2SecondRandomVal = 282945;
+        static constexpr uint64_t kTest2ThirdRandomVal = 166434;
 
         static constexpr uint64_t kTestSeed3 = 357239;
         static constexpr uint64_t kTest3Min = 0;
         static constexpr uint64_t kTest3Max = 10;
         static constexpr uint64_t kTest3FirstRandomVal = 4;
-        static constexpr uint64_t kTest3SecondRandomVal = 9;
-        static constexpr uint64_t kTest3ThirdRandomVal = 7;
+        static constexpr uint64_t kTest3SecondRandomVal = 3;
+        static constexpr uint64_t kTest3ThirdRandomVal = 5;
 
         static constexpr uint64_t kTestSeed4 = 198491317;
         static constexpr uint64_t kTest4Min = 0;
         static constexpr uint64_t kTest4Max = 198491317;
         static constexpr uint64_t kTestFirstRandomVal = 69781571;
-        static constexpr uint64_t kTest4SecondRandomVal = 101845915;
-        static constexpr uint64_t kTest4ThirdRandomVal = 31712183;
+        static constexpr uint64_t kTest4SecondRandomVal = 172217347;
+        static constexpr uint64_t kTest4ThirdRandomVal = 82288079;
+
+        static constexpr uint64_t kTestSeed5 = 198491317;
+        static constexpr fp kTest5Min = fp{-10};
+        static constexpr fp kTest5Max = fp{10};
+        inline static const fp kTest5FirstRandomVal = fp{-6.585808349609375};
+        inline static const fp kTest5SecondRandomVal = fp{7.12713623046875};
+        inline static const fp kTest5ThirdRandomVal = fp{1.303802490234375};
+        inline static const fp kTest5FourthRandomVal = fp{4.6318359375};
+        inline static const fp kTest5FifthRandomVal = fp{-9.6868743896484375};
     };
 
     TEST_F(IncrementalRandomizerTests, GetSeed_returnsSeed) {
@@ -112,5 +121,20 @@ namespace IncrementalRandomizerTests {
         EXPECT_EQ(kTestFirstRandomVal, resultPos0);
         EXPECT_EQ(kTest4SecondRandomVal, resultPos1);
         EXPECT_EQ(kTest4ThirdRandomVal, resultPos2);
+    }
+
+    TEST_F(IncrementalRandomizerTests, GetRandomFp_returnsDeterministicValuesInRange) {
+        IncrementalRandomizer toTest(kTestSeed5);
+        fp resultPos0 = toTest.GetRandomFp(kTest5Min, kTest5Max);
+        fp resultPos1 = toTest.GetRandomFp(kTest5Min, kTest5Max);
+        fp resultPos2 = toTest.GetRandomFp(kTest5Min, kTest5Max);
+        fp resultPos3 = toTest.GetRandomFp(kTest5Min, kTest5Max);
+        fp resultPos4 = toTest.GetRandomFp(kTest5Min, kTest5Max);
+        
+        TestHelpers::expectNear(kTest5FirstRandomVal, resultPos0, fp{0.01f});
+        TestHelpers::expectNear(kTest5SecondRandomVal, resultPos1, fp{0.01f});
+        TestHelpers::expectNear(kTest5ThirdRandomVal, resultPos2, fp{0.01f});
+        TestHelpers::expectNear(kTest5FourthRandomVal, resultPos3, fp{0.01f});
+        TestHelpers::expectNear(kTest5FifthRandomVal, resultPos4, fp{0.01f});
     }
 }
