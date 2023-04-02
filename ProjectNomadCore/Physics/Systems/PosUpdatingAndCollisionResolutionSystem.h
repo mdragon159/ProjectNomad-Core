@@ -41,7 +41,7 @@ namespace ProjectNomad {
                                                         const TransformComponent& transform,
                                                         const PhysicsComponent& physicsComp) {
 
-            if (!coreContext.registry.any_of<HitfreezeComponent>(entityId)) { // Preferably this system wouldn't need to care about hitfreeze for performance, but quick and dirty way to prevent movement during hitfreeze
+            if (!coreContext.registry.any_of<HitstopComponent>(entityId)) { // Preferably this system wouldn't need to care about hitfreeze for performance, but quick and dirty way to prevent movement during hitfreeze
                 const FPVector& playerVel = physicsComp.velocity;
                 fp changeInXPos = playerVel.x * CoreConstants::GetTimePerFrameInSec();
                 fp changeInYPos = playerVel.y * CoreConstants::GetTimePerFrameInSec();

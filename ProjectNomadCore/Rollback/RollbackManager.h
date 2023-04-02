@@ -24,14 +24,15 @@ namespace ProjectNomad {
         static_assert(std::is_base_of_v<BaseSnapshot, SnapshotType>, "SnapshotType must derive from BaseSnapshot");
         
       public:
-        RollbackManager(RollbackUser<SnapshotType>& rollbackUser) : mRollbackUser(rollbackUser) {}
+        RollbackManager(RollbackUser<SnapshotType>& rollbackUser, RollbackSnapshotManager<SnapshotType>& snapshotManager)
+        : mRollbackUser(rollbackUser), mSnapshotManager(snapshotManager) {}
 
         /**
         * Expected to be called at start of new game session before any other method is called.
         * @param rollbackSettings - settings for rollback behavior such as input delay
         * @param rollbackSessionInfo - session-specific settings such as number of players
         **/
-        void OnSessionStart(RollbackSettings rollbackSettings, RollbackSessionInfo rollbackSessionInfo) {
+        void StartRollbackSession(RollbackSettings rollbackSettings, RollbackSessionInfo rollbackSessionInfo) {
             if (mIsSessionRunning) {
                 mLogger.logWarnMessage("RollbackManager::OnSessionStart", "Start called while already running!");
             }
@@ -45,7 +46,7 @@ namespace ProjectNomad {
             mIsSessionRunning = true;
         }
         
-        void EndSession() {
+        void EndRollbackSession() {
             // Simply mark session as stopped running.
             // No need to clear existing data as all other public methods check for this explicitly
             mIsSessionRunning = false;
@@ -57,9 +58,9 @@ namespace ProjectNomad {
         * @param currentFrame - Current frame
         * @param localPlayerInput - 
         **/
-        void OnUpdate(bool isFixedGameplayFrame, FrameType currentFrame, const PlayerInput& localPlayerInput) {
+        void OnUpdate(bool isFixedGameplayFrame, FrameType currentFrame, const CharacterInput& localPlayerInput) {
             if (!mIsSessionRunning) {
-                mLogger.logInfoMessage("RollbackManager::OnFixedUpdate", "No running session");
+                mLogger.logWarnMessage("RollbackManager::OnFixedUpdate", "No running session");
                 return;
             }
             // Sanity check: Verify that the frame is expected, which should always be called one frame forward
@@ -87,6 +88,22 @@ namespace ProjectNomad {
             if (isFixedGameplayFrame) {
                 OnFixedGameplayUpdate(localPlayerInput);
             }
+        }
+
+        /**
+        * Expected to be called at the end of every tick.
+        * Explicit call is necessary to prevent extra work from being done when multiple updates need to occur back to back.
+        * (ie, if local player's frame rate is too low and thus need to catch up, we don't want to do extraneous work)
+        * @param didAnyLocalFixedGameplayFramesOccur true if OnUpdate was called with first param as true, false otherwise
+        **/
+        void OnPostUpdate(bool didAnyLocalFixedGameplayFramesOccur) {
+            // Sanity check
+            if (!mIsSessionRunning) {
+                mLogger.logWarnMessage("RollbackManager::OnPostUpdate", "No running session");
+                return;
+            }
+
+            CheckAndNotifyConfirmedFrameCount(didAnyLocalFixedGameplayFramesOccur);
         }
 
         /*void OnReplayDrivenFixedUpdate(FrameType newFrame,
@@ -127,7 +144,10 @@ namespace ProjectNomad {
 
             result.lastProcessedFrame = mLastProcessedFrame;
             result.inputManager = mInputManager;
-            result.snapshotManager = mSnapshotManager; // TODO: This is broken as heck! Well, with FrameSnapshot type at least
+            // TODO: This is broken as heck! Well, with FrameSnapshot type at least
+            //      2023/03/16: Not sure what above comment is referring to. Perhaps due to pointers in FrameSnapshot
+            //      before? But std::vectors should be fine with copying data? Need to carefully test either way.
+            result.snapshotManager = mSnapshotManager;
         }
 
         /**
@@ -155,8 +175,9 @@ namespace ProjectNomad {
         }
         
         void SetupStateForSessionStart(const RollbackSettings& rollbackSettings, const RollbackSessionInfo& rollbackSessionInfo) {
-            // Reset last processed frame. Note that next frame to process is expected to be 0 as max + 1 = 0
-            // (due to unsigned int overflow being defined behavior) 
+            // Reset last processed frame.
+            //      Note that next frame to process is expected to be 0 as max + 1 = 0
+            //      (due to unsigned int overflow being defined behavior) 
             mLastProcessedFrame = std::numeric_limits<FrameType>::max();
 
             // If local session then try setting up special local-only features
@@ -177,6 +198,10 @@ namespace ProjectNomad {
             }
 
             mRollbackSessionInfo = rollbackSessionInfo;
+
+            // Setup additional debug settings
+            mSyncTestLogSyncTestChecksums = rollbackSettings.logSyncTestChecksums;
+            mLogChecksumForEveryStoredFrameSnapshot = rollbackSettings.logChecksumForEveryStoredFrameSnapshot;
         }
 
         void CheckAndHandleRollbackForNetworkedMPSession() {
@@ -186,9 +211,14 @@ namespace ProjectNomad {
             }
             
             // Check if rollback is appropriate and then handle
+            // Also do frame input validation (like OnPostFixedGameplayUpdate)
+            mLogger.logWarnMessage(
+                "RollbackManager::CheckAndHandleRollbackForNetworkedMPSession",
+                "Implement multiplayer session rollback handling plz!"
+            );
         }
 
-        void OnFixedGameplayUpdate(const PlayerInput& localPlayerInput) {
+        void OnFixedGameplayUpdate(const CharacterInput& localPlayerInput) {
             bool didRollbackOccur = false;
             FrameType targetFrame = mLastProcessedFrame + 1;
             
@@ -198,7 +228,7 @@ namespace ProjectNomad {
                 
                 // Get input used for the relevant prediction frame
                 const FrameType formerPredictionFrame = targetFrame - mLocalPredictionAmount;
-                const PlayerInput predictedInput = mInputManager.GetLocalPlayerPredictedInputForFrame(formerPredictionFrame);
+                const CharacterInput predictedInput = mInputManager.GetLocalPlayerPredictedInputForFrame(formerPredictionFrame);
 
                 // Store the relevant input as input manager deems appropriate.
                 // Doing this after retrieving prediction as - with current implementation - this will wipe out prediction data. 
@@ -219,7 +249,7 @@ namespace ProjectNomad {
             
             // TODO: Send input to remote client (if any)
             
-            HandleGameplayFrame(false, didRollbackOccur);
+            HandleNextGameplayFrame(false, didRollbackOccur);
 
             // Handle SyncTest *after* normal processing is done so we can redo the frames again and compare results
             if (mDoLocalSyncTest) {
@@ -261,6 +291,15 @@ namespace ProjectNomad {
                     "SyncTest failed for frame " + std::to_string(mLastProcessedFrame)
                 );
             }
+
+            // Optionally log additional info to help with arbitrary debugging (as ended up adding this log statement multiple times)
+            if (mSyncTestLogSyncTestChecksums) {
+                mLogger.logInfoMessage(
+                    "RollbackManager::HandleSyncTest",
+                    "Checksum Pre: " + std::to_string(preTestSnapshotChecksum) +
+                    " | Post: " + std::to_string(postTestSnapshotChecksum)
+                );
+            }
         }
 
         /**
@@ -269,8 +308,8 @@ namespace ProjectNomad {
         *                               frame of a series since the snapshot would be identical to what's stored
         * @param didRollbackOccur - true if rollback already occurred in this manager update
         **/
-        void HandleGameplayFrame(bool skipSnapshotCreation, bool didRollbackOccur) {
-            FrameType targetFrame = mLastProcessedFrame + 1;
+        void HandleNextGameplayFrame(bool skipSnapshotCreation, bool didRollbackOccur) {
+            FrameType targetFrame = mLastProcessedFrame + 1; // Don't take this as an input to assure we always do the "next" frame
 
             if (!skipSnapshotCreation) {
                 // Store game state at START of frame.
@@ -279,7 +318,7 @@ namespace ProjectNomad {
             }
             
             // Grab input(s) for updating game
-            const PlayerInput& localPlayerInput = mInputManager.GetLocalPlayerInput(targetFrame);
+            const CharacterInput& localPlayerInput = mInputManager.GetLocalPlayerInput(targetFrame);
 
             // Update game. Note that this is also expected to increment RollbackUser's frame tracking as well
             if (!didRollbackOccur) {
@@ -329,7 +368,7 @@ namespace ProjectNomad {
                 // Skip snapshot creation for first frame as it'll be identical to what's already stored and been restored,
                 // since snapshots are stored at the start of a frame
                 bool skipSnapshotCreation = i == 0;
-                HandleGameplayFrame(skipSnapshotCreation, true);
+                HandleNextGameplayFrame(skipSnapshotCreation, true);
             }
         }
 
@@ -339,7 +378,7 @@ namespace ProjectNomad {
         **/
         void StoreSnapshot(FrameType targetFrame) {
             // Likely redundant sanity checks BUT could uncover bugs in future!
-            if (targetFrame == std::numeric_limits<FrameType>::max()) {
+            if (IsFrameValueMax(targetFrame)) {
                 mLogger.logErrorMessage(
                     "RollbackManager::StoreSnapshot",
                     "Invalid frame (max value) to store snapshot for!: Input frame: " + std::to_string(targetFrame)
@@ -354,15 +393,27 @@ namespace ProjectNomad {
                 );
                 return;
             }
-            
-            SnapshotType snapshot = {};
-            mRollbackUser.GenerateSnapshot(targetFrame, snapshot);
-            mSnapshotManager.StoreSnapshot(targetFrame, snapshot);
+
+            {   // Create then swap-replace insert snapshot.
+                //      Using scope delimiters to make explicit that variable should NOT be used after this cuz of the
+                //      store call using swap-replace.
+                SnapshotType snapshot = {}; 
+                mRollbackUser.GenerateSnapshot(targetFrame, snapshot);
+                mSnapshotManager.StoreSnapshot(targetFrame, snapshot); 
+            }
+
+            if (mLogChecksumForEveryStoredFrameSnapshot) {
+                uint32_t curSnapshotChecksum = mSnapshotManager.GetSnapshot(targetFrame).CalculateChecksum();
+                mLogger.logInfoMessage(
+                    "RollbackManager::StoreSnapshot",
+                    "Frame " + std::to_string(targetFrame) + ": " + std::to_string(curSnapshotChecksum)
+                );
+            }
         }
 
         void RestoreSnapshot(FrameType frameToReprocess) {
             // Likely redundant sanity checks BUT could uncover bugs in future!
-            if (frameToReprocess == std::numeric_limits<FrameType>::max()) {
+            if (IsFrameValueMax(frameToReprocess)) {
                 mLogger.logErrorMessage(
                     "RollbackManager::RestoreSnapshot",
                     "Invalid frame (max value) to retrieve snapshot for!: Input frame: " + std::to_string(frameToReprocess)
@@ -387,6 +438,72 @@ namespace ProjectNomad {
             //  or session based (so no need to restore)
             mLastProcessedFrame = frameToReprocess - 1;
         }
+
+        void CheckAndNotifyConfirmedFrameCount(bool didAnyLocalFixedGameplayFramesOccur) {
+            // Sanity check
+            if (didAnyLocalFixedGameplayFramesOccur && IsFrameValueMax(mLastProcessedFrame)) {
+                mLogger.logWarnMessage(
+                    "RollbackManager::CheckAndNotifyConfirmedFrameCount",
+                    "Current frame value is still at max after gameplay update supposedly occurred!"
+                );
+                return;
+            }
+            
+            // FUTURE: Handle proper input validation with input packets coming from other players (including if other people are ahead)
+            if (mRollbackSessionInfo.isNetworkedMPSession) {
+                mLogger.logWarnMessage(
+                    "RollbackManager::OnPostUpdate",
+                    "Input confirmation not yet implemented for multiplayer?!"
+                );
+                
+                return; // Rest of code below assumes local-only session
+            }
+
+            // For now cuz no multiplayer, if no fixed gameplay frames happened then we did no relevant work.
+            //      CAUTION: Runahead case is a bit tricky as may occur without fixed gameplay update.
+            //      Should still ultimately be fine for now.... methinks? Needs (unit) testing to make sure always valid assumption!
+            if (!didAnyLocalFixedGameplayFramesOccur) {
+                return;
+            }
+
+            FrameType curLocalRollbackRange = GetMaxLocalRollbackFrames();
+            if (curLocalRollbackRange > 0) { // Using local rollback at all?
+                if (mLastProcessedFrame >= curLocalRollbackRange) { // If beyond "initial" frames, then have frames we can confirm
+                    // For simplified logic, just validate any frame once it exits the possible rollback range.
+                    // (Technically we could consider inputs never changing for synctest and whatnot, but no need to complicate further)
+                    mRollbackUser.OnInputsExitRollbackWindow(mLastProcessedFrame - curLocalRollbackRange);
+                }
+            }
+            // Otherwise not using any form of rollback at all in the current session, so immediately validate every frame
+            else {
+                mRollbackUser.OnInputsExitRollbackWindow(mLastProcessedFrame);
+            }
+        }
+
+        FrameType GetMaxLocalRollbackFrames() const {
+            FrameType result = 0;
+            
+            if (mDoLocalSyncTest) {
+                result += mSyncTestRollbackAmount;
+            }
+            if (mIsUsingLocalNegativeInputDelay) {
+                result += mLocalPredictionAmount;
+            }
+
+            return result;
+        }
+
+        /**
+        * Checks if the given frame is at the max possible value.
+        * The underlying intention here is to easily identify what code is relying on this assumption (mostly for sanity checks).
+        * We'll need to review these use cases in future to see if super long games with frame count overflow are feasible.
+        * (For now, don't think are feasible cuz 4,294,967,295 - current FrameType max value - is hundreds of days long with 60fps!)
+        * @param frame - Frame value to check
+        * @returns true if frame value is at the max possible value for the numeric type
+        **/
+        bool IsFrameValueMax(FrameType frame) const {
+            return frame == std::numeric_limits<FrameType>::max();
+        }
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
 
@@ -394,17 +511,19 @@ namespace ProjectNomad {
         RollbackSessionInfo mRollbackSessionInfo;
 
         #pragma region Session Settings
-        
         bool mDoLocalSyncTest = false;
         FrameType mSyncTestRollbackAmount = 0;
         
         bool mIsUsingLocalNegativeInputDelay = false;
         FrameType mLocalPredictionAmount = 0;
 
+        // Dedicated arbitrary debug settings
+        bool mSyncTestLogSyncTestChecksums = false;
+        bool mLogChecksumForEveryStoredFrameSnapshot = false;
         #pragma endregion
         
-        RollbackInputManager mInputManager;
-        RollbackSnapshotManager<SnapshotType> mSnapshotManager;
+        RollbackInputManager mInputManager = {};
+        RollbackSnapshotManager<SnapshotType>& mSnapshotManager;
 
         bool mIsSessionRunning = false;
         // Should always be one less than next frame to process (including overflow) 

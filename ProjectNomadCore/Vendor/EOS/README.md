@@ -1,5 +1,5 @@
 Epic Online Services (EOS) SDK
-v1.14 (17607641)
+v1.15.5
 
 Note that /Lib and /Bin are required to use the SDK, and that only Windows libs are provided
 Definitely need to contact Epic in future for console SDK files and perhaps for Mac + Linux as well

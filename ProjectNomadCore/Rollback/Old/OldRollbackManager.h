@@ -8,7 +8,7 @@
 #include "OldRollbackStaticSettings.h"
 #include "RollbackUpdateResult.h"
 #include "GameCore/PlayerId.h"
-#include "Input/PlayerInput.h"
+#include "Input/CharacterInput.h"
 #include "Utilities/FrameType.h"
 #include "Utilities/LoggerSingleton.h"
 #include "Utilities/Singleton.h"
@@ -32,7 +32,7 @@ namespace ProjectNomad {
         // Various normal processing state
         OldRollbackManagerGameState gameState = {};
         // Technically the below state is part of "GameState" but we should never need the data in snapshots (...supposedly)
-        FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> predictedInputs = {};
+        FlexArray<CharacterInput, INPUTS_HISTORY_SIZE> predictedInputs = {};
         bool needToRollback = false;
         FrameType frameToRollbackTo = 0;
     
@@ -58,7 +58,7 @@ namespace ProjectNomad {
         /// <param name="currentFrame">Should always be one more than the previously called frame</param>
         /// <param name="localPlayerInput">Current frame's input for the local player</param>
         /// <returns>Returns whether game should proceed normally, pause for a frame, or roll back</returns>
-        RollbackUpdateResult doFrameUpdate(FrameType currentFrame, const PlayerInput& localPlayerInput) {
+        RollbackUpdateResult doFrameUpdate(FrameType currentFrame, const CharacterInput& localPlayerInput) {
             if (!isInitialized) {
                 logger.logWarnMessage("RollbackManager::doFrameUpdate", "Not initialized!");
                 return RollbackUpdateResult::ProceedNormally();
@@ -112,7 +112,7 @@ namespace ProjectNomad {
         /// Frame to retrieve inputs for. Must be <= current frame and within max rollback range
         /// </param>
         /// <returns>Intended player input for given player on given frame</returns>
-        PlayerInput getPlayerInput(const PlayerId& playerId, FrameType frameToRetrieveInputsFor) {
+        CharacterInput getPlayerInput(const PlayerId& playerId, FrameType frameToRetrieveInputsFor) {
             if (frameToRetrieveInputsFor > gameState.latestLocalFrame) {
                 logger.logWarnMessage(
                     "RollbackManager::getInput",
@@ -133,7 +133,7 @@ namespace ProjectNomad {
             frameOffset += currentInputDelay; // Simple way to apply arbitrary input delay
 
             if (isRemotePlayer(playerId) && frameToRetrieveInputsFor > gameState.latestRemotePlayerFrame) {
-                PlayerInput predictedInput = inputPredictor.predictInput(
+                CharacterInput predictedInput = inputPredictor.predictInput(
                     frameToRetrieveInputsFor, gameState.latestRemotePlayerFrame, getRemotePlayerInputBuffer());
 
                 // Store predicted input so we can check prediction vs real input later on to determine if need to rollback
@@ -238,7 +238,7 @@ namespace ProjectNomad {
             }
         }
 
-        void handleLocalFrameInput(FrameType currentFrame, const PlayerInput& localPlayerInput) {
+        void handleLocalFrameInput(FrameType currentFrame, const CharacterInput& localPlayerInput) {
             if (currentFrame != gameState.latestLocalStoredInputFrame + 1) { // Sanity check. Likely extraneous but nice to have
                 logger.logWarnMessage(
                     "RollbackManager::handleLocalFrameInput",
@@ -326,7 +326,7 @@ namespace ProjectNomad {
                     // FlexArray (currently) doesn't support removing elements while retaining order
                     // Thus copy over remaining data into a new array then copy that into the original array
                     // FUTURE: Make this more efficient...? Is this even worth worrying about at all?
-                    FlexArray<PlayerInput, INPUTS_HISTORY_SIZE> uncheckedPredictions;
+                    FlexArray<CharacterInput, INPUTS_HISTORY_SIZE> uncheckedPredictions;
                     for (uint32_t i = amountOfNewInputs; i < predictedInputs.GetSize(); i++) {
                         uncheckedPredictions.Add(predictedInputs.Get(i));
                     }
@@ -340,7 +340,7 @@ namespace ProjectNomad {
             OldRollbackInputBuffer& remoteInputsBuffer = getRemotePlayerInputBuffer();
             for (FrameType i = 0; i < amountOfNewInputs; i++) {
                 // index 0 is the latest frame so add backwards
-                const PlayerInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfNewInputs - i);
+                const CharacterInput& remotePlayerInput = inputUpdateMessage.playerInputs.at(amountOfNewInputs - i);
                 remoteInputsBuffer.Add(remotePlayerInput);
             }
 

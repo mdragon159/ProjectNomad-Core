@@ -10,7 +10,7 @@ namespace ProjectNomad {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
     
     public:
-        PlayerInput predictInput(FrameType frameToRetrieveInputFor,
+        CharacterInput predictInput(FrameType frameToRetrieveInputFor,
                                  FrameType latestStoredInputFrame,
                                  const OldRollbackInputBuffer& inputBuffer) {
 

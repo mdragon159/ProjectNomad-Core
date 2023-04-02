@@ -26,7 +26,7 @@ namespace ProjectNomad {
             return fp{1000} * fp{1000} / fp{kGameplayFrameRate};
         }
 
-        static consteval float FloatTimePerFrameInSec() { // For ease of use in engine (Unreal) side. Should NEVER be used in SimLayer!
+        static constexpr float FloatTimePerFrameInSec() { // For ease of use in engine (Unreal) side. Should NEVER be used in SimLayer!
             return 1.f / kGameplayFrameRate;
         }
 
@@ -37,7 +37,7 @@ namespace ProjectNomad {
         * @param valueAs30Fps - input 30fps frame value
         * @returns input frame in current frame rate
         **/
-        static consteval FrameType As30FpsFrame(FrameType valueAs30Fps) {
+        static constexpr FrameType As30FpsFrame(FrameType valueAs30Fps) {
             // Note that there's a concerning edge case when kGameplayFrameRate < 30.
             // Namely, an input of 1 will round down to a 0. However, there are no intentions of testing an fps < 30
             return valueAs30Fps * kGameplayFrameRate / 30;

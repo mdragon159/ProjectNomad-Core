@@ -1,6 +1,6 @@
 #include "pchNCT.h"
 
-#include "Input/PlayerInput.h"
+#include "Input/CharacterInput.h"
 #include "TestHelpers/TestHelpers.h"
 #include "Utilities/Containers/FlexArray.h"
 
@@ -252,15 +252,15 @@ namespace FlexArrayTests {
     }
 
     TEST_F(FlexArrayTests, CalculateCRC32_whenSameValues_givenComplexType_thenChecksumAreEquivalent) {
-        FlexArray<PlayerInput, 100> firstTest;
-        PlayerInput inputA = {};
+        FlexArray<CharacterInput, 100> firstTest;
+        CharacterInput inputA = {};
         inputA.moveForward = fp{0.5f};
         inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
         inputA.commandInputs.SetCommandValue(InputCommand::AttackSecondary, true);
         firstTest.Add(inputA);
         
-        FlexArray<PlayerInput, 100> secondTest;
-        PlayerInput inputB = {};
+        FlexArray<CharacterInput, 100> secondTest;
+        CharacterInput inputB = {};
         inputB.moveForward = fp{0.5f};
         inputB.commandInputs.SetCommandValue(InputCommand::Jump, true);
         inputB.commandInputs.SetCommandValue(InputCommand::AttackSecondary, true);
@@ -275,15 +275,15 @@ namespace FlexArrayTests {
     }
 
     TEST_F(FlexArrayTests, CalculateCRC32_whenDifferentValues_givenComplexType_thenChecksumAreDifferent) {
-        FlexArray<PlayerInput, 100> firstTest;
-        PlayerInput inputA = {};
+        FlexArray<CharacterInput, 100> firstTest;
+        CharacterInput inputA = {};
         inputA.moveForward = fp{0.5f};
         inputA.commandInputs.SetCommandValue(InputCommand::Jump, true);
         inputA.commandInputs.SetCommandValue(InputCommand::AttackSecondary, true);
         firstTest.Add(inputA);
 
-        FlexArray<PlayerInput, 100> secondTest;
-        PlayerInput inputB = {};
+        FlexArray<CharacterInput, 100> secondTest;
+        CharacterInput inputB = {};
         inputB.moveForward = fp{0.25f};
         inputB.commandInputs.SetCommandValue(InputCommand::AttackPrimary, true);
         secondTest.Add(inputB);

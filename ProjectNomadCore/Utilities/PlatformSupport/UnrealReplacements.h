@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 using uint8 = uint8_t; // At time of writing not sure where Unreal is getting its "uint8" from but hey easy fix
 using uint32 = uint32_t;
 

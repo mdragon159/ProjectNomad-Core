@@ -5,7 +5,7 @@
 
 #include "BufferedInputData.h"
 #include "InputCommand.h"
-#include "PlayerInput.h"
+#include "CharacterInput.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
@@ -60,7 +60,7 @@ namespace ProjectNomad {
             for (size_t i = 0; i < mBufferedInputs.size(); i++) {
                 // If command was *just* pressed, then add to input buffer
                 // ...bit hesitant on this design choice atm, but eh it feels "right" for now based on - say - Smash's input buffer
-                if (newFrameCommands.commandInputs[i] && !prevFrameCommands.commandInputs[i]) {
+                if (newFrameCommands.commandInputs.GetIndex(i) && !prevFrameCommands.commandInputs.GetIndex(i)) {
                     mBufferedInputs[i].RememberInputSet(curFrame);
                 }
             }

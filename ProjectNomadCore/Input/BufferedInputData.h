@@ -4,7 +4,7 @@
 #include <CRCpp/CRC.h>
 
 #include "InputCommand.h"
-#include "PlayerInput.h"
+#include "CharacterInput.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {

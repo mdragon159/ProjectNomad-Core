@@ -134,11 +134,11 @@ namespace CoreComponentsTests {
     }
 
     TEST_F(CoreComponentsTests, HitfreezeComponent_CalculateCRC32_whenSameValues_thenChecksumAreEquivalent) {
-        HitfreezeComponent firstComp = {};
+        HitstopComponent firstComp = {};
         firstComp.startingFrame = 99;
         firstComp.totalLength = 2;
 
-        HitfreezeComponent secondComp = {};
+        HitstopComponent secondComp = {};
         secondComp.startingFrame = 99;
         secondComp.totalLength = 2;
         
@@ -151,11 +151,11 @@ namespace CoreComponentsTests {
     }
 
     TEST_F(CoreComponentsTests, HitfreezeComponent_CalculateCRC32_whenDifferentValues_thenChecksumAreDifferent) {
-        HitfreezeComponent firstComp = {};
+        HitstopComponent firstComp = {};
         firstComp.startingFrame = 100;
         firstComp.totalLength = 3;
 
-        HitfreezeComponent secondComp = {};
+        HitstopComponent secondComp = {};
         secondComp.startingFrame = 99;
         secondComp.totalLength = 2;
         

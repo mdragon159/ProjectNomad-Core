@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Utilities/ILogger.h"
-
 namespace ProjectNomad {
     /// <summary>
     /// Simple in-memory ring/circular buffer where "head" moves forward as each element is added, and older
@@ -48,6 +46,11 @@ namespace ProjectNomad {
         void SwapReplace(int offset, ContentType& element) {
             uint32_t index = CalculateIndex(offset);
             std::swap(element, mArray[index]);
+        }
+
+        // Simple wrapper around SwapReplace so don't need to think about how offset works
+        void SwapReplaceOldestValue(ContentType& element) {
+            SwapReplace(1, element);
         }
 
         /**

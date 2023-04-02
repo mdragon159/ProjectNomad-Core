@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Utilities/ILogger.h"
-
 namespace ProjectNomad {
     /// <summary>
     /// Queue in place with fixed size. Intended to be alternative to std::queue for snapshot/memcpy behavior,

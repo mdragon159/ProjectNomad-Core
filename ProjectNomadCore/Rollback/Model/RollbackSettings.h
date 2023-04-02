@@ -15,6 +15,10 @@ namespace ProjectNomad {
         // 
         int localInputDelay = 3;
         FrameType onlineInputDelay = 3; // Using FrameType as not supporting "negative input delay" for online play
+
+        // Additional pure debug settings
+        bool logSyncTestChecksums = false;
+        bool logChecksumForEveryStoredFrameSnapshot = false;
     };
 
     struct RollbackStaticSettings {
@@ -25,7 +29,7 @@ namespace ProjectNomad {
         // the rollback window will simply be the negative input delay.
         static constexpr FrameType kMaxRollbackFrames = 10;
 
-        // Easy access to calculation for  max "buffer" windows for all relevant rollback windows
+        // Easy access to calculation for max "buffer" windows for all relevant rollback windows
         // Size includes rollback window + positive input delay max value + 1 for "current" frame
         // (Note that no need to explicitly account for negative input delay
         static constexpr FrameType kMaxBufferWindow = kMaxRollbackFrames + kMaxInputDelay + 1;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Input/PlayerInput.h"
+#include "Input/CharacterInput.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
@@ -39,7 +39,7 @@ namespace ProjectNomad {
         * @param expectedFrame - frame number that is expected to be processed. Only intended for debug assistance
         * @param localPlayerInput - Input to be used with frame processing
         **/
-        virtual void ProcessFrame(FrameType expectedFrame, const PlayerInput& localPlayerInput) = 0;
+        virtual void ProcessFrame(FrameType expectedFrame, const CharacterInput& localPlayerInput) = 0;
 
         /**
         * Identical to ProcessFrame except expecting rendering to not be necessary.
@@ -47,7 +47,7 @@ namespace ProjectNomad {
         * This callback is used when a rollback occurs and then need to re-process frames quickly back to back.
         * After a rollback, only this method and OnPostRollback will be called instead of ProcessFrame
         **/
-        virtual void ProcessFrameWithoutRendering(FrameType expectedFrame, const PlayerInput& localPlayerInput) = 0;
+        virtual void ProcessFrameWithoutRendering(FrameType expectedFrame, const CharacterInput& localPlayerInput) = 0;
 
         /**
         * Called after a rollback occurs and frames are finished re-processing.
@@ -61,10 +61,8 @@ namespace ProjectNomad {
         *
         * Intended purpose is writing inputs to a replay file once we're confident they won't change, which is
         * particularly relevant for multiplayer games.
-        * @param frame - frame that inputs are being returned for
-        * @param allPlayerInputsForFrame - all player inputs for the given frame. Note that this will match the
-        *                                  number of players in the current game  
+        * @param confirmedFrame - frame that inputs have been fully validated up to (inclusive)
         **/
-        // virtual void OnInputsExitRollbackWindow(FrameType frame, const std::initializer_list<const PlayerInput&>& allPlayerInputsForFrame) = 0;
+        virtual void OnInputsExitRollbackWindow(FrameType confirmedFrame) = 0;
     };
 }

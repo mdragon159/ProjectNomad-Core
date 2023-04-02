@@ -1,5 +1,5 @@
 #pragma once
-#include "Input/PlayerInput.h"
+#include "Input/CharacterInput.h"
 #include "Model/RollbackSessionInfo.h"
 #include "Model/RollbackSettings.h"
 #include "Utilities/LoggerSingleton.h"
@@ -35,7 +35,7 @@ namespace ProjectNomad {
         * @param targetFrame - current frame from caller's perspective to add input for
         * @param localPlayerInput - the input to store
         **/
-        void AddLocalPlayerInput(FrameType targetFrame, const PlayerInput& localPlayerInput) {
+        void AddLocalPlayerInput(FrameType targetFrame, const CharacterInput& localPlayerInput) {
             if (mIsUsingLocalNegativeInputDelay) {
                 // If initial prediction frames, then *don't* add any input as using default inputs for these frames
                 if (targetFrame + 1 < mNegativeLocalInputDelay) {
@@ -68,7 +68,7 @@ namespace ProjectNomad {
         * @param targetFrame - the frame to retrieve input for. This should be
         * @returns "appropriate" input for given frame based on what was previously stored and input delay settings
         **/
-        const PlayerInput& GetLocalPlayerInput(const FrameType targetFrame) {
+        const CharacterInput& GetLocalPlayerInput(const FrameType targetFrame) {
             // Is target frame outside data that we've stored?
             if (targetFrame >= mNextLocalFrameToStore) {
                 // If using negative input delay, then valid input IF trying to retrieve input from within prediction window
@@ -98,7 +98,7 @@ namespace ProjectNomad {
         *          NOT returning by const reference as theoretically enough writes would modify this value. Shouldn't
         *          be necessary but nice to not have to think about the underlying data storage's limitations.
         **/
-        PlayerInput GetLocalPlayerPredictedInputForFrame(const FrameType targetFrame) const {
+        CharacterInput GetLocalPlayerPredictedInputForFrame(const FrameType targetFrame) const {
             // Note that - with current prediction logic - we reuse the same prediction for ALL prediction frames
             // (until a new input is provided).
             //
@@ -135,7 +135,7 @@ namespace ProjectNomad {
             }
         }
 
-        const PlayerInput& GetPredictedLocalPlayerInput() const {
+        const CharacterInput& GetPredictedLocalPlayerInput() const {
             // Always predict that player will use the latest known input.
 
             // Using this prediction as piggybacking off of typical FGC rollback algo findings: Using latest known input
@@ -192,7 +192,7 @@ namespace ProjectNomad {
             return static_cast<int>(offset) * -1;
         }
         
-        RingBuffer<PlayerInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs;
+        RingBuffer<CharacterInput, RollbackStaticSettings::kMaxBufferWindow> mLocalPlayerInputs = {};
         FrameType mNextLocalFrameToStore = 1000; // Starting session should set this back to 0. Cheap way for enforcing session start
         
         // Input delay related vars

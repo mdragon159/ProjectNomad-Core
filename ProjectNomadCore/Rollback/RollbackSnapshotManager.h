@@ -51,7 +51,7 @@ namespace ProjectNomad {
             }
         }
 
-        const SnapshotType& GetSnapshot(FrameType frameToRetrieveSnapshotFor) {
+        const SnapshotType& GetSnapshot(FrameType frameToRetrieveSnapshotFor) const {
             if (frameToRetrieveSnapshotFor > mLatestStoredFrame) {
                 Singleton<LoggerSingleton>::get().logErrorMessage(
                     "RollbackSnapshotManager::GetSnapshot",
@@ -65,12 +65,24 @@ namespace ProjectNomad {
             return mSnapshotBuffer.Get(offset);
         }
 
+        const SnapshotType& GetLatestFrameSnapshot() const {
+            // Sanity check
+            if (mLatestStoredFrame == std::numeric_limits<FrameType>::max()) {
+                Singleton<LoggerSingleton>::get().logWarnMessage(
+                    "RollbackSnapshotManager::GetLatestFrameSnapshot",
+                    "No stored frame data yet! Beware of undefined results"
+                );
+            }
+
+            return mSnapshotBuffer.Get(0); // Element at head is always the latest frame stored
+        }
+
       private:
         bool IsInsertingInitialFrame(FrameType frameToInsert) {
             return mLatestStoredFrame == std::numeric_limits<FrameType>::max() && frameToInsert +  1;
         }
         
-        int CalculateOffset(FrameType frameForStoredSnapshot) {
+        int CalculateOffset(FrameType frameForStoredSnapshot) const {
             FrameType frameOffset = mLatestStoredFrame - frameForStoredSnapshot;
 
             // Sanity check to help catch bugs

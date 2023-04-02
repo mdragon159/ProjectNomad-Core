@@ -17,14 +17,14 @@ namespace ProjectNomad {
         FPVector location = FPVector::zero();
         FPQuat rotation = FPQuat::identity();
 
-        void CalculateCRC32(uint32_t& resultThusFar) const {
-            location.CalculateCRC32(resultThusFar);
-            rotation.CalculateCRC32(resultThusFar);
-        }
-
         // Represents direction that entity is facing, *assuming* +x axis is intended to be forward direction
         FPVector getForwardDirection() const {
             return rotation * FPVector::forward();
+        }
+        
+        void CalculateCRC32(uint32_t& resultThusFar) const {
+            location.CalculateCRC32(resultThusFar);
+            rotation.CalculateCRC32(resultThusFar);
         }
     };
 
@@ -62,7 +62,7 @@ namespace ProjectNomad {
         }
     };
 
-    struct HitfreezeComponent {
+    struct HitstopComponent {
         FrameType startingFrame = 0;
         FrameType totalLength = 15;
 

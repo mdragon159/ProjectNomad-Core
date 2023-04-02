@@ -104,7 +104,7 @@
     <ClInclude Include="Input\CommandSetList.h" />
     <ClInclude Include="Input\CommandInputBuffer.h" />
     <ClInclude Include="Input\InputCommand.h" />
-    <ClInclude Include="Input\PlayerInput.h" />
+    <ClInclude Include="Input\CharacterInput.h" />
     <ClInclude Include="Input\GameplayInteractiveUIChoice.h" />
     <ClInclude Include="Math\FixedPoint.h" />
     <ClInclude Include="Math\FPEulerAngles.h" />
@@ -162,6 +162,7 @@
     <ClInclude Include="Utilities\Assertion.h" />
     <ClInclude Include="Utilities\Containers\FlexArray.h" />
     <ClInclude Include="Utilities\Containers\InPlaceQueue.h" />
+    <ClInclude Include="Utilities\Containers\NumericBitSet.h" />
     <ClInclude Include="Utilities\Containers\RingBuffer.h" />
     <ClInclude Include="Utilities\CoreEnumType.h" />
     <ClInclude Include="Utilities\CoreTypeShortcuts.h" />
@@ -250,7 +251,6 @@
     <ClInclude Include="Vendor\fpm\fixed.hpp" />
     <ClInclude Include="Vendor\fpm\ios.hpp" />
     <ClInclude Include="Vendor\fpm\math.hpp" />
-    <ClInclude Include="Vendor\random\random.hpp" />
     <ClInclude Include="Vendor\rapidjson\allocators.h" />
     <ClInclude Include="Vendor\rapidjson\cursorstreamwrapper.h" />
     <ClInclude Include="Vendor\rapidjson\document.h" />
@@ -298,9 +298,6 @@
     <Content Include="Vendor\EnTT\README.md" />
     <Content Include="Vendor\EOS\README.md" />
     <Content Include="Vendor\fpm\README.md" />
-    <Content Include="Vendor\random\LICENSE.MIT" />
-    <Content Include="Vendor\random\README-original.md" />
-    <Content Include="Vendor\random\README.md" />
     <Content Include="Vendor\rapidjson\license.txt" />
     <Content Include="Vendor\rapidjson\readme-original.md" />
     <Content Include="Vendor\rapidjson\README.md" />

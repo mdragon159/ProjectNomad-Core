@@ -556,6 +556,7 @@ namespace ProjectNomad {
             platformOptions.DeploymentId = NetworkSecrets::DeploymentId;
             platformOptions.ClientCredentials.ClientId = NetworkSecrets::ClientCredentialsId;
             platformOptions.ClientCredentials.ClientSecret = NetworkSecrets::ClientCredentialsSecret;
+            // TODO: platformOptions.EncryptionKey = ;
 
             platformOptions.Flags = 0;
             // For now, don't use any flags for testing consistency with full default features
