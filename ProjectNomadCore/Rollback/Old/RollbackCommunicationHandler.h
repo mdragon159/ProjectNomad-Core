@@ -1,16 +1,16 @@
 #pragma once
-#include "Network/NetworkManagerSingleton.h"
+#include "Network/SimNetworkManager.h"
 #include "Utilities/LoggerSingleton.h"
 #include "Utilities/Singleton.h"
 
 namespace ProjectNomad {
     class RollbackCommunicationHandler {
         LoggerSingleton& logger = Singleton<LoggerSingleton>::get();
-        NetworkManagerSingleton& networkManager = Singleton<NetworkManagerSingleton>::get();
+        SimNetworkManager& networkManager = Singleton<SimNetworkManager>::get();
     
     public:
         bool isMultiplayerGame() {
-            return networkManager.isConnectedToPlayer();
+            return networkManager.IsConnectedToPlayer();
         }
 
         void sendInputsToRemotePlayer(FrameType currentFrame, const OldRollbackInputBuffer& remoteInputs) {
@@ -31,7 +31,7 @@ namespace ProjectNomad {
 
             // Finally send the actual message
             InputUpdateMessage updateMessage(currentFrame, inputHistory);
-            networkManager.sendMessageToConnectedPlayer(updateMessage, packetReliability);
+            networkManager.SendMessageToConnectedPlayer(updateMessage, packetReliability);
         }
     };
 }

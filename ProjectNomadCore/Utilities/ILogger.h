@@ -14,19 +14,19 @@ namespace ProjectNomad {
 
         virtual std::queue<DebugMessage>& getDebugMessages() = 0;
         
-        virtual void logInfoMessage(std::string identifier, std::string infoMessage) = 0;
+        virtual void logInfoMessage(const std::string& identifier, const std::string& infoMessage) = 0;
 
-        virtual void logWarnMessage(std::string identifier, std::string warningMessage) = 0;
+        virtual void logWarnMessage(const std::string& identifier, const std::string& warningMessage) = 0;
         
-        virtual void logErrorMessage(std::string identifier, std::string errorMessage) = 0;
+        virtual void logErrorMessage(const std::string& identifier, const std::string& errorMessage) = 0;
 
         virtual void addDebugMessage(DebugMessage debugMessage) = 0;
 
-        virtual void addLogMessage(std::string message) = 0;
+        virtual void addLogMessage(const std::string& message) = 0;
 
-        virtual void addScreenAndLogMessage(fp displayLength, std::string message) = 0;
+        virtual void addScreenAndLogMessage(fp displayLength, const std::string& message) = 0;
 
-        virtual void addScreenAndLogMessage(fp displayLength, std::string message, OutputColor outputColor) = 0;
+        virtual void addScreenAndLogMessage(fp displayLength, const std::string& message, LogSeverity logSeverity, OutputColor outputColor) = 0;
 
         virtual void addShapeMessage(fp displayTime, const Collider& collider) = 0;
 
@@ -50,25 +50,21 @@ namespace ProjectNomad {
 
         virtual std::queue<NetLogMessage>& getNetLogMessages() = 0;
         
-        virtual void addNetLogMessage(std::string message) = 0;
+        virtual void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) = 0;
 
-        virtual void addNetLogMessage(std::string message, NetLogCategory category) = 0;
+        virtual void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) = 0;
 
-        virtual void addNetLogMessage(std::string message, OutputColor color) = 0;
+        virtual void addInfoNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) = 0;
-
-        virtual void addInfoNetLog(std::string identifier, std::string message) = 0;
-
-        virtual void addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+        virtual void addInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
         
-        virtual void addWarnNetLog(std::string identifier, std::string message) = 0;
+        virtual void addWarnNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+        virtual void addWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
 
-        virtual void addErrorNetLog(std::string identifier, std::string message) = 0;
+        virtual void addErrorNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) = 0;
+        virtual void addErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
 
         #pragma endregion 
     };

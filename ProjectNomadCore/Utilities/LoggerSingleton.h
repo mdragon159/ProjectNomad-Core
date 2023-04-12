@@ -1,4 +1,5 @@
 #pragma once
+
 #include <queue>
 
 #include "ILogger.h"
@@ -29,37 +30,41 @@ namespace ProjectNomad {
             return debugMessages;
         }
         
-        void logInfoMessage(std::string identifier, std::string infoMessage) override {
+        void logInfoMessage(const std::string& identifier, const std::string& infoMessage) override {
             std::string message = identifier + ": " + infoMessage;
-            addScreenAndLogMessage(fp{0.25f}, message, OutputColor::White);
+            addScreenAndLogMessage(fp{0.25f}, message, LogSeverity::Info, OutputColor::White);
         }
 
-        void logWarnMessage(std::string identifier, std::string warningMessage) override {
+        void logWarnMessage(const std::string& identifier, const std::string& warningMessage) override {
             std::string message = identifier + ": " + warningMessage;
-            addScreenAndLogMessage(fp{1.f}, message, OutputColor::Orange);
+            addScreenAndLogMessage(fp{1.f}, message, LogSeverity::Warn, OutputColor::Orange);
         }
         
-        void logErrorMessage(std::string identifier, std::string errorMessage) override {
+        void logErrorMessage(const std::string& identifier, const std::string& errorMessage) override {
             std::string message = identifier + ": " + errorMessage;
-            addScreenAndLogMessage(fp{5.f}, message, OutputColor::Red);
+            addScreenAndLogMessage(fp{5.f}, message, LogSeverity::Error, OutputColor::Red);
         }
 
         void addDebugMessage(DebugMessage debugMessage) override {
             debugMessages.push(debugMessage);
         }
 
-        void addLogMessage(std::string message) override {
+        void addLogMessage(const std::string& message) override {
             debugMessages.push(DebugMessage::createLogMessage(message));
         }
 
-        void addScreenAndLogMessage(fp displayLength, std::string message) override {
+        void addScreenAndLogMessage(fp displayLength, const std::string& message) override {
             debugMessages.push(
                 DebugMessage::createTextMessage(displayLength, OutputLocation::LogAndScreen, message));
         }
 
-        void addScreenAndLogMessage(fp displayLength, std::string message, OutputColor outputColor) override {
-            debugMessages.push(
-                DebugMessage::createTextMessage(displayLength, OutputLocation::LogAndScreen, message, outputColor));
+        void addScreenAndLogMessage(fp displayLength,
+                                    const std::string& message,
+                                    LogSeverity logSeverity,
+                                    OutputColor outputColor) override {
+            debugMessages.push(DebugMessage::createTextMessage(
+                displayLength, OutputLocation::LogAndScreen, message, logSeverity, outputColor
+            ));
         }
 
         void addShapeMessage(fp displayTime, const Collider& collider) override {
@@ -184,54 +189,42 @@ namespace ProjectNomad {
             return netLogMessages;
         }
         
-        void addNetLogMessage(std::string message) override {
-            netLogMessages.push(NetLogMessage(message));
-            addLogMessage(message);
+        void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) override {
+            addNetLogMessage(message, logSeverity, color, NetLogCategory::SimLayer); // Assume SimLayer by default
         }
 
-        void addNetLogMessage(std::string message, NetLogCategory category) override {
-            netLogMessages.push(NetLogMessage(message, category));
-            addLogMessage(message);
+        void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) override {
+            netLogMessages.push({message, logSeverity, color, category});
         }
 
-        void addNetLogMessage(std::string message, OutputColor color) override {
-            netLogMessages.push(NetLogMessage(message, color));
-            addLogMessage(message);
+        void addInfoNetLog(const std::string& identifier, const std::string& message) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Info, OutputColor::White);
         }
 
-        void addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) override {
-            netLogMessages.push(NetLogMessage(message, color, category));
-            addLogMessage(message);
-        }
-
-        void addInfoNetLog(std::string identifier, std::string message) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::White);
-        }
-
-        void addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::White, category);
+        void addInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Info, OutputColor::White, category);
         }
         
-        void addWarnNetLog(std::string identifier, std::string message) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::Orange);
+        void addWarnNetLog(const std::string& identifier, const std::string& message) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Warn, OutputColor::Orange);
         }
 
-        void addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::Orange, category);
+        void addWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Warn, OutputColor::Orange, category);
         }
 
-        void addErrorNetLog(std::string identifier, std::string message) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::Red);
+        void addErrorNetLog(const std::string& identifier, const std::string& message) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Error, OutputColor::Red);
         }
 
-        void addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) override {
-            std::string formattedMsg = identifier + ": " + message;
-            addNetLogMessage(formattedMsg, OutputColor::Red, category);
+        void addErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override {
+            const std::string& formattedMsg = identifier + ": " + message;
+            addNetLogMessage(formattedMsg, LogSeverity::Error, OutputColor::Red, category);
         }
         
         #pragma endregion 

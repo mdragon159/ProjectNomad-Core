@@ -7,6 +7,7 @@
 
 namespace ProjectNomad {
     enum class MessageType { Text, Box, Sphere, Capsule };
+    enum class LogSeverity { Info, Warn, Error };
     enum class OutputLocation { Log, Screen, LogAndScreen };
     enum class OutputColor { White, Black, Transparent, Red, Green, Blue, Yellow, Cyan, Magenta, Orange, Purple,
                                 Turquoise, Silver, Emerald };
@@ -30,17 +31,19 @@ namespace ProjectNomad {
         static DebugMessage createTextMessage(fp displayLength,
                                                 OutputLocation outputLocation,
                                                 const std::string& message) {
-            return createTextMessage(displayLength, outputLocation, message, DEFAULT_COLOR);
+            return createTextMessage(displayLength, outputLocation, message, LogSeverity::Info, DEFAULT_COLOR);
         }
 
         static DebugMessage createTextMessage(fp displayLength,
                                                 OutputLocation outputLocation,
                                                 const std::string& message,
+                                                LogSeverity logSeverity,
                                                 OutputColor outputColor) {
             DebugMessage result(MessageType::Text, displayLength);
 
             result.mOutputLocation = outputLocation;
             result.mTextMessage = message;
+            result.mLogSeverity = logSeverity;
             result.mOutputColor = outputColor;
 
             return result;
@@ -117,6 +120,7 @@ namespace ProjectNomad {
         
         // Text message values
         OutputLocation mOutputLocation = OutputLocation::Log;
+        LogSeverity mLogSeverity = LogSeverity::Info;
         std::string mTextMessage;
 
         // Draw box values

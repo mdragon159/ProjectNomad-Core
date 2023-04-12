@@ -7,19 +7,10 @@
 namespace ProjectNomad {
     enum class NetLogCategory { SimLayer, EosSdk }; // TODO: Set explicit type for all enums
     
-    class NetLogMessage {
-        static const OutputColor DEFAULT_COLOR = OutputColor::White;
-
-    public:
-        NetLogCategory category = NetLogCategory::SimLayer;
-        OutputColor color = DEFAULT_COLOR;
+    struct NetLogMessage {
         std::string message;
-        
-        
-        NetLogMessage(std::string message): message(message) {}
-        NetLogMessage(std::string message, OutputColor color): color(color), message(message) {}
-        
-        NetLogMessage(std::string message, NetLogCategory category): category(category), message(message) {}
-        NetLogMessage(std::string message, OutputColor color, NetLogCategory category): category(category), color(color), message(message) {}
+        LogSeverity logSeverity = LogSeverity::Info;
+        OutputColor color = OutputColor::White;
+        NetLogCategory category = NetLogCategory::SimLayer;
     };
 }
