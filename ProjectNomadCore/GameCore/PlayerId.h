@@ -1,21 +1,20 @@
 #pragma once
 
-#include "Network/EOS/CrossPlatformIdWrapper.h"
+#include "Network/EOS/Model/CrossPlatformIdWrapper.h"
 
 namespace ProjectNomad {
     enum class PlayerSpot : uint8_t {
-        INVALID,
         Player1,
         Player2,
         Player3,
         Player4,
-        
-        Spectator
+
+        ENUM_COUNT // https://stackoverflow.com/a/14989325/3735890
     };
     
     struct PlayerId {
-        PlayerSpot playerSpot = PlayerSpot::INVALID;
-        CrossPlatformIdWrapper crossPlatformId = nullptr;
+        PlayerSpot playerSpot = PlayerSpot::Player1;
+        CrossPlatformIdWrapper crossPlatformId = {};
 
         PlayerId() {}
         PlayerId(PlayerSpot playerSpot) : playerSpot(playerSpot) {}

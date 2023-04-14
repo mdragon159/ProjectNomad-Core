@@ -6,8 +6,9 @@
 #include "INetMessageSubscriber.h"
 #include "NetMessages.h"
 #include "EOS/EOSWrapperSingleton.h"
-#include "EOS/PacketReliability.h"
+#include "EOS/Model/PacketReliability.h"
 #include "GameCore/PlayerId.h"
+#include "Model/NetPlayersInfoManager.h"
 #include "Utilities/Singleton.h"
 
 namespace ProjectNomad {
@@ -22,15 +23,18 @@ namespace ProjectNomad {
             return mIsInitialized;
         }
         bool IsLoggedIn() const {
-            return mIsLoggedIn;
+            return mPlayersInfoManager.GetPlayersInfo().isLoggedIn;
         }
-        bool IsConnectedToPlayer() const {
+        const NetPlayersInfo& GetPlayersInfo() {
+            return mPlayersInfoManager.GetPlayersInfo();
+        }
+        bool IsConnectedToPlayer() const { // TODO: Delete this and clean up the one caller
             return mIsConnectedToOtherPlayer;
         }
         
         void Initialize() {
             if (IsInitialized()) {
-                mLogger.logWarnMessage(
+                mLogger.addWarnNetLog(
                     "NetworkManager:Initialize",
                     "Called initialize while manager is already initialized"
                 );
@@ -80,8 +84,8 @@ namespace ProjectNomad {
                 return;
             }
             if (IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::LoginViaAccountPortal",
+                mLogger.addWarnNetLog(
+                    "SNM::LoginViaAccountPortal",
                     "Called while already logged in"
                 );
                 return;
@@ -96,8 +100,8 @@ namespace ProjectNomad {
                 return;
             }
             if (IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::LoginViaDevAuth",
+                mLogger.addWarnNetLog(
+                    "SNM::LoginViaDevAuth",
                     "Called while already logged in"
                 );
                 return;
@@ -116,8 +120,8 @@ namespace ProjectNomad {
                 return;
             }
             if (!IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::Logout",
+                mLogger.addWarnNetLog(
+                    "SNM::Logout",
                     "Called while not logged in"
                 );
                 return;
@@ -134,8 +138,8 @@ namespace ProjectNomad {
                 return false;
             }
             if (!IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::BeginCreateMainGameLobby",
+                mLogger.addWarnNetLog(
+                    "SNM::BeginCreateMainGameLobby",
                     "Called while not yet logged in"
                 );
                 return false;
@@ -150,8 +154,8 @@ namespace ProjectNomad {
                 return false;
             }
             if (!IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::BeginLeaveMainMatchLobby",
+                mLogger.addWarnNetLog(
+                    "SNM::BeginLeaveMainMatchLobby",
                     "Called while not yet logged in"
                 );
                 return false;
@@ -168,8 +172,8 @@ namespace ProjectNomad {
                 return;
             }
             if (!IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::ShowFriendsUI",
+                mLogger.addWarnNetLog(
+                    "SNM::ShowFriendsUI",
                     "Called while not logged in"
                 );
                 return;
@@ -180,8 +184,8 @@ namespace ProjectNomad {
 
         void ConnectToPlayer(const std::string& targetCrossPlatformId) {
             if (!IsLoggedIn()) {
-                mLogger.logWarnMessage(
-                    "NetworkManager::ConnectToPlayer",
+                mLogger.addWarnNetLog(
+                    "SNM::ConnectToPlayer",
                     "Called while manager is in not in LoggedIn state"
                 );
                 return;
@@ -198,8 +202,8 @@ namespace ProjectNomad {
             static_assert(std::is_base_of_v<BaseNetMessage, MessageType>, "MessageType must inherit from BaseNetMessage");
 
             if (!IsConnectedToPlayer()) {
-                mLogger.logWarnMessage(
-                    "NMS::SendMessageToConnectedPlayer",
+                mLogger.addWarnNetLog(
+                    "SNM::SendMessageToConnectedPlayer",
                     "Called while not connected to a player"
                 );
                 return;
@@ -207,46 +211,26 @@ namespace ProjectNomad {
 
             SendMessage(mConnectedPlayerId.crossPlatformId, message, packetReliability);
         }
-
-        PlayerId GetLocalPlayerId() {
-            return mLocalPlayerId;
-        }
-
-        PlayerId GetConnectedPlayerId() {
-            if (!IsConnectedToPlayer()) {
-                mLogger.logInfoMessage(
-                    "NetworkManagerSingleton::GetConnectedPlayerId",
-                    "Trying to get connected player id while not connected to anyone"
-                );
-                return PlayerId();
-            }
-
-            return mConnectedPlayerId;
-        }
-
-
-
         
         #pragma region EOSWrapper Interface
-        void OnLoginSuccess(CrossPlatformIdWrapper loggedInCrossPlatformId) override {
-            mLocalPlayerId.crossPlatformId = loggedInCrossPlatformId;
-            mIsLoggedIn = true;
+        void OnLoginSuccess(const CrossPlatformIdWrapper& loggedInCrossPlatformId) override {
+            mPlayersInfoManager.OnLoggedIn(loggedInCrossPlatformId);
 
             if (IsRendererSubscriberSet()) {
                 mRendererSubscriber->get().OnLoginStatusChanged();
             }
         }
         void OnLogoutSuccess() override {
-            ClearLoginState();
+            mPlayersInfoManager.OnLoggedOut();
 
             if (IsRendererSubscriberSet()) {
                 mRendererSubscriber->get().OnLoginStatusChanged();
             }
         }
         
-        void OnMessageReceived(CrossPlatformIdWrapper peerId, const std::vector<char>& messageData) override {
+        void OnMessageReceived(const CrossPlatformIdWrapper& peerId, const std::vector<char>& messageData) override {
             if (messageData.empty()) {
-                mLogger.addWarnNetLog("NMS::onMessageReceived", "Somehow received empty message...?");
+                mLogger.addWarnNetLog("SNM::OnMessageReceived", "Somehow received empty message...?");
             }
             
             NetMessageType messageType = static_cast<NetMessageType>(messageData[0]);
@@ -267,22 +251,56 @@ namespace ProjectNomad {
                     }
                     else {
                         mLogger.addInfoNetLog(
-                            "NMS::onMessageReceived",
+                            "SNM::OnMessageReceived",
                             "No registered message subscriber found, likely a bug"
                         );
                     }
             }
         }
 
-        void OnLobbyCreationResult(bool didSucceed) override {
+        void OnLobbyCreationResult(bool didSucceed, const EOSLobbyProperties& lobbyProperties) override {
+            // Update relevant info so subscribers can easily retrieve the info
+            mPlayersInfoManager.OnLobbyJoinOrCreationResult(didSucceed, lobbyProperties);
+
+            // Notify subscribers of event
             if (IsRendererSubscriberSet()) {
                 mRendererSubscriber->get().OnLobbyCreationResult(didSucceed);
             }
         }
+        void OnLobbyJoinResult(bool didSucceed, const EOSLobbyProperties& lobbyProperties) override {
+            // Update relevant info so subscribers can easily retrieve the info
+            mPlayersInfoManager.OnLobbyJoinOrCreationResult(didSucceed, lobbyProperties);
 
+            // Notify subscribers of event
+            if (IsRendererSubscriberSet()) {
+                mRendererSubscriber->get().OnLobbyJoinResult(didSucceed);
+            }
+        }
         void OnLobbyLeftOrDestroyed(bool didSucceed) override {
+            mPlayersInfoManager.OnLobbyLeftOrDestroyed(didSucceed);
+            
             if (IsRendererSubscriberSet()) {
                 mRendererSubscriber->get().OnLobbyLeftOrDestroyed(didSucceed);
+            }
+        }
+        void OnLobbyUpdated(bool didSucceed, const EOSLobbyProperties& lobbyProperties) override {
+            mPlayersInfoManager.OnLobbyUpdated(didSucceed, lobbyProperties);
+            
+            if (IsRendererSubscriberSet()) {
+                mRendererSubscriber->get().OnLobbyUpdated(); // Assuming no need for didSucceed parameter downstream
+            }
+        }
+
+        void OnLobbyJoinOrCreateBegin() override {
+            // Simply forward the event to the "frontend"
+            if (IsRendererSubscriberSet()) {
+                mRendererSubscriber->get().OnLobbyJoinOrCreateBegin();
+            }
+        }
+        void OnLobbyLeaveBegin() override {
+            // Simply forward the event to the "frontend"
+            if (IsRendererSubscriberSet()) {
+                mRendererSubscriber->get().OnLobbyLeaveBegin();
             }
         }
         #pragma endregion 
@@ -293,20 +311,14 @@ namespace ProjectNomad {
                 return false;
             }
 
-            mLogger.logWarnMessage(identifier, "Not initialized");
+            mLogger.addWarnNetLog(identifier, "Not initialized");
             return true;
         }
         
         bool IsRendererSubscriberSet() const {
             return mRendererSubscriber.has_value();
         }
-
-        void ClearLoginState() {
-            ClearConnectionsIfAny();
-
-            mLocalPlayerId = {};
-            mIsLoggedIn = false;
-        }
+        
         void ClearConnectionsIfAny() {
             // If don't have any connections then don't have anything to do
             // FUTURE: Expand this as necessary
@@ -318,16 +330,17 @@ namespace ProjectNomad {
             // TODO: Clear actual connection info
         }
         void CleanupState(bool forceShutdown) {
-            // Clean up callbacks/subcribers just to be clean
+            // Clean up callbacks/subcribers just to be clean and safe
             mMessageSubscriber = nullptr;
             mRendererSubscriber.reset();
+
+            // FUTURE: Clear up any actual data storage we have (like logged in status). However...
+            //      This only matters if we support re-initialization which isn't a goal atm.
+            //      Thus, we'll only worry about more "proper" clean up only if we need to support re-init case.
             
             // Unlike other typical singletons in project, the EOSWrapper is "managed" by this class
             // Thus pass on the clean up call to the EOSWrapper
             mEosWrapperSingleton.CleanupState(forceShutdown);
-
-            ClearConnectionsIfAny();
-            ClearLoginState();
             
             mIsInitialized = false;
         }
@@ -348,8 +361,10 @@ namespace ProjectNomad {
 
         void RememberAcceptedPlayerConnection(bool didLocalPlayerInitiateConnection, CrossPlatformIdWrapper otherPlayerId) {
             mConnectedPlayerId.crossPlatformId = otherPlayerId;
+
+            // TODO: Redo all this connection-related code
             
-            // Select who's player 1 vs 2 based on who initiated connection
+            /*// Select who's player 1 vs 2 based on who initiated connection
             // This method was chosen as needed *some* consistent way to determine who's which player and this is pretty simple
             if (didLocalPlayerInitiateConnection) {
                 mLocalPlayerId.playerSpot = PlayerSpot::Player1;
@@ -360,9 +375,9 @@ namespace ProjectNomad {
                 mConnectedPlayerId.playerSpot = PlayerSpot::Player1;
             }
 
-            mIsConnectedToOtherPlayer = true;
+            mIsConnectedToOtherPlayer = true;*/
             mLogger.addWarnNetLog(
-                "NMS::rememberAcceptedPlayerConnection",
+                "SNM::rememberAcceptedPlayerConnection",
                 "Accepted connection!"
             );
         }
@@ -381,10 +396,11 @@ namespace ProjectNomad {
         std::optional<std::reference_wrapper<INetEventsSubscriber>> mRendererSubscriber = {};
 
         bool mIsInitialized = false;
-        bool mIsLoggedIn = false;
-        bool mIsConnectedToOtherPlayer = false;
 
-        PlayerId mLocalPlayerId = PlayerId(PlayerSpot::Player1);
-        PlayerId mConnectedPlayerId = PlayerId(PlayerSpot::INVALID);
+        // TODO: Move connection tracking to players info tracking class
+        bool mIsConnectedToOtherPlayer = false;
+        PlayerId mConnectedPlayerId = PlayerId(PlayerSpot::Player1);
+
+        NetPlayersInfoManager mPlayersInfoManager = {};
     };
 }

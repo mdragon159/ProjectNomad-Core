@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include "EOS/EOSWrapperStatus.h"
+#include "EOS/Model/EOSWrapperStatus.h"
 
 namespace ProjectNomad {
     using NetStatusChangeCallback = std::function<void(EOSWrapperStatus currentNetStatus)>;

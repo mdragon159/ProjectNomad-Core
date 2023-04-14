@@ -8,7 +8,7 @@ namespace ProjectNomad {
 
     public:
         CrossPlatformIdWrapper() {}
-        CrossPlatformIdWrapper(EOS_ProductUserId accountId) : accountId(accountId) {}
+        explicit CrossPlatformIdWrapper(EOS_ProductUserId accountId) : accountId(accountId) {}
 
         // Note that this method doesn't return a validated id, it just returns the string in the appropriate format.
         // This also means that isValid method will always return true due to being unable to verify
@@ -17,16 +17,16 @@ namespace ProjectNomad {
             return CrossPlatformIdWrapper(formattedId);
         }
         
-        EOS_ProductUserId getAccountId() {
+        EOS_ProductUserId getAccountId() const {
             return accountId;
         }
 
-        bool isValid() {
+        bool isValid() const {
             return accountId != nullptr && EOS_ProductUserId_IsValid(accountId);
         }
 
         // Based on SDK sample's FAccountHelpers::EpicAccountIDToString
-        bool tryToString(std::string& result) {
+        bool tryToString(std::string& result) const {
             static char TempBuffer[EOS_PRODUCTUSERID_MAX_LENGTH + 1];
             int32_t tempBufferSize = sizeof(TempBuffer);
             EOS_EResult conversionResult = EOS_ProductUserId_ToString(accountId, TempBuffer, &tempBufferSize);

@@ -6,15 +6,18 @@
 #include <EOS/Include/eos_auth.h>
 #include <EOS/Include/eos_p2p.h>
 #include <EOS/Include/eos_sdk.h>
+#include <EOS/Include/eos_lobby.h>
+#include <EOS/Include/eos_ui.h>
 
-#include "CrossPlatformIdWrapper.h"
-#include "EpicAccountIdWrapper.h"
+#include "EOSHelpers.h"
 #include "IEOSWrapperManager.h"
-#include "NetLobbySlot.h"
-#include "NetLobbyTracking.h"
-#include "PacketReliability.h"
-#include "EOS/Include/eos_lobby.h"
-#include "EOS/Include/eos_ui.h"
+#include "Model/CrossPlatformIdWrapper.h"
+#include "Model/EpicAccountIdWrapper.h"
+#include "Model/NetLobbySlot.h"
+#include "Model/EOSWrapperStatus.h"
+#include "Model/PacketReliability.h"
+#include "Model/NetLobbyTracking.h"
+
 #include "Network/NetworkManagerCallbackTypes.h"
 #include "Secrets/NetworkSecrets.h"
 #include "Utilities/LoggerSingleton.h"
@@ -240,7 +243,10 @@ namespace ProjectNomad {
             return CrossPlatformIdWrapper(formattedTargetCrossPlatformId);
         }
 
-        void SendMessage(CrossPlatformIdWrapper targetId, const void* data, uint32_t dataLengthInBytes, PacketReliability packetReliability) {
+        void SendMessage(CrossPlatformIdWrapper targetId,
+                         const void* data,
+                         uint32_t dataLengthInBytes,
+                         PacketReliability packetReliability) {
             if (!IsCrossPlatformLoggedIn()) {
                 mLogger.addWarnNetLog("EWS::sendMessage", "Not cross platform logged in");
                 return;
@@ -263,7 +269,7 @@ namespace ProjectNomad {
             options.SocketId = &socketId;
             options.bAllowDelayedDelivery = EOS_TRUE; // PLACEHOLDER: Set to false once separately setting up connections
             options.Channel = 0;
-            options.Reliability = ConvertPacketReliability(packetReliability);
+            options.Reliability = EOSHelpers::ConvertPacketReliability(mLogger, packetReliability);
 
             options.DataLengthBytes = dataLengthInBytes;
             options.Data = data;
@@ -287,22 +293,7 @@ namespace ProjectNomad {
 
 #pragma region Lobby & Sessions
         bool BeginCreateMainMatchLobby() {
-            // Specific lobby type sanity check
-            if (!mMainMatchLobby.IsCompletelyInactive()) {
-                mLogger.addWarnNetLog(
-                    "EWS::BeginCreateLobby",
-                    "Main lobby not entirely inactive. Current status: " + mMainMatchLobby.GetCurrentStatusAsNumber()
-                );
-                return false;
-            }
-
-            bool didSuccessfullyStartLobbyCreation = BeginCreateLobby();
-            if (didSuccessfullyStartLobbyCreation) {
-                // Track lobby creation for general validation purposes
-                mMainMatchLobby.SetBeingCreatedState(mLogger);
-            }
-
-            return didSuccessfullyStartLobbyCreation;
+            return BeginCreateLobby(NetLobbySlot::MainMatchLobby);
         }
 
         bool BeginLeaveMainGameLobby() {
@@ -459,7 +450,7 @@ namespace ProjectNomad {
             else if (EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.addErrorNetLog(
                     "EWS::LoginCompleteCallback",
-                    "Login Failed - Error Code: " + ResultCodeToString(data->ResultCode)
+                    "Login Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
             }
             else {
@@ -479,7 +470,7 @@ namespace ProjectNomad {
             else {
                 mLogger.addErrorNetLog(
                     "EWS::CrossPlatformLoginCompleteCallback",
-                    "Cross plat login failed with result: " + ResultCodeToString(data->ResultCode));
+                    "Cross plat login failed with result: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
         }
 
@@ -500,7 +491,7 @@ namespace ProjectNomad {
             else {
                 mLogger.addErrorNetLog(
                     "EWS::LogoutCompleteCallback",
-                    "Logout Failed - Error Code: " + ResultCodeToString(data->ResultCode)
+                    "Logout Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
             }
 
@@ -567,7 +558,7 @@ namespace ProjectNomad {
             else {
                 mLogger.addErrorNetLog(
                     "EWS::OnIncomingConnectionRequest",
-                    "EOS_P2P_AcceptConnection failed with result: " + ResultCodeToString(result)
+                    "EOS_P2P_AcceptConnection failed with result: " + EOSHelpers::ResultCodeToString(result)
                 );
             }
         }
@@ -579,7 +570,7 @@ namespace ProjectNomad {
             else {
                 mLogger.addWarnNetLog(
                     "EWS::OnShowFriendsCallback",
-                    "Failed with result code: " + ResultCodeToString(data->ResultCode)
+                    "Failed with result code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
             }
         }
@@ -588,46 +579,68 @@ namespace ProjectNomad {
         void OnCreateLobbyFinished(const EOS_Lobby_CreateLobbyCallbackInfo* data) {
             if (!data) {
                 mLogger.addWarnNetLog("EWS::OnCreateLobbyFinished", "Input data is somehow null!");
-                mEosWrapperManager->OnLobbyCreationResult(false);
+                mEosWrapperManager->OnLobbyCreationResult(false, {});
                 return;
             }
             
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
-                mLogger.addWarnNetLog(
+                mLogger.addInfoNetLog(
                     "EWS::OnCreateLobbyFinished",
                     "Operation not complete, should be automatically called again in near future. Result code: "
-                    + ResultCodeToString(data->ResultCode)
+                    + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
                 return; // For now just wait until completion
             }
 
-            // Handle actual result
-            bool didSetupSucceed = false;
-            if (data->ResultCode != EOS_EResult::EOS_Success) {
+            bool didSetupSucceed = data->ResultCode == EOS_EResult::EOS_Success;
+
+            // Give bit of precise feedback to help with general debugging
+            if (!didSetupSucceed) { // Fail case
                 mLogger.addWarnNetLog(
                     "EWS::OnCreateLobbyFinished",
-                    "Creation failed with error code: " + ResultCodeToString(data->ResultCode)
+                    "Creation failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
-                didSetupSucceed = false; // Nice to be explicit
             }
-            else {
+            else { // Success case
                 mLogger.addInfoNetLog("EWS::OnCreateLobbyFinished", "Lobby successfully created!");
-
-                // Try to setup lobby info tracking
-                didSetupSucceed = mMainMatchLobby.TryInitActiveLobby(mLogger, data->LobbyId);
             }
 
-            // If didn't succeed, then make sure to reset tracking so no problems with trying to create future lobbies
-            if (!didSetupSucceed) {
-                mMainMatchLobby.ResetLobbyInfo();
-            }
-
-            // Finally let rest of game handle lobby creation as appropriate
-            if (mEosWrapperManager) {
-                mEosWrapperManager->OnLobbyCreationResult(didSetupSucceed);
-            }
+            bool wasLobbyJoin = false;
+            HandlePostLobbyJoinOrCreation(wasLobbyJoin, didSetupSucceed, NetLobbySlot::MainMatchLobby, data->LobbyId);
         }
+        // Based on SDK sample's FLobbies::OnJoinLobbyFinished
+        void OnJoinLobbyFinished(const EOS_Lobby_JoinLobbyCallbackInfo* data) {
+            if (!data) {
+                mLogger.addWarnNetLog("EWS::OnJoinLobbyFinished", "Input data is somehow null!");
+                mEosWrapperManager->OnLobbyJoinResult(false, {});
+                return;
+            }
 
+            if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
+                mLogger.addInfoNetLog(
+                    "EWS::OnJoinLobbyFinished",
+                    "Operation not complete, should be automatically called again in near future. Result code: "
+                    + EOSHelpers::ResultCodeToString(data->ResultCode)
+                );
+                return; // For now just wait until completion
+            }
+
+            bool didJoinSucceed = data->ResultCode == EOS_EResult::EOS_Success;
+
+            // Give bit of precise feedback to help with general debugging
+            if (!didJoinSucceed) { // Fail case
+                mLogger.addWarnNetLog(
+                    "EWS::OnJoinLobbyFinished",
+                    "Join failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
+                );
+            }
+            else { // Success case
+                mLogger.addInfoNetLog("EWS::OnJoinLobbyFinished", "Lobby successfully joined!");
+            }
+
+            bool wasLobbyJoin = true;
+            HandlePostLobbyJoinOrCreation(wasLobbyJoin, didJoinSucceed, NetLobbySlot::MainMatchLobby, data->LobbyId);
+        }
         // Based on SDK sample's FLobbies::OnLeaveLobbyFinished
         void OnLeaveLobbyFinished(const EOS_Lobby_LeaveLobbyCallbackInfo* data) {
             if (!data) {
@@ -640,36 +653,26 @@ namespace ProjectNomad {
                 mLogger.addWarnNetLog(
                     "EWS::OnLeaveLobbyFinished",
                     "Operation not complete, should be automatically called again in near future. Result code: "
-                    + ResultCodeToString(data->ResultCode)
+                    + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
                 return; // For now just wait until completion
             }
 
-            // Handle actual result
-            bool didLeaveSucceed = false;
-            if (data->ResultCode != EOS_EResult::EOS_Success) {
+            bool didLeaveSucceed = data->ResultCode == EOS_EResult::EOS_Success;
+
+            // Give bit of precise feedback to help with general debugging
+            if (!didLeaveSucceed) {
                 mLogger.addWarnNetLog(
                     "EWS::OnLeaveLobbyFinished",
-                    "Leave failed with error code: " + ResultCodeToString(data->ResultCode)
+                    "Leave failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
-                didLeaveSucceed = false; // Nice to be explicit
             }
             else {
                 mLogger.addInfoNetLog("EWS::OnLeaveLobbyFinished", "Successfully left lobby!");
-                didLeaveSucceed = true;
-
-                // Reset lobby so we can reuse it going forward (ie, create a new lobby without validation issues)
-                NetLobbySlot netLobbySlot = FakePointerToLobbySlot(data->ClientData);
-                NetLobbyTracking& netLobbyTracking = GetLobbyInfoForSlot(netLobbySlot);
-                netLobbyTracking.ResetLobbyInfo();
             }
 
-            // Note: No idea what should do atm if leaving lobby fails. Need to see an actual case in wild (or docs) methinks.
-            //       Likely just have a backup "force leave" option for frontend at least.
-
-            if (mEosWrapperManager) {
-                mEosWrapperManager->OnLobbyLeftOrDestroyed(didLeaveSucceed);
-            }
+            NetLobbySlot netLobbySlot = FakePointerToLobbySlot(data->ClientData);
+            HandlePostLobbyLeave(didLeaveSucceed, netLobbySlot);
         }
 
         void OnLobbyInviteReceived(const EOS_Lobby_LobbyInviteReceivedCallbackInfo* data) {
@@ -677,6 +680,8 @@ namespace ProjectNomad {
                 mLogger.addWarnNetLog("EWS::OnLobbyInviteReceived", "Input data is somehow null!");
                 return;
             }
+
+            mLogger.addInfoNetLog("EWS::OnLobbyInviteReceived", "TODO");
         }
         void OnLobbyInviteAccepted(const EOS_Lobby_LobbyInviteAcceptedCallbackInfo* data) {
             if (!data) {
@@ -684,8 +689,39 @@ namespace ProjectNomad {
                 return;
             }
 
-            // 1. Get lobby info (lotsa pain)
-            // 2. Do shared logic for joining lobby
+            // Retrieve the lobby's handle as that's required for the Join API
+            EOS_Lobby_CopyLobbyDetailsHandleByInviteIdOptions Options = {};
+            Options.ApiVersion = EOS_LOBBY_COPYLOBBYDETAILSHANDLEBYINVITEID_API_LATEST;
+            Options.InviteId = data->InviteId;
+            
+            EOS_HLobbyDetails lobbyDetailsHandle = nullptr;
+            EOS_EResult resultCode = EOS_Lobby_CopyLobbyDetailsHandleByInviteId(mLobbyHandle, &Options, &lobbyDetailsHandle);
+            if (resultCode != EOS_EResult::EOS_Success)
+            {
+                mLogger.addWarnNetLog(
+                    "EWS::OnLobbyInviteAccepted",
+                    "Lobby details handle retrieval failed with error code: " + EOSHelpers::ResultCodeToString(resultCode)
+                );
+                return;
+            }
+            if (lobbyDetailsHandle == nullptr)
+            {
+                mLogger.addWarnNetLog(
+                    "EWS::OnLobbyInviteAccepted",
+                    "Lobby details handle retrieval failed due to nullptr result"
+                );
+                return;
+            }
+
+            // Start actual join
+            bool didJoinAttemptStart = TryJoinLobby(NetLobbySlot::MainMatchLobby, MakeLobbyDetailsKeeper(lobbyDetailsHandle));
+            // Give bit of feedback (as not much UI support atm)
+            if (didJoinAttemptStart) {
+                mLogger.addInfoNetLog("EWS::OnLobbyInviteAccepted", "Successfully started join attempt");
+            }
+            else {
+                mLogger.addWarnNetLog("EWS::OnLobbyInviteAccepted", "Failed to start join attempt. Should have prior logs");
+            }
         }
         void OnJoinLobbyAccepted(const EOS_Lobby_JoinLobbyAcceptedCallbackInfo* data) {
             if (!data) {
@@ -693,8 +729,39 @@ namespace ProjectNomad {
                 return;
             }
 
-            // 1. Get lobby info (lotsa pain)
-            // 2. Do shared logic for joining lobby
+            // Retrieve the lobby's handle as that's required for the Join API
+            EOS_Lobby_CopyLobbyDetailsHandleByUiEventIdOptions copyOptions = {};
+            copyOptions.ApiVersion = EOS_LOBBY_COPYLOBBYDETAILSHANDLEBYUIEVENTID_API_LATEST;
+            copyOptions.UiEventId = data->UiEventId;
+            
+            EOS_HLobbyDetails lobbyDetailsHandle;
+            EOS_EResult resultCode = EOS_Lobby_CopyLobbyDetailsHandleByUiEventId(mLobbyHandle, &copyOptions, &lobbyDetailsHandle);
+            if (resultCode != EOS_EResult::EOS_Success)
+            {
+                mLogger.addWarnNetLog(
+                    "EWS::OnJoinLobbyAccepted",
+                    "Lobby details handle retrieval failed with error code: " + EOSHelpers::ResultCodeToString(resultCode)
+                );
+                return;
+            }
+            if (lobbyDetailsHandle == nullptr)
+            {
+                mLogger.addWarnNetLog(
+                    "EWS::OnJoinLobbyAccepted",
+                    "Lobby details handle retrieval failed due to nullptr result"
+                );
+                return;
+            }
+
+            // Start actual join
+            bool didJoinAttemptStart = TryJoinLobby(NetLobbySlot::MainMatchLobby, MakeLobbyDetailsKeeper(lobbyDetailsHandle));
+            // Give bit of feedback (as not much UI support atm)
+            if (didJoinAttemptStart) {
+                mLogger.addInfoNetLog("EWS::OnJoinLobbyAccepted", "Successfully started join attempt");
+            }
+            else {
+                mLogger.addWarnNetLog("EWS::OnJoinLobbyAccepted", "Failed to start join attempt. Should have prior logs");
+            }
         }
 
         void OnLobbyUpdateReceived(const EOS_Lobby_LobbyUpdateReceivedCallbackInfo* data) {
@@ -703,7 +770,7 @@ namespace ProjectNomad {
                 return;
             }
 
-            // Shared logic: OnLobbyUpdate w/ lobby id
+            OnLobbyUpdated(NetLobbySlot::MainMatchLobby, data->LobbyId);
         }
         void OnMemberUpdateReceived(const EOS_Lobby_LobbyMemberUpdateReceivedCallbackInfo* data) {
             if (!data) {
@@ -711,7 +778,10 @@ namespace ProjectNomad {
                 return;
             }
 
-            // Shared logic: OnLobbyUpdate w/ lobby id
+            // TODO: Remove log
+            mLogger.addInfoNetLog("EWS::OnMemberUpdateReceived", "Called");
+
+            OnLobbyUpdated(NetLobbySlot::MainMatchLobby, data->LobbyId);
         }
         void OnMemberStatusReceived(const EOS_Lobby_LobbyMemberStatusReceivedCallbackInfo* data) {
             if (!data) {
@@ -719,9 +789,13 @@ namespace ProjectNomad {
                 return;
             }
 
+            // TODO: Remove log
+            mLogger.addInfoNetLog("EWS::OnMemberStatusReceived", "Called");
+
             // TODO: If target user id == self AND current status == closed/kicked/disconnected, then handle as if kicked or lobby closed or such
 
-            // Otherwise, do shared logic: OnLobbyUpdate w/ lobby id
+            // Otherwise still in lobby, sp do overall lobby update
+            OnLobbyUpdated(NetLobbySlot::MainMatchLobby, data->LobbyId);
         }
 #pragma endregion
 
@@ -906,7 +980,7 @@ namespace ProjectNomad {
             {
                 mLogger.addErrorNetLog(
                     "EWS::handleReceivedMessages",
-                    "EOS_P2P_ReceivePacket failed with result: " + ResultCodeToString(result)
+                    "EOS_P2P_ReceivePacket failed with result: " + EOSHelpers::ResultCodeToString(result)
                 );
             }
         }
@@ -934,10 +1008,6 @@ namespace ProjectNomad {
             // Clear relevant ids
             mLoggedInCrossPlatformId = {};
             mLoggedInEpicAccountId = {};
-        }
-        
-        void ResetLobbiesAndSessionsTracking() {
-            mMainMatchLobby.ResetLobbyInfo();
         }
 
         
@@ -985,7 +1055,7 @@ namespace ProjectNomad {
             else {
                 mLogger.addErrorNetLog(
                     "EWS::startCrossPlatformLogin",
-                    "EOS_Auth_CopyUserAuthToken failed with result: " + ResultCodeToString(result)
+                    "EOS_Auth_CopyUserAuthToken failed with result: " + EOSHelpers::ResultCodeToString(result)
                 );
             }
         }
@@ -1222,7 +1292,7 @@ namespace ProjectNomad {
             mLobbyMemberStatusNotification = EOS_INVALID_NOTIFICATIONID;
         }
 
-        bool BeginCreateLobby() {
+        bool BeginCreateLobby(NetLobbySlot lobbySlot) {
             // General sanity checks
             if (!IsInitialized()) {
                 mLogger.addWarnNetLog("EWS::BeginCreateLobby", "Not initialized");
@@ -1237,6 +1307,18 @@ namespace ProjectNomad {
                 return false;
             }
 
+            NetLobbyTracking& lobbyTrackingInfo = GetLobbyInfoForSlot(lobbySlot);
+            // Specific lobby type sanity check
+            if (!lobbyTrackingInfo.IsCompletelyInactive()) {
+                mLogger.addWarnNetLog(
+                    "EWS::BeginCreateLobby",
+                    "Lobby not entirely inactive. Lobby slot: " + std::to_string(static_cast<int>(lobbySlot)) +
+                    ", Current status: " + std::to_string(lobbyTrackingInfo.GetCurrentStatusAsNumber())
+                );
+                return false;
+            }
+
+
             // Setup lobby options. Based on SDK sample's FLobbies::CreateLobby
             // FUTURE: Refactor relevant options for more flexible setup at EOS Wrapper level
             EOS_Lobby_CreateLobbyOptions createOptions = {};
@@ -1244,7 +1326,7 @@ namespace ProjectNomad {
             createOptions.LocalUserId = mLoggedInCrossPlatformId.getAccountId();
             createOptions.MaxLobbyMembers = 4;
             createOptions.PermissionLevel = EOS_ELobbyPermissionLevel::EOS_LPL_JOINVIAPRESENCE;
-            createOptions.bPresenceEnabled = true; // Assuming no need for private presence
+            createOptions.bPresenceEnabled = kIsLobbyPresenceEnabled;
             createOptions.bAllowInvites = true;
             createOptions.BucketId = kDefaultGameLobbyBucketId;
             // Don't see any use case for turning this on atm (eg, instead have host via manager explicitly shut down lobby on leave)
@@ -1253,12 +1335,82 @@ namespace ProjectNomad {
             createOptions.bEnableRTCRoom = EOS_FALSE;
             createOptions.LocalRTCOptions = nullptr;
 
+            // Track lobby creation for general validation purposes
+            lobbyTrackingInfo.SetBeingCreatedState(mLogger);
+            // Give feedback to "user" layer in case they need to know that this action is actually going to begin.
+            //      Originally implemented for join side as player can do that through social overlay, but best be
+            //      consistent here for "user" side.
+            //
+            //      Side note: Doing before EOS SDK call to extra guarantee that the finish callback won't occur before
+            //          this begin callback
+            if (mEosWrapperManager) {
+                mEosWrapperManager->OnLobbyJoinOrCreateBegin();
+            }
+
             // Actually send the lobby creation request
             auto simpleCallback = [](const EOS_Lobby_CreateLobbyCallbackInfo* data) {
                 Singleton<EOSWrapperSingleton>::get().OnCreateLobbyFinished(data);
             };
             EOS_Lobby_CreateLobby(mLobbyHandle, &createOptions, nullptr, simpleCallback);
+
+            return true;
+        }
+        bool TryJoinLobby(NetLobbySlot lobbySlot, EOSLobbyDetailsKeeper targetLobbyHandle) {
+            // General sanity checks
+            if (!IsInitialized()) {
+                mLogger.addWarnNetLog("EWS::TryJoinLobby", "Not initialized");
+                return false;
+            }
+            if (!IsFullyLoggedIn()) {
+                mLogger.addWarnNetLog("EWS::TryJoinLobby", "Not yet logged in");
+                return false;
+            }
+            if (mLobbyHandle == nullptr) {
+                mLogger.addWarnNetLog("EWS::TryJoinLobby", "mLobbyHandle is nullptr!");
+                return false;
+            }
+
+            NetLobbyTracking& lobbyTrackingInfo = GetLobbyInfoForSlot(lobbySlot);
+
+            // If lobby already exists in some fashion, then leave that one first before joining this one
+            if (!lobbyTrackingInfo.IsCompletelyInactive()) {
+                // Lobby tracking: Remember new pending lobby to join
+                lobbyTrackingInfo.SetActiveDelayedJoinRequest(mLogger, targetLobbyHandle);
+
+                // If lobby is active and in use, then start the leave flow
+                if (lobbyTrackingInfo.IsActive()) {
+                    BeginLeaveLobby(lobbySlot);
+                }
+                
+                // Otherwise, nothing to do. Once lobby reaches active state, we'll begin the new join.
+                //      See HandlePostLobbyInActiveState() method for more.
+                return true;
+            }
+
+            // Otherwise, nothing should stop us from trying to immediately join the desired lobby...
+            EOS_Lobby_JoinLobbyOptions JoinOptions = {};
+            JoinOptions.ApiVersion = EOS_LOBBY_JOINLOBBY_API_LATEST;
+            JoinOptions.LobbyDetailsHandle = targetLobbyHandle.get();
+            JoinOptions.LocalUserId = mLoggedInCrossPlatformId.getAccountId();
+            JoinOptions.bPresenceEnabled = kIsLobbyPresenceEnabled;
+
+            // Adjust the lobby tracking so it matches expected flow
+            lobbyTrackingInfo.SetJoinInProgressState(mLogger);
+            // Give feedback to "user" layer in case they need to know that this action is actually going to begin.
+            //      Ex: If player tries to join a lobby via Friends overlay, then frontend may not know about this yet.
+            //
+            //      Side note: Doing before EOS SDK call to extra guarantee that the finish callback won't occur before
+            //          this begin callback.
+            if (mEosWrapperManager) {
+                mEosWrapperManager->OnLobbyJoinOrCreateBegin();
+            }
             
+            // Actually send the join request
+            auto simpleCallback = [](const EOS_Lobby_JoinLobbyCallbackInfo* data) {
+                Singleton<EOSWrapperSingleton>::get().OnJoinLobbyFinished(data);
+            };
+            EOS_Lobby_JoinLobby(mLobbyHandle, &JoinOptions, nullptr, simpleCallback);
+
             return true;
         }
 
@@ -1268,20 +1420,20 @@ namespace ProjectNomad {
             
             // General sanity checks
             if (!IsInitialized()) {
-                mLogger.addWarnNetLog("EWS::BeginCreateLobby", "Not initialized");
+                mLogger.addWarnNetLog("EWS::BeginLeaveLobby", "Not initialized");
                 return false;
             }
             if (!IsFullyLoggedIn()) {
-                mLogger.addWarnNetLog("EWS::BeginCreateLobby", "Not yet logged in");
+                mLogger.addWarnNetLog("EWS::BeginLeaveLobby", "Not yet logged in");
                 return false;
             }
             if (mLobbyHandle == nullptr) {
-                mLogger.addWarnNetLog("EWS::BeginCreateLobby", "mLobbyHandle is nullptr!");
+                mLogger.addWarnNetLog("EWS::BeginLeaveLobby", "mLobbyHandle is nullptr!");
                 return false;
             }
             // Specific lobby sanity checks
             if (!lobbyTrackingInfo.IsActive()) {
-                mLogger.addWarnNetLog("EWS::BeginCreateLobby", "Given lobby is not currently active");
+                mLogger.addWarnNetLog("EWS::BeginLeaveLobby", "Given lobby is not currently active");
                 return false;
             }
 
@@ -1295,6 +1447,15 @@ namespace ProjectNomad {
             leaveOptions.LobbyId = lobbyTrackingInfo.GetLobbyProperties().GetId().c_str();
             leaveOptions.LocalUserId = mLoggedInCrossPlatformId.getAccountId();
 
+            // Let "user" side know about this event as we may have initiated the lobby leave from EOS netcode side.
+            //      Ex: If player tries to join a lobby via Friends overlay while in a lobby already
+            //
+            //      Side note: Doing before EOS SDK call to extra guarantee that the finish callback won't occur before
+            //          this begin callback
+            if (mEosWrapperManager) {
+                mEosWrapperManager->OnLobbyLeaveBegin();
+            }
+            
             // Do actual leave call
             auto simpleCallback = [](const EOS_Lobby_LeaveLobbyCallbackInfo* data) {
                 Singleton<EOSWrapperSingleton>::get().OnLeaveLobbyFinished(data);
@@ -1307,6 +1468,107 @@ namespace ProjectNomad {
         bool DestroyLobby(NetLobbyTracking& lobbyTracking) {
             // TODO:
             return false;
+        }
+
+
+
+        void OnLobbyUpdated(NetLobbySlot lobbySlot, EOS_LobbyId lobbyId) {
+            NetLobbyTracking& lobbyTracking = GetLobbyInfoForSlot(lobbySlot);
+
+            bool didUpdateSucceed =
+                lobbyTracking.TryUpdateActiveLobby(mLogger, mLoggedInCrossPlatformId, mLobbyHandle, lobbyId);
+            
+            if (!didUpdateSucceed) { // Bit of feedback to help with debugging
+                mLogger.addWarnNetLog("EWS::OnLobbyUpdated", "Failed to update lobby, may have downstream issues");
+            }
+            else {
+                mLogger.addInfoNetLog("EWS::OnLobbyUpdated", "Update succeeded on EWS side");
+            }
+
+            if (mEosWrapperManager) {
+                mEosWrapperManager->OnLobbyUpdated(didUpdateSucceed, lobbyTracking.GetLobbyProperties());
+            }
+        }
+        // Handles lobby join nor creation
+        void HandlePostLobbyJoinOrCreation(bool wasLobbyJoin,
+                                           bool didSucceedThusFar,
+                                           NetLobbySlot lobbySlot,
+                                           EOS_LobbyId newLobbyId) {
+            NetLobbyTracking& lobbyTracking = GetLobbyInfoForSlot(lobbySlot);
+            
+            // Try to setup lobby info if actually now part of a lobby
+            if (didSucceedThusFar) {
+                // Try to setup lobby info tracking
+                didSucceedThusFar = mMainMatchLobby.TryInitActiveLobby(
+                    mLogger, mLoggedInCrossPlatformId, mLobbyHandle, newLobbyId
+                );
+            }
+            
+            // If didn't succeed, then make sure to reset tracking so no problems with trying to create future lobbies
+            if (!didSucceedThusFar) {
+                mMainMatchLobby.ResetLobbyInfo(true);
+            }
+            else { // Success case!
+                HandleLobbyNowInactiveOrActive(lobbySlot);
+            }
+
+            // Finally let rest of game handle this event as appropriate
+            if (mEosWrapperManager) {
+                if (wasLobbyJoin) {
+                    mEosWrapperManager->OnLobbyJoinResult(didSucceedThusFar, lobbyTracking.GetLobbyProperties());
+                }
+                else {
+                    mEosWrapperManager->OnLobbyCreationResult(didSucceedThusFar, lobbyTracking.GetLobbyProperties());
+                }
+            }
+        }
+        void HandlePostLobbyLeave(bool didLeaveSucceed, NetLobbySlot lobbySlot) {
+            NetLobbyTracking& lobbyTracking = GetLobbyInfoForSlot(lobbySlot);
+            
+            if (!didLeaveSucceed) {
+                // Note: No idea what should do atm if leaving lobby fails. Need to see an actual case in wild (or docs) methinks.
+                //       Likely just have a backup "force leave" option for frontend at least.
+                mLogger.addWarnNetLog(
+                    "EWS::HandlePostLobbyLeave",
+                    "Lobby leave somehow failed, not doing anything atm! Review situation and decide what to implement"
+                );
+            }
+            else {
+                // Reset lobby so we can reuse it going forward (ie, create a new lobby without validation issues)
+                lobbyTracking.ResetLobbyInfo(false);
+
+                HandleLobbyNowInactiveOrActive(lobbySlot);
+            }
+
+            // Finally let rest of game handle this event as appropriate
+            if (mEosWrapperManager) {
+                mEosWrapperManager->OnLobbyLeftOrDestroyed(didLeaveSucceed);
+            }
+        }
+
+        void HandleLobbyNowInactiveOrActive(NetLobbySlot lobbySlot) {
+            NetLobbyTracking& lobbyTracking = GetLobbyInfoForSlot(lobbySlot);
+            
+            // Sanity check
+            if (!lobbyTracking.IsActive() && !lobbyTracking.IsCompletelyInactive()) {
+                mLogger.addWarnNetLog(
+                    "EWS::HandleLobbyNowInactiveOrActive",
+                    "Lobby tracking not in active or inactive state! Current status: " +
+                    std::to_string(lobbyTracking.GetCurrentStatusAsNumber())
+                );
+                return;
+            }
+
+            // Rest of function handles delayed join request. Thus if there's none of that, then nothing to do atm
+            if (!lobbyTracking.HasActiveDelayedJoinRequest()) {
+                return;
+            }
+
+            // Restart the join request, which will handle the current state as appropriate (such as leaving an active lobby)
+            TryJoinLobby(lobbySlot, lobbyTracking.GetAndClearDelayedJoinRequest());
+
+            // TODO: Does "user"/frontend side need any callbacks? (Eg, if just joined another lobby but trying to change lobbies)
+            //      Could definitely see a bug where join one lobby, match starts, but join takes to different lobby.
         }
 
         NetLobbyTracking& GetLobbyInfoForSlot(NetLobbySlot lobbySlot) {
@@ -1357,33 +1619,12 @@ namespace ProjectNomad {
         }
 #pragma endregion
 
-#pragma region EOS SDK type helpers
-        std::string ResultCodeToString(const EOS_EResult& result) {
-            return EOS_EResult_ToString(result);
-        }
-
-        EOS_EPacketReliability ConvertPacketReliability(PacketReliability inPacketReliability) {
-            switch (inPacketReliability) {
-                case PacketReliability::UnreliableUnordered:
-                    return EOS_EPacketReliability::EOS_PR_UnreliableUnordered;
-                case PacketReliability::ReliableUnordered:
-                    return EOS_EPacketReliability::EOS_PR_ReliableUnordered;
-                case PacketReliability::ReliableOrdered:
-                    return EOS_EPacketReliability::EOS_PR_ReliableOrdered;
-                default:
-                    mLogger.logWarnMessage(
-                        "EWS::convertPacketReliability",
-                        "Unexpected PacketReliability value, perhaps missing case?"
-                    );
-                return EOS_EPacketReliability::EOS_PR_ReliableOrdered;
-            }
-        }
-#pragma endregion
-
         const std::string kTestSocketName = "TEST_SOCKET";
         // Below comment form SessionMatchmaking.cpp in SDK Samples:
         //      The top - level, game - specific filtering information for session searches. This criteria should be set with mostly static, coarse settings, often formatted like "GameMode:Region:MapName".
         static constexpr char kDefaultGameLobbyBucketId[] = "TODO:GameMode:Region";
+
+        static constexpr bool kIsLobbyPresenceEnabled = true; // Assuming no need for private presence
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
         EOSWrapperStatus mCurrentNetStatus = EOSWrapperStatus::NotInitialized;
