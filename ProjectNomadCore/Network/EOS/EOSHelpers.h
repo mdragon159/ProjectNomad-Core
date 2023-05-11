@@ -28,7 +28,7 @@ namespace ProjectNomad {
                 case PacketReliability::ReliableOrdered:
                     return EOS_EPacketReliability::EOS_PR_ReliableOrdered;
                 default:
-                    logger.logWarnMessage(
+                    logger.LogWarnMessage(
                         "EWS::convertPacketReliability",
                         "Unexpected PacketReliability value, perhaps missing case?"
                     );

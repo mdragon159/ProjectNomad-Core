@@ -1,9 +1,10 @@
 #pragma once
+#include "EOSPlayersInfoTracking.h"
 #include "Model/EOSLobbyProperties.h"
 
 namespace ProjectNomad {
     // NOTE: If any status enum is added, then review consumers of all code consuming each state (eg, delayed join logic)
-    enum class NetLobbyTrackingStatus : uint8_t {
+    enum class EOSLobbyTrackingStatus : uint8_t {
         Inactive,
         BeingCreated,       // Waiting for lobby to be created
         JoinInProgress,   // Waiting for lobby to be joined
@@ -11,22 +12,22 @@ namespace ProjectNomad {
         LeaveInProgress     // Trying to leave lobby. (Not sure why destroy is instant in SDK samples but eh, best to be safe here)
     };
     
-    class NetLobbyTracking {
+    class EOSLobbyTracking {
       public:
         bool IsCompletelyInactive() const {
-            return mTrackingStatus == NetLobbyTrackingStatus::Inactive;
+            return mTrackingStatus == EOSLobbyTrackingStatus::Inactive;
         }
         bool IsBeingCreated() const {
-            return mTrackingStatus == NetLobbyTrackingStatus::BeingCreated;
+            return mTrackingStatus == EOSLobbyTrackingStatus::BeingCreated;
         }
         bool IsJoinInProgress() const {
-            return mTrackingStatus == NetLobbyTrackingStatus::JoinInProgress;
+            return mTrackingStatus == EOSLobbyTrackingStatus::JoinInProgress;
         }
         bool IsActive() const {
-            return mTrackingStatus == NetLobbyTrackingStatus::Active;
+            return mTrackingStatus == EOSLobbyTrackingStatus::Active;
         }
         bool IsLeaveInProgress() const {
-            return mTrackingStatus == NetLobbyTrackingStatus::LeaveInProgress;
+            return mTrackingStatus == EOSLobbyTrackingStatus::LeaveInProgress;
         }
         int GetCurrentStatusAsNumber() const {
             return static_cast<int>(mTrackingStatus);
@@ -47,53 +48,53 @@ namespace ProjectNomad {
 
         
 
-        void SetBeingCreatedState(LoggerSingleton& logger) {
+        void SetBeingCreatedState() {
             // Sanity check
             if (!IsCompletelyInactive()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::SetBeingCreatedState",
                     "Unexpected state atm! Current state: " + std::to_string(GetCurrentStatusAsNumber())
                 );
                 return; // Don't mask issue so easier to identify
             }
             
-            mTrackingStatus = NetLobbyTrackingStatus::BeingCreated;
+            mTrackingStatus = EOSLobbyTrackingStatus::BeingCreated;
         }
-        void SetJoinInProgressState(LoggerSingleton& logger) {
+        void SetJoinInProgressState() {
             // Sanity check
             if (!IsCompletelyInactive()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::SetJoinInProgressState",
                     "Unexpected state atm! Current state: " + std::to_string(GetCurrentStatusAsNumber())
                 );
                 return; // Don't mask issue so easier to identify
             }
             
-            mTrackingStatus = NetLobbyTrackingStatus::JoinInProgress;
+            mTrackingStatus = EOSLobbyTrackingStatus::JoinInProgress;
         }
-        void SetLeaveInProgressState(LoggerSingleton& logger) {
+        void SetLeaveInProgressState() {
             // Sanity check
             if (!IsActive()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::SetLeaveInProgress",
                     "Unexpected that not in active state atm! Current state: " + std::to_string(GetCurrentStatusAsNumber())
                 );
                 return; // Don't mask issue so easier to identify
             }
             
-            mTrackingStatus = NetLobbyTrackingStatus::LeaveInProgress;
+            mTrackingStatus = EOSLobbyTrackingStatus::LeaveInProgress;
 
             // Note that we should not be clearing the lobby properties tracking yet as that data may still be read.
             //      (Eg, by the EOS SDK itself)
         }
         
-        bool TryInitActiveLobby(LoggerSingleton& logger,
-                                const CrossPlatformIdWrapper& localPlayerId,
+        bool TryInitActiveLobby(const CrossPlatformIdWrapper& localPlayerId,
                                 EOS_HLobby lobbyHandle,
-                                EOS_LobbyId inputId) {
+                                EOS_LobbyId inputId,
+                                EOSPlayersInfoTracking& netUsersInfoTracking) {
             // Sanity check
             if (!IsBeingCreated() && !IsJoinInProgress()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::InitActiveLobby",
                     "Unexpected existing state. Sign of incorrect lobby setup! Current status: "
                     + std::to_string(GetCurrentStatusAsNumber())
@@ -102,26 +103,29 @@ namespace ProjectNomad {
             }
 
             // Try to copy the actual lobby info
-            bool didLobbyPropsInit = mLobbyProperties.TryInit(logger, localPlayerId, lobbyHandle, inputId);
+            bool didLobbyPropsInit = mLobbyProperties.TryInit(mLogger, localPlayerId, lobbyHandle, inputId);
             if (!didLobbyPropsInit) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::InitActiveLobby",
                     "Failed to init lobby properties. See prior logs (as should have logged earlier)"
                 );
                 return false;
             }
 
-            mTrackingStatus = NetLobbyTrackingStatus::Active;
+            // Request any missing info for lobby members that netcode "user" side will need (like display names)
+            AddUserInfoQueriesForLobbyMembers(netUsersInfoTracking);
+
+            mTrackingStatus = EOSLobbyTrackingStatus::Active;
             return true; // Initializing active lobby info succeeded yay!
         }
 
-        bool TryUpdateActiveLobby(LoggerSingleton& logger,
-                                  const CrossPlatformIdWrapper& localPlayerId,
+        bool TryUpdateActiveLobby(const CrossPlatformIdWrapper& localPlayerId,
                                   EOS_HLobby lobbyHandle,
-                                  EOS_LobbyId inputId) {
+                                  EOS_LobbyId inputId,
+                                  EOSPlayersInfoTracking& netUsersInfoTracking) {
             // Sanity check
             if (!IsActive()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::TryUpdateActiveLobby",
                     "Lobby not already in active state. Sign of incorrect lobby setup! Current status: "
                     + std::to_string(GetCurrentStatusAsNumber())
@@ -131,14 +135,17 @@ namespace ProjectNomad {
 
             mLobbyProperties = {}; // Not really necessary but nice to be explicit that throwing away all data atm
 
-            bool didLobbyPropsInit = mLobbyProperties.TryInit(logger, localPlayerId, lobbyHandle, inputId);
+            bool didLobbyPropsInit = mLobbyProperties.TryInit(mLogger, localPlayerId, lobbyHandle, inputId);
             if (!didLobbyPropsInit) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::TryUpdateActiveLobby",
                     "Failed to init lobby properties. See prior logs (as should have logged earlier)"
                 );
                 return false;
             }
+
+            // Request any missing info for lobby members that netcode "user" side will need (like display names)
+            AddUserInfoQueriesForLobbyMembers(netUsersInfoTracking);
 
             return true;
         }
@@ -146,7 +153,7 @@ namespace ProjectNomad {
         // Caller could just use re-initialization, but felt safer to define this when initially writing up class
         //      May delete later if unnecessary/not helpful.
         void ResetLobbyInfo(bool clearAllTrackingInfo) {
-            mTrackingStatus = NetLobbyTrackingStatus::Inactive;
+            mTrackingStatus = EOSLobbyTrackingStatus::Inactive;
             mLobbyProperties = {};
 
             if (clearAllTrackingInfo) {
@@ -157,9 +164,9 @@ namespace ProjectNomad {
 
         
 
-        void SetActiveDelayedJoinRequest(LoggerSingleton& logger, const EOSLobbyDetailsKeeper& targetLobbyHandle) {
+        void SetActiveDelayedJoinRequest(const EOSLobbyDetailsKeeper& targetLobbyHandle) {
             if (IsCompletelyInactive()) {
-                logger.addWarnNetLog(
+                mLogger.AddWarnNetLog(
                     "NetLobbyTracking::SetActiveJoinRequest",
                     "Lobby tracking is currently in inactive state, should not be doing a delayed join!"
                 );
@@ -175,7 +182,25 @@ namespace ProjectNomad {
         }
 
       private:
-        NetLobbyTrackingStatus mTrackingStatus = NetLobbyTrackingStatus::Inactive;
+        void AddUserInfoQueriesForLobbyMembers(EOSPlayersInfoTracking& netUsersInfoTracking) const {
+            // Sanity check
+            if (!mLobbyProperties.IsLobbyValid()) {
+                mLogger.AddWarnNetLog(
+                    "NetLobbyTracking::AddUserInfoQueriesForLobbyMembers",
+                    "Lobby is not valid somehow!"
+                );
+                return;
+            }
+
+            const std::vector<CrossPlatformIdWrapper>& membersList = mLobbyProperties.GetMembersList();
+            for (const CrossPlatformIdWrapper& memberId : membersList) {
+                netUsersInfoTracking.CheckIfHaveUserInfoAndQueryIfNot(mLogger, memberId);
+            }
+        }
+
+        LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();
+        
+        EOSLobbyTrackingStatus mTrackingStatus = EOSLobbyTrackingStatus::Inactive;
 
         EOSLobbyDetailsKeeper mDelayedJoinRequestLobby = nullptr;
         EOSLobbyProperties mLobbyProperties = {};

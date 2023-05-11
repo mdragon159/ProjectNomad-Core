@@ -20,14 +20,16 @@ public:
 #pragma region ILogger Methods
     
     std::queue<DebugMessage>& getDebugMessages() override;
-    void logInfoMessage(std::string identifier, std::string infoMessage) override;
-    void logWarnMessage(std::string identifier, std::string warningMessage) override;
-    void logErrorMessage(std::string identifier, std::string errorMessage) override;
+    void LogInfoMessage(const std::string& identifier, const std::string& infoMessage) override;
+    void LogWarnMessage(const std::string& identifier, const std::string& warningMessage) override;
+    void LogErrorMessage(const std::string& identifier, const std::string& errorMessage) override;
     void addDebugMessage(DebugMessage debugMessage) override;
-    void addLogMessage(std::string message) override;
-    void addScreenAndLogMessage(fp displayLength, std::string message) override;
-    void addScreenAndLogMessage(fp displayLength, std::string message,
-        OutputColor outputColor) override;
+    void addLogMessage(const std::string& message) override;
+    void addScreenAndLogMessage(fp displayLength, const std::string& message) override;
+    void addScreenAndLogMessage(fp displayLength,
+                                const std::string& message,
+                                LogSeverity logSeverity,
+                                OutputColor outputColor) override;
     void addShapeMessage(fp displayTime, const Collider& collider) override;
     void addShapeMessage(fp displayTime, const Collider& collider,
         OutputColor outputColor) override;
@@ -42,16 +44,14 @@ public:
         OutputColor outputColor) override;
 
     std::queue<NetLogMessage>& getNetLogMessages() override;
-    void addNetLogMessage(std::string message) override;
-    void addNetLogMessage(std::string message, NetLogCategory category) override;
-    void addNetLogMessage(std::string message, OutputColor color) override;
-    void addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) override;
-    void addInfoNetLog(std::string identifier, std::string message) override;
-    void addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) override;
-    void addWarnNetLog(std::string identifier, std::string message) override;
-    void addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) override;
-    void addErrorNetLog(std::string identifier, std::string message) override;
-    void addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) override;
+    void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) override;
+    void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) override;
+    void AddInfoNetLog(const std::string& identifier, const std::string& message) override;
+    void AddInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override;
+    void AddWarnNetLog(const std::string& identifier, const std::string& message) override;
+    void AddWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override;
+    void AddErrorNetLog(const std::string& identifier, const std::string& message) override;
+    void AddErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) override;
 
 #pragma endregion 
     

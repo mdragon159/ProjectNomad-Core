@@ -27,7 +27,7 @@ namespace ProjectNomad {
             return value * value;
         }
 
-        static fp clamp(const fp& value, const fp& low, const fp& high) {
+        static constexpr fp clamp(const fp& value, const fp& low, const fp& high) {
             if (value < low) {
                 return low;
             }
@@ -96,11 +96,11 @@ namespace ProjectNomad {
             return normalizeAxis(angleDegrees);
         }
 
-        static const fp& min(const fp& a, const fp& b) {
+        static constexpr fp min(const fp& a, const fp& b) {
             return !(b < a) ? a : b;
         }
 
-        static const fp& max(const fp& a, const fp& b) {
+        static constexpr fp max(const fp& a, const fp& b) {
             return (a < b) ? b : a;
         }
 

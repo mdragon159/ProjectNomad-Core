@@ -22,14 +22,14 @@ namespace ProjectNomad {
 
         bool isColliding(const Collider& A, const Collider& B) {
             if (A.isNotInitialized()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isColliding",
                     "Collider A was not initialized type"
                 );
                 return false;
             }
             if (B.isNotInitialized()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isColliding",
                     "Collider B was not initialized type"
                 );
@@ -70,7 +70,7 @@ namespace ProjectNomad {
                 }
             }
 
-            mLogger.logErrorMessage(
+            mLogger.LogErrorMessage(
                 "CollisionsSimple::isColliding",
                 "Did not find a matching function for colliders A and B of types: "
                             + A.getTypeAsString() + ", " + B.getTypeAsString() 
@@ -80,14 +80,14 @@ namespace ProjectNomad {
 
         bool isBoxAndBoxColliding(const Collider& boxA, const Collider& boxB) {
             if (!boxA.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndBoxColliding",
                     "Collider A was not a box but instead a " + boxA.getTypeAsString()
                 );
                 return false;
             }
             if (!boxB.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndBoxColliding",
                     "Collider B was not a box but instead a " + boxA.getTypeAsString()
                 );
@@ -200,14 +200,14 @@ namespace ProjectNomad {
 
         bool isCapsuleAndCapsuleColliding(const Collider& capA, const Collider& capB) {
             if (!capA.isCapsule()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isCapsuleAndCapsuleColliding",
                     "Collider A was not a capsule but instead a " + capA.getTypeAsString()
                 );
                 return false;
             }
             if (!capB.isCapsule()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isCapsuleAndCapsuleColliding",
                     "Collider B was not a capsule but instead a " + capB.getTypeAsString()
                 );
@@ -240,14 +240,14 @@ namespace ProjectNomad {
 
         bool isSphereAndSphereColliding(const Collider& sphereA, const Collider& sphereB) {
             if (!sphereA.isSphere()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isSphereAndSphereColliding",
                     "Collider A was not a sphere but instead a " + sphereA.getTypeAsString()
                 );
                 return false;
             }
             if (!sphereB.isSphere()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isSphereAndSphereColliding",
                     "Collider B was not a sphere but instead a " + sphereB.getTypeAsString()
                 );
@@ -266,14 +266,14 @@ namespace ProjectNomad {
 
         bool isBoxAndCapsuleColliding(const Collider& box, const Collider& capsule) {
             if (!box.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndCapsuleColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return false;
             }
             if (!capsule.isCapsule()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndCapsuleColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
@@ -405,14 +405,14 @@ namespace ProjectNomad {
 
         bool isBoxAndSphereColliding(const Collider& box, const Collider& sphere) {
             if (!box.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndSphereColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return false;
             }
             if (!sphere.isSphere()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isBoxAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
@@ -450,14 +450,14 @@ namespace ProjectNomad {
 
         bool isCapsuleAndSphereColliding(const Collider& capsule, const Collider& sphere) {
             if (!capsule.isCapsule()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isCapsuleAndSphereColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
                 return false;
             }
             if (!sphere.isSphere()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::isCapsuleAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
@@ -506,7 +506,7 @@ namespace ProjectNomad {
         /// <returns>True if intersection occurs, false otherwise</returns>
         bool raycastWithSphere(const Ray& ray, const Collider& sphere, fp& timeOfIntersection, FPVector& pointOfIntersection) {
             if (!sphere.isSphere()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::raycast",
                     "Provided collider was not a sphere but instead a " + sphere.getTypeAsString()
                 );
@@ -565,7 +565,7 @@ namespace ProjectNomad {
                             fp& timeOfIntersection,
                             FPVector& pointOfIntersection) {
             if (!box.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::raycast",
                     "Provided collider was not a box but instead a " + box.getTypeAsString()
                 );
@@ -606,7 +606,7 @@ namespace ProjectNomad {
                             fp& timeOfIntersection,
                             FPVector& pointOfIntersection) {
             if (!box.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::raycast",
                     "Provided collider was not a box but instead a " + box.getTypeAsString()
                 );
@@ -634,7 +634,7 @@ namespace ProjectNomad {
                                 fp& timeOfIntersection,
                                 FPVector& pointOfIntersection) {
             if (!capsule.isCapsule()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::linetest",
                     "Capsule provided was not a capsule but instead a " + capsule.getTypeAsString()
                 );
@@ -794,7 +794,7 @@ namespace ProjectNomad {
                             fp& timeOfIntersection,
                             FPVector& pointOfIntersection) {
             if (!box.isBox()) {
-                mLogger.logErrorMessage(
+                mLogger.LogErrorMessage(
                     "CollisionsSimple::raycastForAABB",
                     "Provided collider was not a box but instead a " + box.getTypeAsString()
                 );

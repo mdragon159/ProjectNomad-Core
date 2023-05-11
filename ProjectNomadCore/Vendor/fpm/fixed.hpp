@@ -46,6 +46,13 @@ public:
     constexpr inline explicit fixed(T val) noexcept
         : m_value(static_cast<BaseType>(std::round(val * FRACTION_MULT)))
     {}
+    // Exact same behavior as normal floating point to fixed conversion, but actually constexpr due to no std::round.
+    //      Assuming the std::round is actually useful and thus that this alternate method just for defining constexpr
+    //      is necessary.
+    template <typename T, typename std::enable_if<std::is_floating_point<T>::value>::type* = nullptr>
+    static constexpr inline fixed fromConstexprFloat(T val) noexcept {
+        return from_raw_value(static_cast<BaseType>(val * FRACTION_MULT));
+    }
 
     // Constructs from another fixed-point type with possibly different underlying representation.
     // Like static_cast, this truncates bits that don't fit.
@@ -121,33 +128,33 @@ public:
         return fixed::from_raw_value(-m_value);
     }
 
-    inline fixed& operator+=(const fixed& y) noexcept
+    constexpr inline fixed& operator+=(const fixed& y) noexcept
     {
         m_value += y.m_value;
         return *this;
     }
 
     template <typename I, typename std::enable_if<std::is_integral<I>::value>::type* = nullptr>
-    inline fixed& operator+=(I y) noexcept
+    constexpr inline fixed& operator+=(I y) noexcept
     {
         m_value += y * FRACTION_MULT;
         return *this;
     }
 
-    inline fixed& operator-=(const fixed& y) noexcept
+    constexpr inline fixed& operator-=(const fixed& y) noexcept
     {
         m_value -= y.m_value;
         return *this;
     }
 
     template <typename I, typename std::enable_if<std::is_integral<I>::value>::type* = nullptr>
-    inline fixed& operator-=(I y) noexcept
+    constexpr inline fixed& operator-=(I y) noexcept
     {
         m_value -= y * FRACTION_MULT;
         return *this;
     }
 
-    inline fixed& operator*=(const fixed& y) noexcept
+    constexpr inline fixed& operator*=(const fixed& y) noexcept
     {
         // Normal fixed-point multiplication is: x * y / 2**FractionBits.
         // To correctly round the last bit in the result, we need one more bit of information.
@@ -158,13 +165,13 @@ public:
     }
 
     template <typename I, typename std::enable_if<std::is_integral<I>::value>::type* = nullptr>
-    inline fixed& operator*=(I y) noexcept
+    constexpr inline fixed& operator*=(I y) noexcept
     {
         m_value *= y;
         return *this;
     }
 
-    inline fixed& operator/=(const fixed& y) noexcept
+    constexpr inline fixed& operator/=(const fixed& y) noexcept
     {
         assert(y.m_value != 0);
         // Normal fixed-point division is: x * 2**FractionBits / y.
@@ -176,7 +183,7 @@ public:
     }
 
     template <typename I, typename std::enable_if<std::is_integral<I>::value>::type* = nullptr>
-    inline fixed& operator/=(I y) noexcept
+    constexpr inline fixed& operator/=(I y) noexcept
     {
         m_value /= y;
         return *this;

@@ -3,9 +3,10 @@
 #include "TestLogger.h"
 #include "Math/FPVector.h"
 #include "Utilities/LoggerSingleton.h"
+#include "Utilities/Singleton.h"
 
 // Starting to see why "using namespace" and these includes ain't in the header file... (slowness and finally what "poisoning" namespace means)
-// TODO: Replace with forward declaration in header file
+// TODO: Replace with forward declaration in cpp file
 using namespace ProjectNomad;
 
 static float toFloat(fp value) {
@@ -45,5 +46,10 @@ protected:
 
         TestHelpers::VerifySingleLoggingDidNotOccur();
         TestHelpers::EmptySingletonLogger(); // Don't want state from one test to carry on to next
+    }
+
+    // Shortcut method to save a bit of time
+    static LoggerSingleton& GetLoggerSingleton() {
+        return Singleton<LoggerSingleton>::get();
     }
 };

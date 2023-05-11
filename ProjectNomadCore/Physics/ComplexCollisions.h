@@ -29,14 +29,14 @@ namespace ProjectNomad {
 #pragma region Get Hit Info Complex Collision Checks
         ImpactResult isColliding(const Collider& A, const Collider& B) {
             if (A.isNotInitialized()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isColliding",
                     "Collider A was not initialized type"
                 );
                 return ImpactResult::noCollision();
             }
             if (B.isNotInitialized()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isColliding",
                     "Collider B was not initialized type"
                 );
@@ -89,7 +89,7 @@ namespace ProjectNomad {
                 }
             }
 
-            logger.logErrorMessage(
+            logger.LogErrorMessage(
                 "CollisionsComplex::isColliding",
                 "Did not find a matching function for colliders A and B of types: "
                             + A.getTypeAsString() + ", " + B.getTypeAsString() 
@@ -99,14 +99,14 @@ namespace ProjectNomad {
 
         ImpactResult isBoxAndBoxColliding(const Collider& boxA, const Collider& boxB) {
             if (!boxA.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndBoxColliding",
                     "Collider A was not a box but instead a " + boxA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!boxB.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndBoxColliding",
                     "Collider B was not a box but instead a " + boxA.getTypeAsString()
                 );
@@ -236,14 +236,14 @@ namespace ProjectNomad {
 
         ImpactResult isCapsuleAndCapsuleColliding(const Collider& capA, const Collider& capB) {
             if (!capA.isCapsule()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isCapsuleAndCapsuleColliding",
                     "Collider A was not a capsule but instead a " + capA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!capB.isCapsule()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isCapsuleAndCapsuleColliding",
                     "Collider B was not a capsule but instead a " + capB.getTypeAsString()
                 );
@@ -309,14 +309,14 @@ namespace ProjectNomad {
 
         ImpactResult isSphereAndSphereColliding(const Collider& sphereA, const Collider& sphereB) {
             if (!sphereA.isSphere()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isSphereAndSphereColliding",
                     "Collider A was not a sphere but instead a " + sphereA.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphereB.isSphere()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isSphereAndSphereColliding",
                     "Collider B was not a sphere but instead a " + sphereB.getTypeAsString()
                 );
@@ -339,14 +339,14 @@ namespace ProjectNomad {
 
         ImpactResult isBoxAndCapsuleColliding(const Collider& box, const Collider& capsule) {
             if (!box.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndCapsuleColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!capsule.isCapsule()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndCapsuleColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
@@ -383,14 +383,14 @@ namespace ProjectNomad {
 
         ImpactResult isBoxAndSphereColliding(const Collider& box, const Collider& sphere) {
             if (!box.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndSphereColliding",
                     "Collider box was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphere.isSphere()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isBoxAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
@@ -450,14 +450,14 @@ namespace ProjectNomad {
 
         ImpactResult isCapsuleAndSphereColliding(const Collider& capsule, const Collider& sphere) {
             if (!capsule.isCapsule()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isCapsuleAndSphereColliding",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!sphere.isSphere()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "CollisionsComplex::isCapsuleAndSphereColliding",
                     "Collider sphere was not a sphere but instead a " + sphere.getTypeAsString()
                 );
@@ -731,21 +731,21 @@ namespace ProjectNomad {
                                                         const fp& timeOfInitialIntersection,
                                                         const FPVector& pointOfInitialIntersection) {
             if (!box.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "ComplexCollisions::calculateBoxCapsulePenetrationInfo",
                     "Provided collider was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!expandedCheckBox.isBox()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "ComplexCollisions::calculateBoxCapsulePenetrationInfo",
                     "Provided checkAgainstBox collider was not a box but instead a " + box.getTypeAsString()
                 );
                 return ImpactResult::noCollision();
             }
             if (!capsule.isCapsule()) {
-                logger.logErrorMessage(
+                logger.LogErrorMessage(
                     "ComplexCollisions::calculateBoxCapsulePenetrationInfo",
                     "Collider capsule was not a capsule but instead a " + capsule.getTypeAsString()
                 );

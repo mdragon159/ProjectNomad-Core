@@ -1,6 +1,6 @@
 #include "pchNCT.h"
 
-#include "Rollback/RollbackSnapshotManager.h"
+#include "Rollback/Managers/RollbackSnapshotManager.h"
 #include "TestHelpers/TestHelpers.h"
 #include "TestHelpers/TestSnapshot.h"
 

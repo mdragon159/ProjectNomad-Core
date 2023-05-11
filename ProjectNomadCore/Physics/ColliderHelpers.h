@@ -65,7 +65,7 @@ namespace ProjectNomad {
 
                     // Sanity check: Raycast should collide with box since it starts inside the box
                     if (!didCollide) {
-                        logger.logWarnMessage(
+                        logger.LogWarnMessage(
                             "Collider::getFurthestPoint",
                             "Raycast from inside box somehow did not collide!"
                         );
@@ -134,14 +134,14 @@ namespace ProjectNomad {
                 }
 
                 case ColliderType::NotInitialized:
-                    logger.logWarnMessage(
+                    logger.LogWarnMessage(
                         "Collider::getFurthestPoint",
                         "Collider not initialized!"
                     );
                     return FPVector::zero();
 
                 default:
-                    logger.logWarnMessage(
+                    logger.LogWarnMessage(
                         "Collider::getFurthestPoint",
                         "Unknown collider type, please implement"
                     );

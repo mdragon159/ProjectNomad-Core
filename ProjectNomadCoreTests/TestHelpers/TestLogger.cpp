@@ -17,15 +17,15 @@ std::queue<DebugMessage>& TestLogger::getDebugMessages() {
     return emptyQueue;
 }
 
-void TestLogger::logInfoMessage(std::string identifier, std::string infoMessage) {
+void TestLogger::LogInfoMessage(const std::string& identifier, const std::string& infoMessage) {
     wasMessageLogged = true;
 }
 
-void TestLogger::logWarnMessage(std::string identifier, std::string warningMessage) {
+void TestLogger::LogWarnMessage(const std::string& identifier, const std::string& warningMessage) {
     wasMessageLogged = true;
 }
 
-void TestLogger::logErrorMessage(std::string identifier, std::string errorMessage) {
+void TestLogger::LogErrorMessage(const std::string& identifier, const std::string& errorMessage) {
     wasMessageLogged = true;
 }
 
@@ -33,15 +33,18 @@ void TestLogger::addDebugMessage(DebugMessage debugMessage) {
     wasMessageLogged = true;
 }
 
-void TestLogger::addLogMessage(std::string message) {
+void TestLogger::addLogMessage(const std::string& message) {
     wasMessageLogged = true;
 }
 
-void TestLogger::addScreenAndLogMessage(fp displayLength, std::string message) {
+void TestLogger::addScreenAndLogMessage(fp displayLength, const std::string& message) {
     wasMessageLogged = true;
 }
 
-void TestLogger::addScreenAndLogMessage(fp displayLength, std::string message, OutputColor outputColor) {
+void TestLogger::addScreenAndLogMessage(fp displayLength,
+                                        const std::string& message,
+                                        LogSeverity logSeverity,
+                                        OutputColor outputColor) {
     wasMessageLogged = true;
 }
 
@@ -85,43 +88,36 @@ std::queue<NetLogMessage>& TestLogger::getNetLogMessages() {
     return emptyNetLogQueue;
 }
 
-void TestLogger::addNetLogMessage(std::string message) {
+void TestLogger::AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addNetLogMessage(std::string message, NetLogCategory category) {
+void TestLogger::AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color,
+    NetLogCategory category) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addNetLogMessage(std::string message, OutputColor color) {
+void TestLogger::AddInfoNetLog(const std::string& identifier, const std::string& message) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addNetLogMessage(std::string message, OutputColor color, NetLogCategory category) {
+void TestLogger::AddInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addInfoNetLog(std::string identifier, std::string message) {
+void TestLogger::AddWarnNetLog(const std::string& identifier, const std::string& message) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addInfoNetLog(std::string identifier, std::string message, NetLogCategory category) {
+void TestLogger::AddWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addWarnNetLog(std::string identifier, std::string message) {
+void TestLogger::AddErrorNetLog(const std::string& identifier, const std::string& message) {
     wasNetLogMessageLogged = true;
 }
 
-void TestLogger::addWarnNetLog(std::string identifier, std::string message, NetLogCategory category) {
-    wasNetLogMessageLogged = true;
-}
-
-void TestLogger::addErrorNetLog(std::string identifier, std::string message) {
-    wasNetLogMessageLogged = true;
-}
-
-void TestLogger::addErrorNetLog(std::string identifier, std::string message, NetLogCategory category) {
+void TestLogger::AddErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) {
     wasNetLogMessageLogged = true;
 }
 

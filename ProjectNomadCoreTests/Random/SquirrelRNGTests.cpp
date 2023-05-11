@@ -1,7 +1,6 @@
 #include "pchNCT.h"
 
 #include "Random/SquirrelRNG.h"
-#include "Rollback/RollbackSnapshotManager.h"
 #include "TestHelpers/TestHelpers.h"
 
 using namespace ProjectNomad;

@@ -13,6 +13,8 @@ namespace ProjectNomad {
         fp y;
         fp z;
 
+        // TODO: Mark relevant methods as constexpr
+        
         FPVector() : x(0), y(0), z(0) {}
         explicit FPVector(const fp& val): x(val), y(val), z(val) {}
         FPVector(fp x, fp y, fp z) : x(x), y(y), z(z) {}

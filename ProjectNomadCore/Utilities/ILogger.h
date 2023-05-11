@@ -14,11 +14,11 @@ namespace ProjectNomad {
 
         virtual std::queue<DebugMessage>& getDebugMessages() = 0;
         
-        virtual void logInfoMessage(const std::string& identifier, const std::string& infoMessage) = 0;
+        virtual void LogInfoMessage(const std::string& identifier, const std::string& infoMessage) = 0;
 
-        virtual void logWarnMessage(const std::string& identifier, const std::string& warningMessage) = 0;
+        virtual void LogWarnMessage(const std::string& identifier, const std::string& warningMessage) = 0;
         
-        virtual void logErrorMessage(const std::string& identifier, const std::string& errorMessage) = 0;
+        virtual void LogErrorMessage(const std::string& identifier, const std::string& errorMessage) = 0;
 
         virtual void addDebugMessage(DebugMessage debugMessage) = 0;
 
@@ -50,21 +50,21 @@ namespace ProjectNomad {
 
         virtual std::queue<NetLogMessage>& getNetLogMessages() = 0;
         
-        virtual void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) = 0;
+        virtual void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) = 0;
 
-        virtual void addNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) = 0;
+        virtual void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) = 0;
 
-        virtual void addInfoNetLog(const std::string& identifier, const std::string& message) = 0;
+        virtual void AddInfoNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
+        virtual void AddInfoNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
         
-        virtual void addWarnNetLog(const std::string& identifier, const std::string& message) = 0;
+        virtual void AddWarnNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
+        virtual void AddWarnNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
 
-        virtual void addErrorNetLog(const std::string& identifier, const std::string& message) = 0;
+        virtual void AddErrorNetLog(const std::string& identifier, const std::string& message) = 0;
 
-        virtual void addErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
+        virtual void AddErrorNetLog(const std::string& identifier, const std::string& message, NetLogCategory category) = 0;
 
         #pragma endregion 
     };

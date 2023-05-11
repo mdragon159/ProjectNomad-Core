@@ -16,13 +16,13 @@ namespace ProjectNomad {
 
         // TODO: Figure out the constexpr/consteval issues with fp!
 
-        static fp TimePerFrameInSec() {
+        static constexpr fp TimePerFrameInSec() {
             return fp{1} / fp{kGameplayFrameRate};
         }
-        static fp TimePerFrameInMilliSec() {
+        static constexpr fp TimePerFrameInMilliSec() {
             return fp{1000} / fp{kGameplayFrameRate};
         }
-        static fp TimePerFrameInMicroSec() {
+        static constexpr fp TimePerFrameInMicroSec() {
             return fp{1000} * fp{1000} / fp{kGameplayFrameRate};
         }
 
@@ -48,8 +48,7 @@ namespace ProjectNomad {
          * @param timeInSeconds Input time in seconds
          * @returns input as number of frames
          */
-        // TODO: Once fp supports constexpr/consteval, mark this as consteval
-        static FrameType FromSeconds(fp timeInSeconds) {
+        static constexpr FrameType FromSeconds(fp timeInSeconds) {
             fp resultWithDecimals = timeInSeconds / TimePerFrameInSec();
             return static_cast<FrameType>(resultWithDecimals);
         }

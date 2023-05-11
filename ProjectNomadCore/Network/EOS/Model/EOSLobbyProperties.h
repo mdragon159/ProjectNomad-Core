@@ -18,6 +18,9 @@ namespace ProjectNomad {
         bool IsLocalPlayerLobbyOwner() const {
             return mIsLocalPlayerLobbyOwner;
         }
+        const CrossPlatformIdWrapper& GetLobbyOwner() const {
+            return mOwnerId;
+        }
         uint32_t GetMaxMembers() const {
             return mLobbyMaxMembers;
         }
@@ -34,11 +37,11 @@ namespace ProjectNomad {
 
             // Sanity checks
             if (lobbyHandle == nullptr) {
-                logger.addWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Lobby handle is nullptr!");
+                logger.AddWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Lobby handle is nullptr!");
                 return false;
             }
             if (inputLobbyId == nullptr) {
-                logger.addWarnNetLog(
+                logger.AddWarnNetLog(
                     "EOSLobbyProperties::InitFromLobbyHandle",
                     "Input id is nullptr!"
                 );
@@ -50,14 +53,14 @@ namespace ProjectNomad {
                 logger, localPlayerId, lobbyHandle, inputLobbyId
             );
             if (!lobbyDetailsHandle) {
-                logger.addWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Failed to retrieve lobby details handle");
+                logger.AddWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Failed to retrieve lobby details handle");
                 return false;
             }
 
             // Retrieve general lobby info
             uint32_t availableSlotsFromSDK = 0;
             if (!TryGetGeneralLobbyDetails(logger, localPlayerId, lobbyDetailsHandle, availableSlotsFromSDK)) {
-                logger.addWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Failed to retrieve general lobby details");
+                logger.AddWarnNetLog("EOSLobbyProperties::InitFromLobbyHandle", "Failed to retrieve general lobby details");
                 return false;
             }
 
@@ -67,7 +70,7 @@ namespace ProjectNomad {
             // Sanity check: Validate # of available slots reported by EOS vs calculated by stored data
             uint32_t calculatedAvailableSlots = mLobbyMaxMembers - mCurLobbyMembers.size();
             if (availableSlotsFromSDK != calculatedAvailableSlots) {
-                logger.addWarnNetLog(
+                logger.AddWarnNetLog(
                     "EOSLobbyProperties::InitFromLobbyHandle",
                     "Stored lobby data doesn't match with available slots from SDK. Available slots from SDK: "
                     + std::to_string(availableSlotsFromSDK) + ", calculated slots: " + std::to_string(calculatedAvailableSlots)
@@ -93,7 +96,7 @@ namespace ProjectNomad {
             EOS_Lobby_CopyLobbyDetailsHandleOptions copyHandleOptions = {};
             copyHandleOptions.ApiVersion = EOS_LOBBY_COPYLOBBYDETAILSHANDLE_API_LATEST;
             copyHandleOptions.LobbyId = inputLobbyId;
-            copyHandleOptions.LocalUserId = localPlayerId.getAccountId();
+            copyHandleOptions.LocalUserId = localPlayerId.GetAccountId();
             
             // Actually retrieve the lobby details handle
             EOS_HLobbyDetails lobbyDetailsHandle = nullptr;
@@ -101,7 +104,7 @@ namespace ProjectNomad {
             resultCode = EOS_Lobby_CopyLobbyDetailsHandle(lobbyHandle, &copyHandleOptions, &lobbyDetailsHandle);
             if (resultCode != EOS_EResult::EOS_Success)
             {
-                logger.addWarnNetLog(
+                logger.AddWarnNetLog(
                     "EOSLobbyProperties::InitFromLobbyHandle",
                     "Retrieving lobby details handle failed with result code: " + EOSHelpers::ResultCodeToString(resultCode)
                 );
@@ -123,7 +126,7 @@ namespace ProjectNomad {
             EOS_EResult resultCode = EOS_LobbyDetails_CopyInfo(lobbyDetailsHandle, &copyInfoDetails, &lobbyInfo);
             if (resultCode != EOS_EResult::EOS_Success || !lobbyInfo)
             {
-                logger.addWarnNetLog(
+                logger.AddWarnNetLog(
                     "EOSLobbyProperties::InitFromLobbyHandle",
                     "Copying lobby details failed with result code: " + EOSHelpers::ResultCodeToString(resultCode)
                 );
@@ -137,7 +140,7 @@ namespace ProjectNomad {
             
             // Copy owner info for easy retrieval
             mOwnerId = CrossPlatformIdWrapper(lobbyInfo->LobbyOwnerUserId);
-            mIsLocalPlayerLobbyOwner = mOwnerId.getAccountId() == localPlayerId.getAccountId();
+            mIsLocalPlayerLobbyOwner = mOwnerId.GetAccountId() == localPlayerId.GetAccountId();
             
             // Release the lobby info copy pointer now that done with it
             EOS_LobbyDetails_Info_Release(lobbyInfo);
