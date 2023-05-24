@@ -55,6 +55,39 @@ namespace ProjectNomad {
             mIsSessionRunning = false;
         }
 
+        void OnReceivedTimeQualityReport(PlayerSpot remotePlayerSpot, FrameType remotePlayerFrame) {
+            // Sanity checks
+            if (!mIsSessionRunning) {
+                mLogger.LogWarnMessage("Called while session not running!");
+                return;
+            }
+            if (!mRollbackSettings.IsMultiplayerSession()) {
+                mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
+                return;
+            }
+            if (remotePlayerSpot == mRollbackSettings.localPlayerSpot) {
+                mLogger.LogWarnMessage(
+                    "Provided remote player spot is actually equal to local player spot! Player spot: " +
+                    std::to_string(static_cast<int>(remotePlayerSpot))
+                );
+                return;
+            }
+
+            // Ignore any messages not from host player, as currently only time syncing to host.
+            //      This is contrary to, say, typical 2-player fighting game rollback.  But this decision was made as
+            //      there may be an arbitrary number of players and we need to time sync to a single point.
+            //      Thus, the natural choice is to always time sync with the session host.
+            if (remotePlayerSpot != mRollbackSettings.hostPlayerSpot) {
+                return;
+            }
+
+            // Set TimeManager's time sync info. That's it for time sync management here! ^_^
+            //      Note that we could also do input range validation, but the time manager call will also validate range for us.
+            //      Not the best practice, but eh good enough for now.
+            int64_t hostNumberOfFramesAhead = // Cast to int64 to avoid underflow as FrameType is currently uint32
+                static_cast<int64_t>(remotePlayerFrame) - static_cast<int64_t>(mRuntimeState.lastProcessedFrame);
+            mTimeManager.SetupTimeSyncForRemoteFrameDifference(mLogger, hostNumberOfFramesAhead);
+        }
         void OnReceivedRemotePlayerInput(PlayerSpot remotePlayerSpot,
                                          FrameType updateFrame,
                                          const InputHistoryArray& playerInputs) {
@@ -220,7 +253,14 @@ namespace ProjectNomad {
                 // TODO: Post-processing related to frame inputs exiting rollback window (eg, for replays or checksums)
                 //       Note that can either be done here OR all at once afterwards, depending on how long input
                 //       storage is keeping the old inputs. Need to double check and assure that
-                // See old method 
+                // See old method
+                //      FUTURE: Rewrite stuff below so...  neater I guess? Not satisfied with how messy this feels, and
+                //                  non-robust this "feels" (lotsa overlapping expectations, like relying on fact that
+                //                  this is only place that we actually first move lastProcessedFrame to higher values
+                //                  for first time, as rollback doesn't increase frame count compared to pre-rollback).
+                if (mRuntimeState.lastProcessedFrame % RollbackStaticSettings::kTimeQualityReportFrequencyInFrames == 0) {
+                    mRollbackUser.SendTimeQualityReport(mRuntimeState.lastProcessedFrame);
+                }
             }
 
             // If actually processed any new frames...
@@ -315,8 +355,15 @@ namespace ProjectNomad {
 
       private:
         bool AreSettingsValid(const RollbackSettings& rollbackSettings) const {
-            if (rollbackSettings.totalPlayers < 1 || rollbackSettings.totalPlayers > PlayerSpotHelpers::kMaxPlayerSpots) {
+            if (PlayerSpotHelpers::IsInvalidTotalPlayers(rollbackSettings.totalPlayers)) {
                 mLogger.LogWarnMessage("Invalid total players! Provided: " + std::to_string(rollbackSettings.totalPlayers));
+                return false;
+            }
+            if (PlayerSpotHelpers::IsPlayerSpotOutsideTotalPlayers(rollbackSettings.totalPlayers, rollbackSettings.localPlayerSpot)) {
+                mLogger.LogWarnMessage(
+                     "Invalid local player spot! Provided total players: " + std::to_string(rollbackSettings.totalPlayers) +
+                     ", provided player spot: " + std::to_string(static_cast<int>(rollbackSettings.localPlayerSpot))
+                 );
                 return false;
             }
 
@@ -345,6 +392,14 @@ namespace ProjectNomad {
                     mLogger.LogWarnMessage(
                         "Negative input delay not valid while in online multiplayer! Provided value: "
                         + std::to_string(rollbackSettings.localInputDelay)
+                    );
+                    return false;
+                }
+                
+                if (PlayerSpotHelpers::IsPlayerSpotOutsideTotalPlayers(rollbackSettings.totalPlayers, rollbackSettings.hostPlayerSpot)) {
+                    mLogger.LogWarnMessage(
+                        "Invalid host player spot! Provided total players: " + std::to_string(rollbackSettings.totalPlayers) +
+                        ", provided player spot: " + std::to_string(static_cast<int>(rollbackSettings.hostPlayerSpot))
                     );
                     return false;
                 }

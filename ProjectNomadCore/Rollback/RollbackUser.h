@@ -66,6 +66,12 @@ namespace ProjectNomad {
         **/
         virtual void OnPostRollback() = 0;
 
+        /**
+        * Send time quality message to all peers to assist
+        * @param currentFrame - 
+        **/
+        virtual void SendTimeQualityReport(FrameType currentFrame) = 0;
+        
         virtual void SendLocalInputsToRemotePlayers(FrameType updateFrame, const InputHistoryArray& playerInputs) = 0;
         virtual void OnStallingForRemoteInputs(const RollbackStallInfo& stallInfo) = 0;
         

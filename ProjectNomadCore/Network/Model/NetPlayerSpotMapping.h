@@ -31,6 +31,7 @@ namespace ProjectNomad {
         
         void SetMapping(LoggerSingleton& logger,
                         const CrossPlatformIdWrapper& localPlayerId,
+                        const CrossPlatformIdWrapper& hostPlayerId,
                         const std::vector<CrossPlatformIdWrapper>& allPlayerIdsInOrder) {
             mIsMappingSet = false; // Reset validity in case there are any issues later on
 
@@ -48,6 +49,7 @@ namespace ProjectNomad {
             
             // Store all the player ids against their intended spot
             bool wasLocalPlayerSpotFound = false;
+            bool wasHostPlayerSpotFound = false;
             mPlayerIdPerSpot = {}; // This is a sort of "array"/"list" so make sure to reset before trying to add to it
             for (uint8_t i = 0; i < mTotalPlayers; i++) {
                 const CrossPlatformIdWrapper& curId = allPlayerIdsInOrder.at(i);
@@ -55,6 +57,7 @@ namespace ProjectNomad {
                 // Set the ids in order which represents the intended player spot as well
                 mPlayerIdPerSpot.Add(curId);
 
+                // Check if found local player spot
                 if (localPlayerId == curId) {
                     if (wasLocalPlayerSpotFound) { // Extremely unlikely sanity check but eh, super easy and low cost to check
                         logger.AddWarnNetLog("Found local player id more than once!");
@@ -64,12 +67,26 @@ namespace ProjectNomad {
                     wasLocalPlayerSpotFound = true;
                     mLocalPlayerSpot = static_cast<PlayerSpot>(i); // Already validated range earlier in function
                 }
+                // Check if found host player spot
+                if (hostPlayerId == curId) {
+                    if (wasHostPlayerSpotFound) {
+                        logger.AddWarnNetLog("Found host player id more than once!");
+                        return;
+                    }
+                    
+                    wasHostPlayerSpotFound = true;
+                    mHostPlayerSpot = static_cast<PlayerSpot>(i);
+                }
             }
 
-            // Sanity check: Assure local player was in list of players.
+            // Sanity check: Assure local and host player was in list of players.
             //      Currently not worrying about spectator support, will leave that for way in future
             if (!wasLocalPlayerSpotFound) {
                 logger.AddWarnNetLog("Local player id not found in list of player ids!");
+                return;
+            }
+            if (!wasHostPlayerSpotFound) {
+                logger.AddWarnNetLog("Host player id not found in list of player ids!");
                 return;
             }
             
@@ -81,6 +98,9 @@ namespace ProjectNomad {
         }
         PlayerSpot GetLocalPlayerSpot() const {
             return mLocalPlayerSpot;
+        }
+        PlayerSpot GetHostPlayerSpot() const {
+            return mHostPlayerSpot;
         }
         const PlayerIdPerSpot& GetUnderlyingMapping() const {
             return mPlayerIdPerSpot;
@@ -138,6 +158,7 @@ namespace ProjectNomad {
         
         // Assuming this will be something commonly looked up. Thus explicitly find and store this
         PlayerSpot mLocalPlayerSpot = PlayerSpot::Player1;
+        PlayerSpot mHostPlayerSpot = PlayerSpot::Player1;
         
         // Underlying Mapping: Define a player id for each potential player spot.
         //      This relies on assumption that earlier spots will be used before latter spots.

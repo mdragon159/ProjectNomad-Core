@@ -12,9 +12,7 @@ namespace ProjectNomad {
       public:
         FrameRate() = delete;
         
-        static constexpr FrameType kGameplayFrameRate = 60;
-
-        // TODO: Figure out the constexpr/consteval issues with fp!
+        static constexpr FrameType kGameplayFrameRate = 60; // Number of frames per second
 
         static constexpr fp TimePerFrameInSec() {
             return fp{1} / fp{kGameplayFrameRate};
@@ -49,7 +47,7 @@ namespace ProjectNomad {
          * @returns input as number of frames
          */
         static constexpr FrameType FromSeconds(fp timeInSeconds) {
-            fp resultWithDecimals = timeInSeconds / TimePerFrameInSec();
+            fp resultWithDecimals = timeInSeconds * kGameplayFrameRate;
             return static_cast<FrameType>(resultWithDecimals);
         }
     };

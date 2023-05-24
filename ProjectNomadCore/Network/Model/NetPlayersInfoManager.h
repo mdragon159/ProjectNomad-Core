@@ -158,7 +158,7 @@ namespace ProjectNomad {
             }
             
             mPlayersInfo.netLobbyInfo.playerSpotMapping.SetMapping(
-                mLogger, mPlayersInfo.localPlayerId, allPlayerIdsInOrder
+                mLogger, mPlayersInfo.localPlayerId, mPlayersInfo.netLobbyInfo.lobbyOwner, allPlayerIdsInOrder
             );
         }
 
@@ -203,7 +203,7 @@ namespace ProjectNomad {
             }
 
             mPlayersInfo.netLobbyInfo.playerSpotMapping.SetMapping(
-                mLogger, mPlayersInfo.localPlayerId, mPlayersInfo.netLobbyInfo.lobbyMemberIds
+                mLogger, mPlayersInfo.localPlayerId, mPlayersInfo.netLobbyInfo.lobbyOwner, mPlayersInfo.netLobbyInfo.lobbyMemberIds
             );
         }
         

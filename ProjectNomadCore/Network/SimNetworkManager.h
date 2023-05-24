@@ -109,7 +109,6 @@ namespace ProjectNomad {
 
         /**
         * Send a P2P message to all players in the current match lobby
-        * @tparam MessageType - Message type to send. Must extend BaseNetMessage
         * @param message - Message to send
         * @param packetReliability - How should message be sent. This will dictate whether in UDP-style, TCP-style, etc
         * @returns true if message successfully queued for sending to all players 
@@ -119,7 +118,8 @@ namespace ProjectNomad {
             static_assert(std::is_base_of_v<BaseNetMessage, MessageType>, "MessageType must inherit from BaseNetMessage");
 
             // General sanity checks
-            if (CheckAndLogIfNotInitialized("SNM::SendP2PMessageToAllPlayersInMatchLobby")) {
+            if (!IsInitialized()) {
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (!IsLoggedIn()) {
@@ -160,7 +160,6 @@ namespace ProjectNomad {
         }
         /**
         * Send a P2P message to match lobby's host
-        * @tparam MessageType - Message type to send. Must extend BaseNetMessage
         * @param message - Message to send
         * @param packetReliability - How should message be sent. This will dictate whether in UDP-style, TCP-style, etc
         * @returns true if message successfully queued for sending to host player
@@ -168,7 +167,8 @@ namespace ProjectNomad {
         template<typename MessageType>
         bool SendP2PMessageToMatchLobbyHost(const MessageType& message, PacketReliability packetReliability) {
             // General sanity checks
-            if (CheckAndLogIfNotInitialized("SNM::SendP2PMessageToMatchLobbyHost")) {
+            if (!IsInitialized()) {
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (!IsLoggedIn()) {
@@ -188,6 +188,45 @@ namespace ProjectNomad {
 
             // Actually send the message
             return SendP2PMessage(allPlayersInfo.netLobbyInfo.lobbyOwner, message, packetReliability);
+        }
+
+        /**
+        * Sends a message to a player identified by their id
+        * @param message - Message to send
+        * @param packetReliability - How should message be sent. This will dictate whether in UDP-style, TCP-style, etc
+        * @param targetId - Which player should this message be sent to
+        * @returns 
+        **/
+        template<typename MessageType>
+        bool SendP2PMessageToSpecifiedPlayerInLobby(const MessageType& message,
+                                                    PacketReliability packetReliability,
+                                                    const CrossPlatformIdWrapper& targetId) {
+            // General sanity checks
+            if (!IsInitialized()) {
+                mLogger.AddWarnNetLog("Not initialized");
+                return false;
+            }
+            if (!IsLoggedIn()) {
+                mLogger.AddWarnNetLog("Called while not yet logged in");
+                return false;
+            }
+            // Lobby sanity checks
+            const NetAllPlayersInfo& allPlayersInfo = GetPlayersInfo(); // For readability
+            if (!allPlayersInfo.netLobbyInfo.isInLobby) {
+                mLogger.AddWarnNetLog("Called while not actually in a lobby");
+                return false;
+            }
+            if (allPlayersInfo.localPlayerId == targetId) {
+                mLogger.AddWarnNetLog("Tried to send message to self for some reason, ignoring");
+                return false;
+            }
+            if (!allPlayersInfo.netLobbyInfo.IsIdInLobbyMembers(targetId)) {
+                mLogger.AddWarnNetLog( "Tried to send message to player not in lobby, player id: " + targetId.ToStringForLogging());
+                return false;
+            }
+
+            // Actually send the message
+            return SendP2PMessage(targetId, message, packetReliability);
         }
 
         bool BeginCreateMainMatchLobby() {

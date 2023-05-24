@@ -56,7 +56,7 @@ namespace ProjectNomad {
         /// <returns>Returns true if initialization succeeded</returns>
         bool TryInitialize() {
             if (IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::Initialize", "NetworkManager is already initialized");
+                mLogger.AddWarnNetLog("NetworkManager is already initialized");
                 return false;
             }
 
@@ -78,27 +78,25 @@ namespace ProjectNomad {
                 // No idea, just proceed onwards
                 // Update: In reality, callback setting and platform creation never succeed if already configured .-.
                 mLogger.AddInfoNetLog(
-                    "EWS::Initialize",
                     "EOS_Initialize returned EOS_AlreadyConfigured, proceeding with init attempt"
                 );
             } else if (initResult != EOS_EResult::EOS_Success) {
                 mLogger.AddErrorNetLog(
-                    "EWS::Initialize",
                     "EOS SDK failed to init with result: " + std::string(EOS_EResult_ToString(initResult))
                 );
                 return false;
             }
 
-            mLogger.AddInfoNetLog("EWS::Initialize", "EOS SDK initialized, setting logging callback...");
+            mLogger.AddInfoNetLog("EOS SDK initialized, setting logging callback...");
             EOS_EResult setLogCallbackResult = EOS_Logging_SetCallback([](const EOS_LogMessage* message) {
                 Singleton<EOSWrapperSingleton>::get().HandleEosLogMessage(message);
             });
             if (setLogCallbackResult != EOS_EResult::EOS_Success) {
-                mLogger.AddWarnNetLog("EWS::Initialize", "Set logging callback failed");
+                mLogger.AddWarnNetLog("Set logging callback failed");
                 return false;
             } 
 
-            mLogger.AddInfoNetLog("EWS::Initialize", "Logging callback set");
+            mLogger.AddInfoNetLog("Logging callback set");
             EOS_Logging_SetLogLevel(EOS_ELogCategory::EOS_LC_ALL_CATEGORIES, EOS_ELogLevel::EOS_LOG_Verbose);
 
             if (TryCreatePlatformInstance()) {
@@ -144,10 +142,10 @@ namespace ProjectNomad {
                     // Shutdown is supposedly done! (Even if it fails, we won't know right now)
                     // At the very least, we can report that our work here is complete and we are no longer initialized
                     mIsInitialized = false;
-                    mLogger.AddInfoNetLog("EWS::Shutdown", "Shutdown attempt completed");
+                    mLogger.AddInfoNetLog("Shutdown attempt completed");
                 }
                 else {
-                    mLogger.AddInfoNetLog("EWS::Shutdown", "Not initialized");
+                    mLogger.AddInfoNetLog("Not initialized");
                 }
             }
         }
@@ -190,15 +188,15 @@ namespace ProjectNomad {
 
         bool BeginLogout() {
             if (!IsBasicLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::Logout", "Not logged in");
+                mLogger.AddWarnNetLog("Not logged in");
                 return false;
             }
             if (mAuthHandle == nullptr) {
-                mLogger.AddErrorNetLog("EWS::Logout", "Is logged in but somehow no auth handle");
+                mLogger.AddErrorNetLog("Is logged in but somehow no auth handle");
                 return false;
             }
 
-            mLogger.AddInfoNetLog("EWS::Logout", "Logging out...");
+            mLogger.AddInfoNetLog("Logging out...");
 
             EOS_Auth_LogoutOptions LogoutOptions;
             LogoutOptions.ApiVersion = EOS_AUTH_LOGOUT_API_LATEST;
@@ -217,15 +215,15 @@ namespace ProjectNomad {
 
         void ShowFriendsUI() {
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::ShowFriendsUI", "Not initialized");
+                mLogger.AddWarnNetLog("Not initialized");
                 return;
             }
             if (!IsLoggedInAtAll()) {
-                mLogger.AddWarnNetLog("EWS::ShowFriendsUI", "Not logged in yet");
+                mLogger.AddWarnNetLog("Not logged in yet");
                 return;
             }
             if (mUIHandle == nullptr) {
-                mLogger.AddErrorNetLog("EWS::ShowFriendsUI", "mUIHandle null somehow");
+                mLogger.AddErrorNetLog("mUIHandle null somehow");
                 return;
             }
 
@@ -253,11 +251,11 @@ namespace ProjectNomad {
                             uint32_t dataLengthInBytes,
                             PacketReliability packetReliability) {
             if (!IsFullyLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::SendP2PMessage", "Not cross platform logged in");
+                mLogger.AddWarnNetLog("Not cross platform logged in");
                 return false;
             }
             if (!targetId.IsValid()) {
-                mLogger.AddWarnNetLog("EWS::SendP2PMessage", "Target cross platform id is invalid");
+                mLogger.AddWarnNetLog("Target cross platform id is invalid");
                 return false;
             }
 
@@ -285,7 +283,6 @@ namespace ProjectNomad {
                 // Use error as failing to queue up message is unexpected
                 // FUTURE: If target "refuses" or closes connection, would we fail at this point?
                 mLogger.AddErrorNetLog(
-                    "EWS::SendP2PMessage",
                     "Failed to send message with result code: " + EOSHelpers::ResultCodeToString(resultCode)
                 );
                 return false;
@@ -297,11 +294,11 @@ namespace ProjectNomad {
         #pragma region Debug/Testing Methods
         void TestSendMessage(const std::string& targetCrossPlatformId, const std::string& message) {
             if (targetCrossPlatformId.empty()) {
-                mLogger.AddWarnNetLog("EWS::TestSendMessage", "Empty targetCrossPlatformId");
+                mLogger.AddWarnNetLog("Empty targetCrossPlatformId");
                 return;
             }
             if (message.empty()) {
-                mLogger.AddWarnNetLog("EWS::TestSendMessage", "Empty message, nothing to send");
+                mLogger.AddWarnNetLog("Empty message, nothing to send");
                 return;
             }
 
@@ -315,32 +312,32 @@ namespace ProjectNomad {
 
         void PrintLoggedInId() {
             if (!IsBasicLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::PrintLoggedInId", "Not logged in");
+                mLogger.AddWarnNetLog("Not logged in");
                 return;
             }
 
             std::string idAsString;
             if (!mLoggedInEpicAccountId.TryToString(idAsString)) {
-                mLogger.AddErrorNetLog("EWS::PrintLoggedInId", "Failed to convert id to string");
+                mLogger.AddErrorNetLog("Failed to convert id to string");
                 return;
             }
 
-            mLogger.AddInfoNetLog("EWS::PrintLoggedInId", "Id: " + idAsString);
+            mLogger.AddInfoNetLog("Id: " + idAsString);
         }
 
         void PrintLoggedInCrossPlatformId() {
             if (!IsCrossPlatformLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::PrintLoggedInCrossPlatformId", "Not logged in");
+                mLogger.AddWarnNetLog("Not logged in");
                 return;
             }
 
             std::string idAsString;
             if (!mLoggedInCrossPlatformId.TryToString(idAsString)) {
-                mLogger.AddErrorNetLog("EWS::PrintLoggedInCrossPlatformId", "Failed to convert id to string");
+                mLogger.AddErrorNetLog("Failed to convert id to string");
                 return;
             }
 
-            mLogger.AddInfoNetLog("EWS::PrintLoggedInCrossPlatformId", "Id: " + idAsString);
+            mLogger.AddInfoNetLog("Id: " + idAsString);
         }
         #pragma endregion
 
@@ -366,7 +363,7 @@ namespace ProjectNomad {
         // Based on SDK sample's FAuthentication::LoginCompleteCallbackFn
         void OnLoginComplete(const EOS_Auth_LoginCallbackInfo* data) {
             if (data == nullptr) {
-                mLogger.AddErrorNetLog("EWS::LoginCompleteCallback", "Input data is unexpectedly null");
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
                 return;
             }
 
@@ -374,13 +371,10 @@ namespace ProjectNomad {
                 OnSuccessfulEpicLogin(data->LocalUserId);
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_PinGrantCode) {
-                mLogger.AddWarnNetLog("EWS::LoginCompleteCallback", "Waiting for PIN grant...?");
+                mLogger.AddWarnNetLog("Waiting for PIN grant...?");
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_MFARequired) {
-                mLogger.AddWarnNetLog(
-                    "EWS::LoginCompleteCallback",
-                    "MFA Code needs to be entered before logging in"
-                );
+                mLogger.AddWarnNetLog("MFA Code needs to be entered before logging in");
 
                 // PLACEHOLDER: Callback or such to handle this case
                 // See SDK sample relevant code (event type UserLoginRequiresMFA). Eg:
@@ -388,7 +382,7 @@ namespace ProjectNomad {
             }
             else if (data->ResultCode == EOS_EResult::EOS_InvalidUser) {
                 if (data->ContinuanceToken != nullptr) {
-                    mLogger.AddWarnNetLog("EWS::LoginCompleteCallback", "Login failed, external account not found");
+                    mLogger.AddWarnNetLog("Login failed, external account not found");
 
                     // PLACEHOLDER: Check sample's FAuthentication::LoginCompleteCallbackFn for relevant code here
                     // Something something try to continue login or something...?
@@ -396,36 +390,27 @@ namespace ProjectNomad {
                     // See following section in docs for more info:
                     // https://dev.epicgames.com/docs/services/en-US/EpicAccountServices/AuthInterface/index.html#externalaccountauthentication
                 } else {
-                    mLogger.AddErrorNetLog("EWS::LoginCompleteCallback", "Continuation Token is invalid");
+                    mLogger.AddErrorNetLog("Continuation Token is invalid");
                 }
             }
             else if (data->ResultCode == EOS_EResult::EOS_Auth_AccountFeatureRestricted) {
                 if (data->AccountFeatureRestrictedInfo) {
                     std::string verificationURI = data->AccountFeatureRestrictedInfo->VerificationURI;
-                    mLogger.AddErrorNetLog(
-                        "EWS::LoginCompleteCallback",
-                        "Login failed, account is restricted. User must visit URI: " + verificationURI
-                    );
+                    mLogger.AddErrorNetLog("Login failed, account is restricted. User must visit URI: " + verificationURI);
                 } else {
-                    mLogger.AddErrorNetLog(
-                        "EWS::LoginCompleteCallback",
-                        "Login failed, account is restricted. VerificationURI is invalid!"
-                    );
+                    mLogger.AddErrorNetLog("Login failed, account is restricted. VerificationURI is invalid!");
                 }
             }
             else if (EOS_EResult_IsOperationComplete(data->ResultCode)) {
-                mLogger.AddErrorNetLog(
-                    "EWS::LoginCompleteCallback",
-                    "Login Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddErrorNetLog("Login Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
             else {
-                mLogger.AddWarnNetLog("EWS::LoginCompleteCallback", "Hit final else statement unexpectedly");
+                mLogger.AddWarnNetLog("Hit final else statement unexpectedly");
             }
         }
         void OnCrossPlatformLoginComplete(const EOS_Connect_LoginCallbackInfo* data) {
             if (data == nullptr) {
-                mLogger.AddErrorNetLog("EWS::CrossPlatformLoginCompleteCallback", "Data is nullptr");
+                mLogger.AddErrorNetLog("Data is nullptr");
                 return;
             }
 
@@ -433,19 +418,17 @@ namespace ProjectNomad {
                 OnSuccessfulCrossPlatformLogin(data->LocalUserId);
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::CrossPlatformLoginCompleteCallback",
-                    "Cross plat login failed with result: " + EOSHelpers::ResultCodeToString(data->ResultCode));
+                mLogger.AddErrorNetLog("Cross plat login failed with result: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
         }
         void OnLogoutComplete(const EOS_Auth_LogoutCallbackInfo* data) {
             if (data == nullptr) {
-                mLogger.AddErrorNetLog("EWS::LogoutCompleteCallback", "Input data is unexpectedly null");
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
                 return;
             }
 
             if (data->ResultCode == EOS_EResult::EOS_Success) {
-                mLogger.AddInfoNetLog("EWS::LogoutCompleteCallback", "Logged out successfully");
+                mLogger.AddInfoNetLog("Logged out successfully");
                 if (mEosWrapperManager) {
                     mEosWrapperManager->OnLogoutSuccess();
                 }
@@ -453,10 +436,7 @@ namespace ProjectNomad {
                 // Note that logging out event game-wise can (and likely should be) handled on the LoginStatusChanged callback side
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::LogoutCompleteCallback",
-                    "Logout Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddErrorNetLog("Logout Failed - Error Code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
 
             // Arbitrarily assuming that not logged in regardless of what result occurred. Thus resetting related data
@@ -468,14 +448,13 @@ namespace ProjectNomad {
 
         // Based on SDK sample's FP2PNAT::OnIncomingConnectionRequest
         void OnIncomingConnectionRequest(const EOS_P2P_OnIncomingConnectionRequestInfo* data) {
+            // Sanity checks
             if (data == nullptr) {
-                mLogger.AddErrorNetLog("EWS::OnIncomingConnectionRequest", "Input data is unexpectedly null");
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
                 return;
             }
-            // Sanity check
             if (!IsCrossPlatformLoggedIn()) {
                 mLogger.AddWarnNetLog(
-                    "EWS::OnIncomingConnectionRequest",
                     "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?"
                 );
                 return;
@@ -484,20 +463,14 @@ namespace ProjectNomad {
             // Validate socket name. Better to be safe th an sorry
             std::string socketName = data->SocketId->SocketName;
             if (socketName != "CHAT") { // TODO: Support non-hardcoded specific socket
-                mLogger.AddWarnNetLog(
-                    "EWS::OnIncomingConnectionRequest",
-                    "Ignoring due to unexpected socket name. Incoming name: " + socketName
-                );
+                mLogger.AddWarnNetLog("Ignoring due to unexpected socket name. Incoming name: " + socketName);
                 return;
             }
 
             // Validate the other player. Otherwise we theoretically could be accepting spam connections from anyone
             CrossPlatformIdWrapper remoteIdWrapped(data->RemoteUserId);
             if (!IsValidPlayerForIncomingConnectionRequest(remoteIdWrapped)) {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnIncomingConnectionRequest",
-                    "Ignoring invalid player with id: " + remoteIdWrapped.ToStringForLogging()
-                );
+                mLogger.AddWarnNetLog("Ignoring invalid player with id: " + remoteIdWrapped.ToStringForLogging());
                 return;
             }
 
@@ -515,17 +488,107 @@ namespace ProjectNomad {
 
             EOS_EResult result = EOS_P2P_AcceptConnection(p2pHandle, &options);
             if (result == EOS_EResult::EOS_Success) {
-                mLogger.AddInfoNetLog(
-                    "EWS::OnIncomingConnectionRequest",
-                    "Successfully accepted connection from: " + remoteIdWrapped.ToStringForLogging()
-                );
+                mLogger.AddInfoNetLog("Successfully accepted connection from: " + remoteIdWrapped.ToStringForLogging());
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::OnIncomingConnectionRequest",
-                    "Accepting connection failed with result: " + EOSHelpers::ResultCodeToString(result)
-                );
+                mLogger.AddErrorNetLog("Accepting connection failed with result: " + EOSHelpers::ResultCodeToString(result));
             }
+        }
+        void OnPeerConnectionEstablished(const EOS_P2P_OnPeerConnectionEstablishedInfo* data) {
+            // Sanity checks
+            if (data == nullptr) {
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
+                return;
+            }
+            if (!IsCrossPlatformLoggedIn()) {
+                mLogger.AddWarnNetLog(
+                    "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?"
+                );
+                return;
+            }
+
+            CrossPlatformIdWrapper remoteId = CrossPlatformIdWrapper(data->RemoteUserId);
+            std::string socketName = data->SocketId->SocketName;
+            std::string connectionEstablishedType =
+                data->ConnectionType == EOS_EConnectionEstablishedType::EOS_CET_NewConnection ? "NewConnection" : "Reconnection";
+
+            std::string networkConnectionType = "<MissingSwitchCase>";
+            switch (data->NetworkType) {
+                case EOS_ENetworkConnectionType::EOS_NCT_NoConnection:
+                    networkConnectionType = "NoConnection";
+                    break;
+                case EOS_ENetworkConnectionType::EOS_NCT_DirectConnection:
+                    networkConnectionType = "DirectConnection";
+                    break;
+                case EOS_ENetworkConnectionType::EOS_NCT_RelayedConnection:
+                    networkConnectionType = "RelayedConnection";
+                    break;
+            }
+            
+            mLogger.AddInfoNetLog(
+                "Connection established with remote id " + remoteId.ToStringForLogging() + " | socket name: " + socketName
+                + " | ConnectionEstablishedType: " + connectionEstablishedType
+                + " | NetworkConnectionType: " + networkConnectionType
+            );
+        }
+        void OnPeerConnectionInterrupted(const EOS_P2P_OnPeerConnectionInterruptedInfo* data) {
+            // Sanity checks
+            if (data == nullptr) {
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
+                return;
+            }
+            if (!IsCrossPlatformLoggedIn()) {
+                mLogger.AddWarnNetLog(
+                    "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?"
+                );
+                return;
+            }
+
+            CrossPlatformIdWrapper remoteId = CrossPlatformIdWrapper(data->RemoteUserId);
+            std::string socketName = data->SocketId->SocketName;
+            mLogger.AddWarnNetLog(
+                "Connection interrupted with remote id " + remoteId.ToStringForLogging() + " | socket name: " + socketName
+            );
+        }
+        void OnPeerConnectionClosed(const EOS_P2P_OnRemoteConnectionClosedInfo* data) {
+            // Sanity checks
+            if (data == nullptr) {
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
+                return;
+            }
+            if (!IsCrossPlatformLoggedIn()) {
+                mLogger.AddWarnNetLog(
+                    "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?"
+                );
+                return;
+            }
+
+            CrossPlatformIdWrapper remoteId = CrossPlatformIdWrapper(data->RemoteUserId);
+            std::string socketName = data->SocketId->SocketName;
+            mLogger.AddInfoNetLog(
+                "Connection closed with remote id " + remoteId.ToStringForLogging() + " | socket name: " + socketName
+                + " | ConnectionClosedReason: " + std::to_string(static_cast<int>(data->Reason))
+            );
+        }
+        void OnIncomingPacketQueueFull(const EOS_P2P_OnIncomingPacketQueueFullInfo* data) {
+            // Sanity checks
+            if (data == nullptr) {
+                mLogger.AddErrorNetLog("Input data is unexpectedly null");
+                return;
+            }
+            if (!IsCrossPlatformLoggedIn()) {
+                mLogger.AddWarnNetLog(
+                    "Somehow receiving connection requests without being cross platform logged in. Perhaps outdated expectation?"
+                );
+                return;
+            }
+            
+            mLogger.LogWarnMessage(
+                "Incoming packet queue full! PacketQueueMaxSizeBytes: " + std::to_string(data->PacketQueueMaxSizeBytes)
+                + " | PacketQueueCurrentSizeBytes: " + std::to_string(data->PacketQueueCurrentSizeBytes)
+                + " | OverflowPacketChannel: " + std::to_string(data->OverflowPacketChannel)
+                + " | OverflowPacketSizeBytes: " + std::to_string(data->OverflowPacketSizeBytes)
+            );
         }
 
         void OnShowFriendsResult(const EOS_UI_ShowFriendsCallbackInfo* data) {
@@ -533,22 +596,18 @@ namespace ProjectNomad {
                 mLogger.AddInfoNetLog("EWS::OnShowFriendsCallback",  "Success!");
             }
             else {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnShowFriendsCallback",
-                    "Failed with result code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Failed with result code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
         }
 
         // Based on SDK sample's FUsers::OnQueryAccountMappingsCallback
         void OnQueryAccountMappingsResult(const EOS_Connect_QueryProductUserIdMappingsCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnQueryAccountMappingsCallback", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.AddInfoNetLog(
-                    "EWS::OnQueryAccountMappingsCallback",
                     "Operation not complete, should be automatically called again in near future. Result code: "
                     + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
@@ -557,17 +616,14 @@ namespace ProjectNomad {
 
             // Overall fail case
             if (data->ResultCode != EOS_EResult::EOS_Success) {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnQueryAccountMappingsCallback",
-                    "Failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
 
                 // Don't have ability to see which requests failed exactly, so clear all of em
                 mPlayersInfoTracking.ClearAllPendingAccountIdRequestsDueToFailure();
                 return;
             }
 
-            mLogger.AddInfoNetLog("EWS::OnQueryAccountMappingsCallback", "Called with initial success");
+            mLogger.AddInfoNetLog("Called with initial success");
             EOS_HConnect connectHandle = EOS_Platform_GetConnectInterface(mPlatformHandle);
             
             // Ordinary API callback doesn't return provided ids. Thus loop through all manually tracked ids to retrieve
@@ -595,13 +651,12 @@ namespace ProjectNomad {
                     EpicAccountIdWrapper resultEpicAccountId = EpicAccountIdWrapper::FromString(idString);
                     mPlayersInfoTracking.SetAccountIdMapping(mLogger, resultEpicAccountId, queriedId);
 
-                    mLogger.AddInfoNetLog("EWS::OnQueryAccountMappingsCallback", "Successfully retrieved a mapping!");
+                    mLogger.AddInfoNetLog("Successfully retrieved a mapping!");
                 }
                 else {
                     // Theoretically could not have succeeded as still waiting for result from a separate query.
                     // Thus log at warning level so can definitely investigate if/when this happens.
                     mLogger.AddWarnNetLog(
-                        "EWS::OnQueryAccountMappingsCallback",
                         "EOS_Connect_GetProductUserIdMapping did not succeed with warning code "
                         + EOSHelpers::ResultCodeToString(data->ResultCode) + " for cross plat id "  + queriedId.ToStringForLogging()
                         + ". Need to investigate if this is an expected situation (such as waiting for results still) or if unexpected"
@@ -612,12 +667,11 @@ namespace ProjectNomad {
         // Based on SDK sample's FUsers::QueryUserInfoCompleteCallbackFn and FUsers::OnQueryDisplayNameFinishedCallback
         void OnQueryUserInfoResult(const EOS_UserInfo_QueryUserInfoCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnQueryUserInfoResult", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.AddInfoNetLog(
-                    "EWS::OnQueryUserInfoResult",
                     "Operation not complete, should be automatically called again in near future. Result code: "
                     + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
@@ -626,17 +680,14 @@ namespace ProjectNomad {
 
             // General fail case
             if (data->ResultCode != EOS_EResult::EOS_Success) {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnQueryUserInfoResult",
-                    "Failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
                 mPlayersInfoTracking.ClearPendingUserInfoRequestDueToFailure(data->TargetUserId);
                 return;
             }
             // Sanity check. Not strictly necessary for LocalUserId API param in a way, but only doing these queries
             //      atm when logged in anyways.
             if (!IsBasicLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::OnQueryUserInfoResult", "Not logged in atm!");
+                mLogger.AddWarnNetLog("Not logged in atm!");
                 mPlayersInfoTracking.ClearPendingUserInfoRequestDueToFailure(data->TargetUserId);
                 return;
             }
@@ -652,14 +703,11 @@ namespace ProjectNomad {
             EOS_UserInfo* userInfo = nullptr;
             EOS_EResult copyInfoResultCode = EOS_UserInfo_CopyUserInfo(userInfoInterface, &options, &userInfo);
             if (copyInfoResultCode != EOS_EResult::EOS_Success || !userInfo) {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnQueryUserInfoResult",
-                    "Copying user info failed with error code: " + EOSHelpers::ResultCodeToString(copyInfoResultCode)
-                );
+                mLogger.AddWarnNetLog("Copying user info failed with error code: " + EOSHelpers::ResultCodeToString(copyInfoResultCode));
                 mPlayersInfoTracking.ClearPendingUserInfoRequestDueToFailure(data->TargetUserId);
                 return;
             }
-            mLogger.AddInfoNetLog("EWS::OnQueryUserInfoResult", "Successfully retrieved info!");
+            mLogger.AddInfoNetLog("Successfully retrieved info!");
 
             // Process the info
             mPlayersInfoTracking.SetQueriedUserInfo(mLogger, data->TargetUserId, *userInfo);
@@ -678,13 +726,12 @@ namespace ProjectNomad {
         // Based on SDK sample's FLobbies::OnCreateLobbyFinished
         void OnCreateLobbyFinished(const EOS_Lobby_CreateLobbyCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnCreateLobbyFinished", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 mEosWrapperManager->OnLobbyCreationResult(false, {}, mPlayersInfoTracking);
                 return;
             }
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.AddInfoNetLog(
-                    "EWS::OnCreateLobbyFinished",
                     "Operation not complete, should be automatically called again in near future. Result code: "
                     + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
@@ -695,13 +742,10 @@ namespace ProjectNomad {
 
             // Give bit of precise feedback to help with general debugging
             if (!didSetupSucceed) { // Fail case
-                mLogger.AddWarnNetLog(
-                    "EWS::OnCreateLobbyFinished",
-                    "Creation failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Creation failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
             else { // Success case
-                mLogger.AddInfoNetLog("EWS::OnCreateLobbyFinished", "Lobby successfully created!");
+                mLogger.AddInfoNetLog("Lobby successfully created!");
             }
 
             bool wasLobbyJoin = false;
@@ -710,14 +754,13 @@ namespace ProjectNomad {
         // Based on SDK sample's FLobbies::OnJoinLobbyFinished
         void OnJoinLobbyFinished(const EOS_Lobby_JoinLobbyCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnJoinLobbyFinished", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 mEosWrapperManager->OnLobbyJoinResult(false, {}, mPlayersInfoTracking);
                 return;
             }
 
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.AddInfoNetLog(
-                    "EWS::OnJoinLobbyFinished",
                     "Operation not complete, should be automatically called again in near future. Result code: "
                     + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
@@ -728,13 +771,10 @@ namespace ProjectNomad {
 
             // Give bit of precise feedback to help with general debugging
             if (!didJoinSucceed) { // Fail case
-                mLogger.AddWarnNetLog(
-                    "EWS::OnJoinLobbyFinished",
-                    "Join failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Join failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
             else { // Success case
-                mLogger.AddInfoNetLog("EWS::OnJoinLobbyFinished", "Lobby successfully joined!");
+                mLogger.AddInfoNetLog("Lobby successfully joined!");
             }
 
             bool wasLobbyJoin = true;
@@ -743,14 +783,13 @@ namespace ProjectNomad {
         // Based on SDK sample's FLobbies::OnLeaveLobbyFinished
         void OnLeaveLobbyFinished(const EOS_Lobby_LeaveLobbyCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnLeaveLobbyFinished", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 mEosWrapperManager->OnLobbyLeftOrDestroyed(false);
                 return;
             }
 
             if (!EOS_EResult_IsOperationComplete(data->ResultCode)) {
                 mLogger.AddWarnNetLog(
-                    "EWS::OnLeaveLobbyFinished",
                     "Operation not complete, should be automatically called again in near future. Result code: "
                     + EOSHelpers::ResultCodeToString(data->ResultCode)
                 );
@@ -761,13 +800,10 @@ namespace ProjectNomad {
 
             // Give bit of precise feedback to help with general debugging
             if (!didLeaveSucceed) {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnLeaveLobbyFinished",
-                    "Leave failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode)
-                );
+                mLogger.AddWarnNetLog("Leave failed with error code: " + EOSHelpers::ResultCodeToString(data->ResultCode));
             }
             else {
-                mLogger.AddInfoNetLog("EWS::OnLeaveLobbyFinished", "Successfully left lobby!");
+                mLogger.AddInfoNetLog("Successfully left lobby!");
             }
 
             NetLobbySlot netLobbySlot = FakePointerToLobbySlot(data->ClientData);
@@ -777,15 +813,15 @@ namespace ProjectNomad {
         // Based on SDK sample's FLobbies::OnLobbyInviteReceived
         void OnLobbyInviteReceived(const EOS_Lobby_LobbyInviteReceivedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnLobbyInviteReceived", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
-            mLogger.AddInfoNetLog("EWS::OnLobbyInviteReceived", "TODO");
+            mLogger.AddInfoNetLog("TODO");
         }
         void OnLobbyInviteAccepted(const EOS_Lobby_LobbyInviteAcceptedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnLobbyInviteAccepted", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
@@ -799,17 +835,13 @@ namespace ProjectNomad {
             if (resultCode != EOS_EResult::EOS_Success)
             {
                 mLogger.AddWarnNetLog(
-                    "EWS::OnLobbyInviteAccepted",
                     "Lobby details handle retrieval failed with error code: " + EOSHelpers::ResultCodeToString(resultCode)
                 );
                 return;
             }
             if (lobbyDetailsHandle == nullptr)
             {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnLobbyInviteAccepted",
-                    "Lobby details handle retrieval failed due to nullptr result"
-                );
+                mLogger.AddWarnNetLog("Lobby details handle retrieval failed due to nullptr result");
                 return;
             }
 
@@ -817,15 +849,15 @@ namespace ProjectNomad {
             bool didJoinAttemptStart = TryJoinLobby(NetLobbySlot::MainMatchLobby, MakeLobbyDetailsKeeper(lobbyDetailsHandle));
             // Give bit of feedback (as not much UI support atm)
             if (didJoinAttemptStart) {
-                mLogger.AddInfoNetLog("EWS::OnLobbyInviteAccepted", "Successfully started join attempt");
+                mLogger.AddInfoNetLog("Successfully started join attempt");
             }
             else {
-                mLogger.AddWarnNetLog("EWS::OnLobbyInviteAccepted", "Failed to start join attempt. Should have prior logs");
+                mLogger.AddWarnNetLog("Failed to start join attempt. Should have prior logs");
             }
         }
         void OnJoinLobbyAccepted(const EOS_Lobby_JoinLobbyAcceptedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnJoinLobbyAccepted", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
@@ -839,17 +871,13 @@ namespace ProjectNomad {
             if (resultCode != EOS_EResult::EOS_Success)
             {
                 mLogger.AddWarnNetLog(
-                    "EWS::OnJoinLobbyAccepted",
                     "Lobby details handle retrieval failed with error code: " + EOSHelpers::ResultCodeToString(resultCode)
                 );
                 return;
             }
             if (lobbyDetailsHandle == nullptr)
             {
-                mLogger.AddWarnNetLog(
-                    "EWS::OnJoinLobbyAccepted",
-                    "Lobby details handle retrieval failed due to nullptr result"
-                );
+                mLogger.AddWarnNetLog("Lobby details handle retrieval failed due to nullptr result");
                 return;
             }
 
@@ -857,17 +885,17 @@ namespace ProjectNomad {
             bool didJoinAttemptStart = TryJoinLobby(NetLobbySlot::MainMatchLobby, MakeLobbyDetailsKeeper(lobbyDetailsHandle));
             // Give bit of feedback (as not much UI support atm)
             if (didJoinAttemptStart) {
-                mLogger.AddInfoNetLog("EWS::OnJoinLobbyAccepted", "Successfully started join attempt");
+                mLogger.AddInfoNetLog("Successfully started join attempt");
             }
             else {
-                mLogger.AddWarnNetLog("EWS::OnJoinLobbyAccepted", "Failed to start join attempt. Should have prior logs");
+                mLogger.AddWarnNetLog("Failed to start join attempt. Should have prior logs");
             }
         }
 
         // Based on SDK sample's FLobbies::OnLobbyUpdateReceived
         void OnLobbyUpdateReceived(const EOS_Lobby_LobbyUpdateReceivedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnLobbyUpdateReceived", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
@@ -875,23 +903,23 @@ namespace ProjectNomad {
         }
         void OnMemberUpdateReceived(const EOS_Lobby_LobbyMemberUpdateReceivedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnMemberUpdateReceived", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
             // TODO: Remove log
-            mLogger.AddInfoNetLog("EWS::OnMemberUpdateReceived", "Called");
+            mLogger.AddInfoNetLog("Called");
 
             OnLobbyUpdated(NetLobbySlot::MainMatchLobby, data->LobbyId);
         }
         void OnMemberStatusReceived(const EOS_Lobby_LobbyMemberStatusReceivedCallbackInfo* data) {
             if (!data) {
-                mLogger.AddWarnNetLog("EWS::OnMemberStatusReceived", "Input data is somehow null!");
+                mLogger.AddWarnNetLog("Input data is somehow null!");
                 return;
             }
 
             // TODO: Remove log
-            mLogger.AddInfoNetLog("EWS::OnMemberStatusReceived", "Called");
+            mLogger.AddInfoNetLog("Called");
 
             // TODO: If target user id == self AND current status == closed/kicked/disconnected, then handle as if kicked or lobby closed or such
 
@@ -901,15 +929,6 @@ namespace ProjectNomad {
         #pragma endregion
 
       private:
-        bool CheckAndLogIfNotInitialized(const std::string& identifier) const {
-            if (IsInitialized()) {
-                return false;
-            }
-
-            mLogger.AddWarnNetLog(identifier, "Not initialized");
-            return true;
-        }
-        
         /// <returns>True if EOS Platform successfully initialized</returns>
         bool TryCreatePlatformInstance() {
             EOS_Platform_Options platformOptions = {};
@@ -937,11 +956,11 @@ namespace ProjectNomad {
 
             mPlatformHandle = EOS_Platform_Create(&platformOptions);
             if (mPlatformHandle == nullptr) {
-                mLogger.AddErrorNetLog("EWS::createPlatformInstance", "EOS Platform failed to init");
+                mLogger.AddErrorNetLog("EOS Platform failed to init");
                 return false;
             }
 
-            mLogger.AddInfoNetLog("EWS::createPlatformInstance", "EOS Platform successfully initialized!");
+            mLogger.AddInfoNetLog("EOS Platform successfully initialized!");
             return true;
         }
 
@@ -967,11 +986,11 @@ namespace ProjectNomad {
         **/
         bool BeginLoginAttempt(const EOS_Auth_Credentials& credentials) {
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::BeginLoginAttempt", "Not initialized");
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (IsLoggedInAtAll()) {
-                mLogger.AddWarnNetLog("EWS::BeginLoginAttempt", "Already logged in");
+                mLogger.AddWarnNetLog("Already logged in");
                 return false;
             }
 
@@ -1004,10 +1023,7 @@ namespace ProjectNomad {
             // Waiting until this is really necessary to truly understand it before implementing
 
             // NOTE: If EOS_Auth_Login callback is not called, then make sure credentials are correctly set AND EOS_Platform_Tick is called
-            mLogger.AddInfoNetLog(
-                "EWS::BeginLoginAttempt",
-                "Successfully sent login request"
-            );
+            mLogger.AddInfoNetLog("Successfully sent login request");
             return true;
         }
         void OnSuccessfulEpicLogin(const EOS_EpicAccountId resultUserId) {
@@ -1015,12 +1031,9 @@ namespace ProjectNomad {
 
             std::string userIdAsString;
             if (!mLoggedInEpicAccountId.TryToString(userIdAsString)) {
-               mLogger.AddErrorNetLog("EWS::onSuccessfulLogin", "Could not convert user id to string");
+               mLogger.AddErrorNetLog("Could not convert user id to string");
             }
-            mLogger.AddInfoNetLog(
-                "EWS::onSuccessfulLogin",
-                "Login Complete - User ID: " + userIdAsString
-            );
+            mLogger.AddInfoNetLog("Login Complete - User ID: " + userIdAsString);
             
             StartCrossPlatformLogin();
         }
@@ -1029,14 +1042,9 @@ namespace ProjectNomad {
 
             std::string userIdAsString;
             if (!mLoggedInCrossPlatformId.TryToString(userIdAsString)) {
-                mLogger.AddErrorNetLog(
-                    "EWS::onSuccessfulCrossPlatformLogin",
-                    "Could not convert cross platform id to string");
+                mLogger.AddErrorNetLog("Could not convert cross platform id to string");
             }
-            mLogger.AddInfoNetLog(
-                "EWS::onSuccessfulCrossPlatformLogin",
-                "Login Complete - Cross Platform User ID: " + userIdAsString
-            );
+            mLogger.AddInfoNetLog("Login Complete - Cross Platform User ID: " + userIdAsString);
 
             // Subscribe to various relevant updates that may happen during netcode usage
             SubscribeToConnectionRequests(); // Must be done after logging in, otherwise get EOS SDK log warnings/errors
@@ -1051,15 +1059,15 @@ namespace ProjectNomad {
         void StartCrossPlatformLogin() {
             // Sanity checks
             if (!IsBasicLoggedIn()) {
-                mLogger.AddErrorNetLog("EWS::StartCrossPlatformLogin", "Is not 'basic' logged in yet");
+                mLogger.AddErrorNetLog("Is not 'basic' logged in yet");
                 return;
             }
             if (mAuthHandle == nullptr) {
-                mLogger.AddErrorNetLog("EWS::StartCrossPlatformLogin", "AuthHandle null");
+                mLogger.AddErrorNetLog("AuthHandle null");
                 return;
             }
             if (mConnectHandle == nullptr) {
-                mLogger.AddErrorNetLog("EWS::StartCrossPlatformLogin", "ConnectHandle null");
+                mLogger.AddErrorNetLog("ConnectHandle null");
                 return;
             }
             
@@ -1089,7 +1097,6 @@ namespace ProjectNomad {
             }
             else {
                 mLogger.AddErrorNetLog(
-                    "EWS::startCrossPlatformLogin",
                     "EOS_Auth_CopyUserAuthToken failed with result: " + EOSHelpers::ResultCodeToString(result)
                 );
             }
@@ -1124,10 +1131,7 @@ namespace ProjectNomad {
             // If not in a match lobby currently, then reject all connections as currently only accepting p2p connections
             // from game match lobby members
             if (!mMainMatchLobby.IsActive()) {
-                mLogger.AddWarnNetLog(
-                    "EWS::IsValidPlayerForIncomingConnectionRequest",
-                    "Invalid request due to not being in a match lobby atm"
-                );
+                mLogger.AddWarnNetLog("Invalid request due to not being in a match lobby atm");
                 return false;
             }
 
@@ -1141,10 +1145,7 @@ namespace ProjectNomad {
                 }
             }
 
-            mLogger.AddWarnNetLog(
-                "EWS::IsValidPlayerForIncomingConnectionRequest",
-                "Invalid request due to player id not being part of current lobby members list"
-            );
+            mLogger.AddWarnNetLog("Invalid request due to player id not being part of current lobby members list");
             return false;
         }
         
@@ -1178,10 +1179,7 @@ namespace ProjectNomad {
                 // No more packets, potential expected case. Nothing to do
             }
             else if (result != EOS_EResult::EOS_Success) {
-                mLogger.AddErrorNetLog(
-                    "EWS::HandleReceivedMessages",
-                    "Receiving packet failed with result: " + EOSHelpers::ResultCodeToString(result)
-                );
+                mLogger.AddErrorNetLog("Receiving packet failed with result: " + EOSHelpers::ResultCodeToString(result));
             }
             else { // Success case!
                 // Chop off unused data at end of array so we don't need to pass around bytes written as well.
@@ -1200,15 +1198,15 @@ namespace ProjectNomad {
         bool BeginCreateLobby(NetLobbySlot lobbySlot) {
             // General sanity checks
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::BeginCreateLobby", "Not initialized");
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (!IsFullyLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::BeginCreateLobby", "Not yet logged in");
+                mLogger.AddWarnNetLog("Not yet logged in");
                 return false;
             }
             if (mLobbyHandle == nullptr) {
-                mLogger.AddWarnNetLog("EWS::BeginCreateLobby", "mLobbyHandle is nullptr!");
+                mLogger.AddWarnNetLog("mLobbyHandle is nullptr!");
                 return false;
             }
 
@@ -1216,7 +1214,6 @@ namespace ProjectNomad {
             // Specific lobby type sanity check
             if (!lobbyTrackingInfo.IsCompletelyInactive()) {
                 mLogger.AddWarnNetLog(
-                    "EWS::BeginCreateLobby",
                     "Lobby not entirely inactive. Lobby slot: " + std::to_string(static_cast<int>(lobbySlot)) +
                     ", Current status: " + std::to_string(lobbyTrackingInfo.GetCurrentStatusAsNumber())
                 );
@@ -1263,15 +1260,15 @@ namespace ProjectNomad {
         bool TryJoinLobby(NetLobbySlot lobbySlot, EOSLobbyDetailsKeeper targetLobbyHandle) {
             // General sanity checks
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::TryJoinLobby", "Not initialized");
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (!IsFullyLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::TryJoinLobby", "Not yet logged in");
+                mLogger.AddWarnNetLog("Not yet logged in");
                 return false;
             }
             if (mLobbyHandle == nullptr) {
-                mLogger.AddWarnNetLog("EWS::TryJoinLobby", "mLobbyHandle is nullptr!");
+                mLogger.AddWarnNetLog("mLobbyHandle is nullptr!");
                 return false;
             }
 
@@ -1325,20 +1322,20 @@ namespace ProjectNomad {
             
             // General sanity checks
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::BeginLeaveLobby", "Not initialized");
+                mLogger.AddWarnNetLog("Not initialized");
                 return false;
             }
             if (!IsFullyLoggedIn()) {
-                mLogger.AddWarnNetLog("EWS::BeginLeaveLobby", "Not yet logged in");
+                mLogger.AddWarnNetLog("Not yet logged in");
                 return false;
             }
             if (mLobbyHandle == nullptr) {
-                mLogger.AddWarnNetLog("EWS::BeginLeaveLobby", "mLobbyHandle is nullptr!");
+                mLogger.AddWarnNetLog("mLobbyHandle is nullptr!");
                 return false;
             }
             // Specific lobby sanity checks
             if (!lobbyTrackingInfo.IsActive()) {
-                mLogger.AddWarnNetLog("EWS::BeginLeaveLobby", "Given lobby is not currently active");
+                mLogger.AddWarnNetLog("Given lobby is not currently active");
                 return false;
             }
 
@@ -1381,10 +1378,10 @@ namespace ProjectNomad {
                 lobbyTracking.TryUpdateActiveLobby(mLoggedInCrossPlatformId, mLobbyHandle, lobbyId, mPlayersInfoTracking);
             
             if (!didUpdateSucceed) { // Bit of feedback to help with debugging
-                mLogger.AddWarnNetLog("EWS::OnLobbyUpdated", "Failed to update lobby, may have downstream issues");
+                mLogger.AddWarnNetLog("Failed to update lobby, may have downstream issues");
             }
             else {
-                mLogger.AddInfoNetLog("EWS::OnLobbyUpdated", "Update succeeded on EWS side");
+                mLogger.AddInfoNetLog("Update succeeded on EWS side");
             }
 
             if (mEosWrapperManager) {
@@ -1435,7 +1432,6 @@ namespace ProjectNomad {
                 // Note: No idea what should do atm if leaving lobby fails. Need to see an actual case in wild (or docs) methinks.
                 //       Likely just have a backup "force leave" option for frontend at least.
                 mLogger.AddWarnNetLog(
-                    "EWS::HandlePostLobbyLeave",
                     "Lobby leave somehow failed, not doing anything atm! Review situation and decide what to implement"
                 );
             }
@@ -1458,7 +1454,6 @@ namespace ProjectNomad {
             // Sanity check
             if (!lobbyTracking.IsActive() && !lobbyTracking.IsCompletelyInactive()) {
                 mLogger.AddWarnNetLog(
-                    "EWS::HandleLobbyNowInactiveOrActive",
                     "Lobby tracking not in active or inactive state! Current status: " +
                     std::to_string(lobbyTracking.GetCurrentStatusAsNumber())
                 );
@@ -1500,22 +1495,20 @@ namespace ProjectNomad {
         
         #pragma region EOS Subscriptions
         bool IsSubscribedToConnectionRequests() {
-            return mConnectionNotificationId != EOS_INVALID_NOTIFICATIONID;
+            return mP2PConnectionRequestNotificationId != EOS_INVALID_NOTIFICATIONID
+                && mP2PConnectionEstablishedNotificationId != EOS_INVALID_NOTIFICATIONID
+                && mP2PConnectionInterruptedNotificationId != EOS_INVALID_NOTIFICATIONID
+                && mP2PConnectionClosedNotificationId != EOS_INVALID_NOTIFICATIONID
+                && mP2PIncomingPacketQueueFullNotificationId != EOS_INVALID_NOTIFICATIONID;
         }
         void SubscribeToConnectionRequests() {
             // Sanity checks
             if (!IsInitialized()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToConnectionRequests",
-                    "Called but not yet initialized!"
-                );
+                mLogger.AddErrorNetLog("Called but not yet initialized!");
                 return;
             }
             if (IsSubscribedToConnectionRequests()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToConnectionRequests",
-                    "Already subscribed to connection requests"
-                );
+                mLogger.AddErrorNetLog("Already subscribed to connection requests");
                 return;
             }
 
@@ -1526,44 +1519,84 @@ namespace ProjectNomad {
             // strncpy_s(socketId.SocketName, TEST_SOCKET_NAME.c_str(), TEST_SOCKET_NAME.size() + 1);
             strncpy_s(socketId.SocketName, "CHAT", 5); // TODO: Why didn't above custom name setting work?
 
-            EOS_P2P_AddNotifyPeerConnectionRequestOptions options;
-            options.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONREQUEST_API_LATEST;
-            options.LocalUserId = mLoggedInCrossPlatformId.GetAccountId();
-            options.SocketId = &socketId;
+            EOS_P2P_AddNotifyPeerConnectionRequestOptions connectionReqOptions = {};
+            connectionReqOptions.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONREQUEST_API_LATEST;
+            connectionReqOptions.LocalUserId = mLoggedInCrossPlatformId.GetAccountId();
+            connectionReqOptions.SocketId = &socketId;
+            mP2PConnectionRequestNotificationId =
+                EOS_P2P_AddNotifyPeerConnectionRequest(p2pHandle, &connectionReqOptions, nullptr,
+                    [](const EOS_P2P_OnIncomingConnectionRequestInfo* data) {
+                        Singleton<EOSWrapperSingleton>::get().OnIncomingConnectionRequest(data);
+                    });
 
-            mConnectionNotificationId = EOS_P2P_AddNotifyPeerConnectionRequest(p2pHandle, &options, nullptr,
-                [](const EOS_P2P_OnIncomingConnectionRequestInfo* data) {
-                    Singleton<EOSWrapperSingleton>::get().OnIncomingConnectionRequest(data);
-                });
+            EOS_P2P_AddNotifyPeerConnectionEstablishedOptions connectionEstablishedOptions;
+            connectionEstablishedOptions.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONESTABLISHED_API_LATEST;
+            connectionEstablishedOptions.LocalUserId = mLoggedInCrossPlatformId.GetAccountId();
+            connectionEstablishedOptions.SocketId = &socketId;
+            mP2PConnectionEstablishedNotificationId =
+                EOS_P2P_AddNotifyPeerConnectionEstablished(p2pHandle, &connectionEstablishedOptions, nullptr,
+                    [](const EOS_P2P_OnPeerConnectionEstablishedInfo* data) {
+                        Singleton<EOSWrapperSingleton>::get().OnPeerConnectionEstablished(data);
+                    });
 
+            EOS_P2P_AddNotifyPeerConnectionInterruptedOptions connectionInterruptedOptions;
+            connectionInterruptedOptions.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONINTERRUPTED_API_LATEST;
+            connectionInterruptedOptions.LocalUserId = mLoggedInCrossPlatformId.GetAccountId();
+            connectionInterruptedOptions.SocketId = &socketId;
+            mP2PConnectionInterruptedNotificationId =
+                EOS_P2P_AddNotifyPeerConnectionInterrupted(p2pHandle, &connectionInterruptedOptions, nullptr,
+                    [](const EOS_P2P_OnPeerConnectionInterruptedInfo* data) {
+                        Singleton<EOSWrapperSingleton>::get().OnPeerConnectionInterrupted(data);
+                    });
+
+            EOS_P2P_AddNotifyPeerConnectionClosedOptions connectionClosedOptions;
+            connectionClosedOptions.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONINTERRUPTED_API_LATEST;
+            connectionClosedOptions.LocalUserId = mLoggedInCrossPlatformId.GetAccountId();
+            connectionClosedOptions.SocketId = &socketId;
+            mP2PConnectionClosedNotificationId =
+                EOS_P2P_AddNotifyPeerConnectionClosed(p2pHandle, &connectionClosedOptions, nullptr,
+                    [](const EOS_P2P_OnRemoteConnectionClosedInfo* data) {
+                        Singleton<EOSWrapperSingleton>::get().OnPeerConnectionClosed(data);
+                    });
+
+            EOS_P2P_AddNotifyIncomingPacketQueueFullOptions incomingPacketQueueFullOptions;
+            incomingPacketQueueFullOptions.ApiVersion = EOS_P2P_ADDNOTIFYPEERCONNECTIONINTERRUPTED_API_LATEST;
+            mP2PIncomingPacketQueueFullNotificationId =
+                EOS_P2P_AddNotifyIncomingPacketQueueFull(p2pHandle, &incomingPacketQueueFullOptions, nullptr,
+                    [](const EOS_P2P_OnIncomingPacketQueueFullInfo* data) {
+                        Singleton<EOSWrapperSingleton>::get().OnIncomingPacketQueueFull(data);
+                    });
+            
             // Success vs failure logging
             if (IsSubscribedToConnectionRequests()) {
-                mLogger.AddInfoNetLog(
-                    "EWS::SubscribeToConnectionRequests",
-                    "Successfully subscribed"
-                );
+                mLogger.AddInfoNetLog("Successfully subscribed");
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToConnectionRequests",
-                    "Failed to subscribe, bad notification id returned"
-                );
+                mLogger.AddErrorNetLog("Failed to subscribe, bad notification id returned");
             }
         }
         void UnsubscribeFromConnectionRequests() {
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::UnsubscribeFromConnectionRequests", "Called while not currently initialized");
+                mLogger.AddWarnNetLog("Called while not currently initialized");
                 return;
             }
             if (!IsSubscribedToConnectionRequests()) {
-                mLogger.AddWarnNetLog("EWS::unsubscribeFromConnectionRequests", "Not subscribed already");
+                mLogger.AddWarnNetLog("Not subscribed already");
                 return;
             }
 
             EOS_HP2P p2pHandle = EOS_Platform_GetP2PInterface(mPlatformHandle);
-            EOS_P2P_RemoveNotifyPeerConnectionRequest(p2pHandle, mConnectionNotificationId);
+            EOS_P2P_RemoveNotifyPeerConnectionRequest(p2pHandle, mP2PConnectionRequestNotificationId);
+            EOS_P2P_RemoveNotifyPeerConnectionEstablished(p2pHandle, mP2PConnectionEstablishedNotificationId);
+            EOS_P2P_RemoveNotifyPeerConnectionInterrupted(p2pHandle, mP2PConnectionInterruptedNotificationId);
+            EOS_P2P_RemoveNotifyPeerConnectionClosed(p2pHandle, mP2PConnectionClosedNotificationId);
+            EOS_P2P_RemoveNotifyIncomingPacketQueueFull(p2pHandle, mP2PIncomingPacketQueueFullNotificationId);
             
-            mConnectionNotificationId = EOS_INVALID_NOTIFICATIONID;
+            mP2PConnectionRequestNotificationId = EOS_INVALID_NOTIFICATIONID;
+            mP2PConnectionEstablishedNotificationId = EOS_INVALID_NOTIFICATIONID;
+            mP2PConnectionInterruptedNotificationId = EOS_INVALID_NOTIFICATIONID;
+            mP2PConnectionClosedNotificationId = EOS_INVALID_NOTIFICATIONID;
+            mP2PIncomingPacketQueueFullNotificationId = EOS_INVALID_NOTIFICATIONID;
         }
 
         bool IsSubscribedToLobbyInvites() {
@@ -1574,17 +1607,11 @@ namespace ProjectNomad {
         void SubscribeToLobbyInvites() { // Based on SDK sample's FLobbies::SubscribeToLobbyInvites
             // Sanity checks
             if (!IsInitialized()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyInvites",
-                    "Called but not yet initialized!"
-                );
+                mLogger.AddErrorNetLog("Called but not yet initialized!");
                 return;
             }
             if (IsSubscribedToLobbyInvites()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyInvites",
-                    "Already subscribed to connection requests"
-                );
+                mLogger.AddErrorNetLog("Already subscribed to connection requests");
                 return;
             }
             
@@ -1613,26 +1640,20 @@ namespace ProjectNomad {
 
             // Success vs failure logging
             if (IsSubscribedToLobbyInvites()) {
-                mLogger.AddInfoNetLog(
-                    "EWS::SubscribeToLobbyInvites",
-                    "Successfully subscribed"
-                );
+                mLogger.AddInfoNetLog("Successfully subscribed");
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyInvites",
-                    "Failed to subscribe, bad notification id returned"
-                );
+                mLogger.AddErrorNetLog("Failed to subscribe, bad notification id returned");
             }
         }
         void UnsubscribeFromLobbyInvites()
         {
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::UnsubscribeFromLobbyInvites", "Called while not currently initialized");
+                mLogger.AddWarnNetLog("Called while not currently initialized");
                 return;
             }
             if (!IsSubscribedToConnectionRequests()) {
-                mLogger.AddWarnNetLog("EWS::IsSubscribedToConnectionRequests", "Not subscribed already");
+                mLogger.AddWarnNetLog("Not subscribed already");
                 return;
             }
             
@@ -1656,17 +1677,11 @@ namespace ProjectNomad {
         void SubscribeToLobbyUpdates() { // Based on SDK sample's FLobbies::SubscribeToLobbyUpdates
             // Sanity checks
             if (!IsInitialized()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyUpdates",
-                    "Called but not yet initialized!"
-                );
+                mLogger.AddErrorNetLog("Called but not yet initialized!");
                 return;
             }
             if (IsSubscribedToLobbyUpdates()) {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyUpdates",
-                    "Already subscribed to connection requests"
-                );
+                mLogger.AddErrorNetLog("Already subscribed to connection requests");
                 return;
             }
             
@@ -1696,25 +1711,19 @@ namespace ProjectNomad {
 
             // Success vs failure logging
             if (IsSubscribedToLobbyUpdates()) {
-                mLogger.AddInfoNetLog(
-                    "EWS::SubscribeToLobbyUpdates",
-                    "Successfully subscribed"
-                );
+                mLogger.AddInfoNetLog("Successfully subscribed");
             }
             else {
-                mLogger.AddErrorNetLog(
-                    "EWS::SubscribeToLobbyUpdates",
-                    "Failed to subscribe, bad notification id returned"
-                );
+                mLogger.AddErrorNetLog("Failed to subscribe, bad notification id returned");
             }
         }
         void UnsubscribeToLobbyUpdates() {
             if (!IsInitialized()) {
-                mLogger.AddWarnNetLog("EWS::UnsubscribeToLobbyUpdates", "Called while not currently initialized");
+                mLogger.AddWarnNetLog("Called while not currently initialized");
                 return;
             }
             if (!IsSubscribedToLobbyUpdates()) {
-                mLogger.AddWarnNetLog("EWS::UnsubscribeToLobbyUpdates", "Not subscribed already");
+                mLogger.AddWarnNetLog("Not subscribed already");
                 return;
             }
 
@@ -1734,7 +1743,8 @@ namespace ProjectNomad {
 
         
         void HandlePendingUserInfoRequests() {
-            if (CheckAndLogIfNotInitialized("EWS::HandlePendingUserInfoRequests")) { // Sanity check
+            if (!IsInitialized()) { // Sanity check
+                mLogger.AddWarnNetLog("Not initialized");
                 return;
             }
 
@@ -1788,10 +1798,7 @@ namespace ProjectNomad {
             EOS_Connect_QueryProductUserIdMappings(connectHandle, &QueryOptions, nullptr, simpleCallback);
 
             // Give a bit of feedback in logs to help keep track through full process of this info retrieval system
-            mLogger.AddInfoNetLog(
-                "EWS::SendAccountMappingQueries",
-                "Sent queries for following # of ids: " + std::to_string(accountMappingRequests.size())
-            );
+            mLogger.AddInfoNetLog("Sent queries for following # of ids: " + std::to_string(accountMappingRequests.size()));
         }
         void SendUserInfoQueries(const std::set<EpicAccountIdWrapper>& userInfoRequests) {
             // Make sure input is not empty before doing any further work.
@@ -1818,10 +1825,7 @@ namespace ProjectNomad {
             }
 
             // Give a bit of feedback in logs to help keep track through full process of this info retrieval system
-            mLogger.AddInfoNetLog(
-                "EWS::SendUserInfoQueries",
-                "Sent queries for following # of ids: " + std::to_string(userInfoRequests.size())
-            );
+            mLogger.AddInfoNetLog("Sent queries for following # of ids: " + std::to_string(userInfoRequests.size()));
         }
 
 
@@ -1871,7 +1875,11 @@ namespace ProjectNomad {
         EOS_HLobby mLobbyHandle = nullptr;
 
         // Id used with managing incoming connection notifications. Not the same as a socket id or such
-        EOS_NotificationId mConnectionNotificationId = EOS_INVALID_NOTIFICATIONID;
+        EOS_NotificationId mP2PConnectionRequestNotificationId = EOS_INVALID_NOTIFICATIONID;
+        EOS_NotificationId mP2PConnectionEstablishedNotificationId = EOS_INVALID_NOTIFICATIONID;
+        EOS_NotificationId mP2PConnectionInterruptedNotificationId = EOS_INVALID_NOTIFICATIONID;
+        EOS_NotificationId mP2PConnectionClosedNotificationId = EOS_INVALID_NOTIFICATIONID;
+        EOS_NotificationId mP2PIncomingPacketQueueFullNotificationId = EOS_INVALID_NOTIFICATIONID;
         // Lobby general update notifications
         EOS_NotificationId mLobbyUpdateNotification = EOS_INVALID_NOTIFICATIONID;
         EOS_NotificationId mLobbyMemberUpdateNotification = EOS_INVALID_NOTIFICATIONID;

@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 namespace ProjectNomad {
     // Enum matching EOS_EPacketReliability. Useful to not expose EOS dependencies outside EOSWrapper

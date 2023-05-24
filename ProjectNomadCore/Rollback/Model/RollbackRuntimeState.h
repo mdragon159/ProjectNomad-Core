@@ -1,5 +1,6 @@
 #pragma once
 
+#include "RollbackDesyncChecker.h"
 #include "Rollback/Managers/RollbackInputManager.h"
 #include "Rollback/Managers/RollbackSnapshotManager.h"
 #include "Utilities/FrameType.h"
@@ -18,6 +19,7 @@ namespace ProjectNomad {
         // Should always be one less than next frame to process (including overflow)
         FrameType lastProcessedFrame = std::numeric_limits<FrameType>::max();
 
+        RollbackDesyncChecker desyncChecker = {};
         RollbackInputManager inputManager = {};
         RollbackSnapshotManager<SnapshotType> snapshotManager = {};
     };

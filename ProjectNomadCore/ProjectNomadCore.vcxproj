@@ -137,6 +137,7 @@
     <ClInclude Include="Network\Model\NetPlayerSpotMapping.h" />
     <ClInclude Include="Network\Model\NetSubscribersManager.h" />
     <ClInclude Include="Network\P2PMessages\BaseNetMessage.h" />
+    <ClInclude Include="Network\P2PMessages\NetMessagesConnectionInfo.h" />
     <ClInclude Include="Network\P2PMessages\NetMessagesPlayerSpot.h" />
     <ClInclude Include="Network\P2PMessages\NetMessagesSimple.h" />
     <ClInclude Include="Network\P2PMessages\NetMessagesInput.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="Rollback\Managers\RollbackSnapshotManager.h" />
     <ClInclude Include="Rollback\Managers\RollbackTimeManager.h" />
     <ClInclude Include="Rollback\Model\BaseSnapshot.h" />
+    <ClInclude Include="Rollback\Model\RollbackDesyncChecker.h" />
     <ClInclude Include="Rollback\Model\RollbackRuntimeState.h" />
     <ClInclude Include="Rollback\Model\RollbackPerPlayerInputs.h" />
     <ClInclude Include="Rollback\Model\RollbackStallInfo.h" />

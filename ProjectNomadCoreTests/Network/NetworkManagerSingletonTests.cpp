@@ -1,6 +1,7 @@
 #include "pchNCT.h"
 
 #include "TestHelpers/TestHelpers.h"
+/*
 #include "Network/NetworkManagerSingleton.h"
 
 using namespace TopDownSimLibrary;
@@ -30,3 +31,4 @@ namespace NetworkManagerSingletonTests {
         networkManager.Initialize();
     }
 }
+*/

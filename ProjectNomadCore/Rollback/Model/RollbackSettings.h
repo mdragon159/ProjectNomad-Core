@@ -1,17 +1,18 @@
 #pragma once
 
+#include "Context/FrameRate.h"
 #include "GameCore/PlayerSpot.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
     struct RollbackSettings {
         // Expected to be no less than 0 and no greater than max number in PlayerSpot
-        uint8_t totalPlayers = 1;
+        uint8_t totalPlayers = 0;
         // Which "spot" is locally controlled player using? 
-        PlayerSpot localPlayerSpot = PlayerSpot::Player1;
-
-        
-        bool useLockstep = false;
+        PlayerSpot localPlayerSpot = PlayerSpot::Player4;
+        // If playing multiplayer, then which spot represents the host player?
+        //      Intended for rollback "polish" features, such as 2+ player time syncing.
+        PlayerSpot hostPlayerSpot = PlayerSpot::Player4;
         
         bool useSyncTest = false;
         FrameType syncTestFrames = 2;
@@ -46,5 +47,10 @@ namespace ProjectNomad {
         // Size includes rollback window + positive input delay max value + 1 for "current" frame
         // (Note that no need to explicitly account for negative input delay
         static constexpr FrameType kMaxBufferWindow = kMaxRollbackFrames + kMaxInputDelay + 1;
+
+        // How often should "time quality" (time sync) messages be sent to other players?
+        //      Don't want too fast as pointless to adjust so quickly (just extra noise), but not too slow as time drift
+        //      may build up. Especially if time quality messages are dropped (due to being sent via "UDP")
+        static constexpr FrameType kTimeQualityReportFrequencyInFrames = FrameRate::FromSeconds(fp{1}); // Current time sync duration is 3s so about 3x as fast to cover potential packet drops
     }; 
 }

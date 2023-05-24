@@ -11,6 +11,9 @@ namespace ProjectNomad {
         InputUpdate,
         PlayerSpotMapping,
 
+        TimeQualityReport,
+        TimeQualityResponse,
+        
         PrepareLobbyStartMatch,
         ConfirmedLobbyStartMatch,
         LoadMap,
