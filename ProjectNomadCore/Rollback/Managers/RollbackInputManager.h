@@ -118,6 +118,40 @@ namespace ProjectNomad {
             return isAnyPlayerMissingTooManyInputs;
         }
 
+        /**
+        * Checks if any player in current match have not yet stored input for the given frame.
+        * Intended to be used for quickly sanity checking that all expected inputs have been stored for a frame as it
+        * exits the rollback window.
+        *
+        * FUTURE: This has overlap with IsFrameOutsideOfGetRangeForAnyPlayer(), albeit used in slightly different
+        *           contexts (where former is used before processing new frame, and this is used afterwards).
+        *           Would be nice to not have two such similar use case methods.
+        * @param logger - Logger reference
+        * @param targetFrame - Frame to check if input was ever stored for. Note that this may be outside of what inputs
+        *                      are actually stored (ie, beyond the rollback window).
+        * @returns true if any player has never gotten actual input for the given frame, false otherwise
+        **/
+        bool DoesAnyPlayerNotYetHaveInputForFrame(LoggerSingleton& logger, FrameType targetFrame) const {
+            if (!mIsInitialized) {
+                logger.LogWarnMessage("Not initialized!");
+                return false;
+            }
+
+            // Check if target frame hasn't yet been stored for any player
+            for (int i = 0; i < mTotalPlayersInSession; i++) {
+                const RollbackPerPlayerInputs& perPlayerInputs = mPerPlayerInputs[i]; // For readability
+
+                // If target frame is beyond the latest stored frame, then this player hasn't yet stored input for the given frame.
+                //      This relies on fact that inputs are always stored incrementally. Ie, if frame 20 is stored,
+                //      then frames 0-19 have already been stored at some point in the past
+                if (targetFrame > perPlayerInputs.GetLastStoredFrame()) {
+                    return true;
+                }
+            }
+            
+            return false; // Confirmed that all players have stored input for the target frame at some point
+        }
+
       private:
         uint32_t PlayerSpotToIndex(LoggerSingleton& logger, PlayerSpot playerSpot) const {
             auto result = static_cast<uint32_t>(playerSpot); // Enum starts at 0

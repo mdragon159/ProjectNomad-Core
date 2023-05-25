@@ -67,10 +67,16 @@ namespace ProjectNomad {
         virtual void OnPostRollback() = 0;
 
         /**
-        * Send time quality message to all peers to assist
-        * @param currentFrame - 
+        * Send time quality message to all peers to assist in time syncing (ie, closing time drift between players)
+        * @param currentFrame - Frame that sending quality report for
         **/
         virtual void SendTimeQualityReport(FrameType currentFrame) = 0;
+        /**
+        * Send checksum to all peers for desync detection purposes
+        * @param targetFrame - Frame that sending checksum for
+        * @param checksum - Checksum from snapshot for target frame
+        **/
+        virtual void SendValidationChecksum(FrameType targetFrame, uint32_t checksum) = 0;
         
         virtual void SendLocalInputsToRemotePlayers(FrameType updateFrame, const InputHistoryArray& playerInputs) = 0;
         virtual void OnStallingForRemoteInputs(const RollbackStallInfo& stallInfo) = 0;

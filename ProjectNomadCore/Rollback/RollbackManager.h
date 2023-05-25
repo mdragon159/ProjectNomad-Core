@@ -61,7 +61,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Called while session not running!");
                 return;
             }
-            if (!mRollbackSettings.IsMultiplayerSession()) {
+            if (!IsMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
                 return;
             }
@@ -88,6 +88,34 @@ namespace ProjectNomad {
                 static_cast<int64_t>(remotePlayerFrame) - static_cast<int64_t>(mRuntimeState.lastProcessedFrame);
             mTimeManager.SetupTimeSyncForRemoteFrameDifference(mLogger, hostNumberOfFramesAhead);
         }
+        void OnReceivedValidationChecksum(PlayerSpot remotePlayerSpot, FrameType targetFrame, uint32_t checksum) {
+            // Sanity checks
+            if (!mIsSessionRunning) {
+                mLogger.LogWarnMessage("Called while session not running!");
+                return;
+            }
+            if (!IsMultiplayerMatch()) {
+                mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
+                return;
+            }
+            if (remotePlayerSpot == mRollbackSettings.localPlayerSpot) {
+                mLogger.LogWarnMessage(
+                    "Provided remote player spot is actually equal to local player spot! Player spot: " +
+                    std::to_string(static_cast<int>(remotePlayerSpot))
+                );
+                return;
+            }
+
+            // Ignore any messages not from host player, as currently only doing desync detection against host.
+            //      Simpler to implement desync detection against only one "source of truth" rather than every player
+            //      against every other player.
+            if (remotePlayerSpot != mRollbackSettings.hostPlayerSpot) {
+                return;
+            }
+
+            bool isChecksumFromLocalPlayer = false;
+            HandleDesyncDetectionChecksum(targetFrame, checksum, isChecksumFromLocalPlayer);
+        }
         void OnReceivedRemotePlayerInput(PlayerSpot remotePlayerSpot,
                                          FrameType updateFrame,
                                          const InputHistoryArray& playerInputs) {
@@ -96,7 +124,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Called while session not running!");
                 return;
             }
-            if (!mRollbackSettings.IsMultiplayerSession()) {
+            if (!IsMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
                 return;
             }
@@ -170,7 +198,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Ignoring as called while already paused");
                 return;
             }
-            if (mRollbackSettings.IsMultiplayerSession()) { // Theoretically could support multiplayer pausing but needs much more work
+            if (IsMultiplayerMatch()) { // Theoretically could support multiplayer pausing but needs much more work
                 mLogger.LogWarnMessage("Cannot pause in a multiplayer session!");
                 return;
             }
@@ -204,7 +232,7 @@ namespace ProjectNomad {
             }
             // If paused, then nothing to do as wel
             if (mTimeManager.IsPaused()) {
-                if (mRollbackSettings.IsMultiplayerSession()) { // Extra sanity check. Expected to never happen atm
+                if (IsMultiplayerMatch()) { // Extra sanity check. Expected to never happen atm
                     mLogger.LogWarnMessage("Game currently paused but no support for multiplayer pausing atm!");
                 }
                 return 0;
@@ -250,15 +278,21 @@ namespace ProjectNomad {
                 //      post-rollback re-processing of frames.
                 ProcessNextFrame(false, didRollbackOccur);
 
-                // TODO: Post-processing related to frame inputs exiting rollback window (eg, for replays or checksums)
-                //       Note that can either be done here OR all at once afterwards, depending on how long input
-                //       storage is keeping the old inputs. Need to double check and assure that
-                // See old method
+                // Do any necessary processing on the latest verified frame (if any).
+                //      "Verified frame" == frame that exits rollback window and thus expecting to be consistent between
+                //          all players.
+                //      Note that doing this in for loop as we may process multiple new frames in this loop back to back,
+                //          but we need to process each fresh verified frame one by one before old data is lost (such as
+                //          before data being overwritten in snapshot ring buffer due to processing a new frame).
+                HandleLatestVerifiedFrame();
+
+                // Send time quality report to peers if finally hit the appropriate time.
                 //      FUTURE: Rewrite stuff below so...  neater I guess? Not satisfied with how messy this feels, and
                 //                  non-robust this "feels" (lotsa overlapping expectations, like relying on fact that
                 //                  this is only place that we actually first move lastProcessedFrame to higher values
                 //                  for first time, as rollback doesn't increase frame count compared to pre-rollback).
-                if (mRuntimeState.lastProcessedFrame % RollbackStaticSettings::kTimeQualityReportFrequencyInFrames == 0) {
+                //      Really, this doesn't HAVE to be in this for loop here. Only added here at first cuz convenient.
+                if (IsMultiplayerMatch() && mRuntimeState.lastProcessedFrame % RollbackStaticSettings::kTimeQualityReportFrequency == 0) {
                     mRollbackUser.SendTimeQualityReport(mRuntimeState.lastProcessedFrame);
                 }
             }
@@ -275,7 +309,7 @@ namespace ProjectNomad {
                 }
 
                 // If playing multiplayer, then send (new) local player inputs to other players in session
-                if (mRollbackSettings.IsMultiplayerSession()) {
+                if (IsMultiplayerMatch()) {
                     // Since packets are sent via "UDP" (unreliable unordered), add many inputs per update packet.
                     // In future, we only want to send a certain number of inputs to reduce packet size.
                     // However for initial implementation simplicity, just always send many inputs at once.
@@ -408,8 +442,18 @@ namespace ProjectNomad {
             else {
                 if (rollbackSettings.localPlayerSpot != PlayerSpot::Player1) {
                     mLogger.LogWarnMessage(
-                        "Single player mode but provided non-Player1 spot! Provided value: "
+                        "Single player mode but provided non-Player1 local spot! Provided value: "
                         + std::to_string(static_cast<int>(rollbackSettings.localPlayerSpot))
+                    );
+                    return false;
+                }
+                // The host spot should be local spot too.
+                //      Theoretically *shouldn't* matter as not multiplayer game, but this allows code to just explicitly
+                //      check "is local player host" without caring for multiplayer game check.
+                if (rollbackSettings.hostPlayerSpot != PlayerSpot::Player1) {
+                    mLogger.LogWarnMessage(
+                        "Single player mode but provided non-Player1 host spot! Provided value: "
+                        + std::to_string(static_cast<int>(rollbackSettings.hostPlayerSpot))
                     );
                     return false;
                 }
@@ -434,6 +478,14 @@ namespace ProjectNomad {
             }
             
             return true;
+        }
+
+        bool IsMultiplayerMatch() const { // Just for readability and not needing to remember where this is stored
+            return mRollbackSettings.IsMultiplayerSession();
+        }
+        bool IsLocalPlayerHost() const {
+            // Note that host player spot may not be necessarily
+            return mRollbackSettings.localPlayerSpot == mRollbackSettings.hostPlayerSpot;
         }
 
         /**
@@ -636,7 +688,7 @@ namespace ProjectNomad {
         }
 
         FrameType GetCurrentMaxPossibleRollbackFrames() const {
-            if (mRollbackSettings.IsMultiplayerSession()) {
+            if (IsMultiplayerMatch()) {
                 return RollbackStaticSettings::kMaxRollbackFrames;
             }
             if (mRollbackSettings.useSyncTest) {
@@ -659,7 +711,7 @@ namespace ProjectNomad {
         }
 
         RollbackStallInfo CheckIfShouldStallForRemoteInputs() const {
-            if (!mRollbackSettings.IsMultiplayerSession()) { // Stalling is only done during multiplayer games
+            if (!IsMultiplayerMatch()) { // Stalling is only done during multiplayer games
                 return RollbackStallInfo::NoStall();
             }
 
@@ -694,6 +746,90 @@ namespace ProjectNomad {
             }
             
             return RollbackStallInfo::WithStall(waitingOnPlayersFullInfo);
+        }
+
+        void HandleLatestVerifiedFrame() {
+            // Underflow check: Assure even have any verified frame (ie, skip initial frames until outside rollback window).
+            //      Technically, any frame with all inputs from all players could be considered "verified" or unchanging.
+            //          However, for simplicity we'll only consider frames that exited the rollback window.
+            //      Note that 0 is a valid frame. Eg, if rollback window is +10, then reaching 11th frame will make
+            //          frame 0 the first frame that we no longer support rolling back to.
+            if (mRuntimeState.lastProcessedFrame < RollbackStaticSettings::kOneMoreThanMaxRollbackFrames) {
+                return;
+            }
+            const FrameType latestVerifiedFrame =
+                mRuntimeState.lastProcessedFrame - RollbackStaticSettings::kOneMoreThanMaxRollbackFrames;
+            
+            // Sanity check: We should have already received inputs from all players for this verified frame, which is
+            //               what makes the frame "verified".
+            //      Note that this is just a sanity check as we should have stalled earlier if missing inputs. See CheckIfShouldStallForRemoteInputs()
+            if (mRuntimeState.inputManager.DoesAnyPlayerNotYetHaveInputForFrame(mLogger, latestVerifiedFrame)) {
+                mLogger.LogWarnMessage("Unexpected: Somehow did not have all expected inputs for latest verified frame!");
+                return;
+            }
+
+            // TODO: Some stuff related to inputs exited rollback window? Can't remember exact needs, see ReplayManager perhaps?
+            
+            // Handle desync detection with peers if appropriate frame.
+            //      Note that we technically *could* do desync detection every single frame, but that's expensive to do
+            //      and likely not worth the effort. After all, desyncs should be rare.
+            if (IsMultiplayerMatch() && latestVerifiedFrame % RollbackStaticSettings::kDesyncDetectionFrequency == 0) {
+                // Calculate checksum for the verified frame (whose snapshot should still be stored)
+                //      FUTURE: Would be nice to implement caching of some sort?
+                uint32_t verifiedFrameChecksum = mRuntimeState.snapshotManager.GetSnapshot(latestVerifiedFrame).CalculateChecksum();
+                
+                // Send checksum to peers so they can do their desync detection as appropriate
+                mRollbackUser.SendValidationChecksum(latestVerifiedFrame, verifiedFrameChecksum);
+                
+                // Do any other necessary work for actual desync detection now that we have our checksum
+                bool isChecksumFromLocalPlayer = true;
+                HandleDesyncDetectionChecksum(latestVerifiedFrame, verifiedFrameChecksum, isChecksumFromLocalPlayer);
+            }
+        }
+
+        void HandleDesyncDetectionChecksum(FrameType targetFrame, uint32_t checksum, bool isChecksumFromLocalPlayer) {
+            // Sanity check: Validate that actually a multiplayer match.
+            //      (This should have been checked earlier before wasting time calculating checksum)
+            if (!IsMultiplayerMatch()) {
+                mLogger.LogWarnMessage("Called while not in multiplayer match! This should have been checked already");
+                return;
+            }
+            // If we're the host, then nothing to do atm.
+            //      As may be more than 2 players, the host is the "source of truth". Could implement host also checking
+            //      for desyncs with every other player, but peers are already doing desync checks. Thus no need for host
+            //      to actually do any of this desync detection themselves atm.
+            if (IsLocalPlayerHost()) {
+                return;
+            }
+
+            // Let underlying data structure handle storing the checksum
+            //      Note that in future, we can easily expand this pattern to handle checksums from all peers rather
+            //      than just local + host. However, no immediate need to do so atm
+            if (isChecksumFromLocalPlayer) {
+                mRuntimeState.desyncChecker.ProvideLocalHostChecksum(mLogger, targetFrame, checksum);
+            }
+            else {
+                mRuntimeState.desyncChecker.ProvideRemoteHostChecksum(mLogger, targetFrame, checksum);
+            }
+
+            // If don't have necessary checksum data for the comparison yet, then nothing more to do
+            if (!mRuntimeState.desyncChecker.IsResultForCurrentTargetFrameReady()) {
+                return;
+            }
+
+            // Finally check and handle if desync occurred
+            if (mRuntimeState.desyncChecker.DidDesyncOccur()) {
+                // Log error level for now as not expected to happen normally and is (multiplayer) game breaking.
+                //      When game officially launches, this should perhaps change as mods or such could cause desyncs.
+                mLogger.LogErrorMessage(
+                    "Desync detected! Checksums do not match for frame: "
+                    + std::to_string(mRuntimeState.desyncChecker.GetCurrentTargetFrame())
+                );
+
+                // TODO: Proper desync handling
+                //      - Should disconnect from match and notify player (eg, error popup with debug help instructions perhaps)
+                //      - Store replay perhaps or other stuff
+            }
         }
         
         LoggerSingleton& mLogger = Singleton<LoggerSingleton>::get();

@@ -22,6 +22,18 @@ namespace ProjectNomad {
     **/
     class RollbackDesyncChecker {
       public:
+        FrameType GetCurrentTargetFrame() const {
+            return mTargetFrame;
+        }
+        bool IsResultForCurrentTargetFrameReady() const {
+            return mHaveRemoteHostChecksum && mHaveLocalChecksum;
+        }
+        bool DidDesyncOccur() {
+            mWasDesyncCheckedForCurrentTargetFrame = true;
+            
+            return mRemoteHostChecksum == mLocalChecksum;
+        }
+        
         void ProvideRemoteHostChecksum(LoggerSingleton& logger, FrameType targetFrame, uint32_t checksum) {
             // Is this for an entirely new frame?
             SetupForNewFrameIfNecessary(logger, targetFrame);
@@ -58,15 +70,6 @@ namespace ProjectNomad {
             mHaveLocalChecksum = true;
         }
 
-        bool IsResultForCurrentTargetFrameReady() const {
-            return mHaveRemoteHostChecksum && mHaveLocalChecksum;
-        }
-        bool DidDesyncOccur() {
-            mWasDesyncCheckedForCurrentTargetFrame = true;
-            
-            return mRemoteHostChecksum == mLocalChecksum;
-        }
-
       private:
         void SetupForNewFrameIfNecessary(LoggerSingleton& logger, FrameType targetFrame) {
             // Nothing to do if already on necessary frame
@@ -74,14 +77,14 @@ namespace ProjectNomad {
                 return;
             }
             
-            // Sanity check: Expecting checks for strictly increasing frames.
+            // Sanity check: Expecting desync checks for only strictly increasing frames.
             //      (Frame overflow is not expected to be a realistic case ever due to session length)
             if (targetFrame < mTargetFrame) {
                 logger.LogWarnMessage(
                     "New target frame is less than old stored target frame! Old stored target frame: "
                     + std::to_string(mTargetFrame) + ", new frame: "  + std::to_string(targetFrame)
                 );
-                // No need to early return just in case overflow does happen. Low chance of bad side effects in current implementation
+                return; // Better to be safe here. Eg, potential out of order packets that are no longer relevant
             }
 
             // Sanity check: Desync check is expected to be used for every target frame before moving on
@@ -90,7 +93,7 @@ namespace ProjectNomad {
                     "Desync was not checked for old target frame before moving on to new frame! Old stored target frame: "
                     + std::to_string(mTargetFrame) + ", new frame: "  + std::to_string(targetFrame)
                 );
-                // Again, no need to early return and break things. Just a concern that should be double checked if/when it occurs
+                // No need to early return and break things. Just a concern that should be double checked if/when it occurs
             }
 
             /// Finally reset state for the new target frame

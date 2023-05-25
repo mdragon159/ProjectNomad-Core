@@ -85,9 +85,9 @@ namespace ProjectNomad {
             FrameType frameOffset = mLatestStoredFrame - frameForStoredSnapshot;
 
             // Sanity check to help catch bugs
-            if (frameOffset > RollbackStaticSettings::kMaxRollbackFrames) {
+            if (frameOffset > RollbackStaticSettings::kOneMoreThanMaxRollbackFrames) {
                 Singleton<LoggerSingleton>::get().LogErrorMessage(
-                    "Provided retrieval frame beyond buffer size (rollback window), input frame: " +
+                    "Provided retrieval frame beyond buffer size (rollback window + 1 older frames), input frame: " +
                     std::to_string(frameForStoredSnapshot)
                 );
                 return 0;
@@ -98,6 +98,6 @@ namespace ProjectNomad {
         }
         
         FrameType mLatestStoredFrame = std::numeric_limits<FrameType>::max(); // Next frame to store is 0 (max + 1 = 0 with overflow)
-        RingBuffer<SnapshotType, RollbackStaticSettings::kMaxRollbackFrames> mSnapshotBuffer = {};
+        RingBuffer<SnapshotType, RollbackStaticSettings::kTwoMoreThanMaxRollbackFrames> mSnapshotBuffer = {}; // Store current frame, 10 frames in past, and 1 extra frame for verified frame processing
     };
 }

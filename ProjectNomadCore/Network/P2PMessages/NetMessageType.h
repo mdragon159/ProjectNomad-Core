@@ -13,6 +13,7 @@ namespace ProjectNomad {
 
         TimeQualityReport,
         TimeQualityResponse,
+        ValidationChecksum,
         
         PrepareLobbyStartMatch,
         ConfirmedLobbyStartMatch,

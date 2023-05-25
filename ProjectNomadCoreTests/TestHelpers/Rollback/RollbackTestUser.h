@@ -14,6 +14,7 @@ public:
     void ProcessFrameWithoutRendering(FrameType expectedFrame, const PlayerInputsForFrame& playerInputs) override {}
     void OnPostRollback() override {}
     void SendTimeQualityReport(FrameType currentFrame) override {}
+    void SendValidationChecksum(FrameType targetFrame, uint32_t checksum) override {}
     void SendLocalInputsToRemotePlayers(FrameType expectedFrame, const InputHistoryArray& playerInputs) override {}
     void OnStallingForRemoteInputs(const RollbackStallInfo& stallInfo) override {}
     void OnInputsExitRollbackWindow(FrameType confirmedFrame) override {}

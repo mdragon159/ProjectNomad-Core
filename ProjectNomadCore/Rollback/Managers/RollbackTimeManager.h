@@ -93,7 +93,7 @@ namespace ProjectNomad {
             //  Eg, if range == 0.1, then max 10% speed difference (whether slowing down or speeding up)
             mTimeSyncTimeMultiplier = std::clamp(mTimeSyncTimeMultiplier, 1 - kMaxTimeMultiplierRange, 1 + kMaxTimeMultiplierRange);
 
-            logger.LogWarnMessage("Setting time sync up for hostNumberOfFramesAhead: " +
+            logger.LogInfoMessage("Setting time sync up for hostNumberOfFramesAhead: " +
                 std::to_string(hostNumberOfFramesAhead) + " with time multiplier: " + std::to_string(mTimeSyncTimeMultiplier));
         }
 
@@ -207,6 +207,9 @@ namespace ProjectNomad {
                 ResetTimeSyncStatus();
             }
             else {
+                // Minor TODO: Note that this does not take into account if TimeManager user doesn't actually use these
+                //             frames (like during stalls). Expecting this to not really matter much, but should test
+                //             thoroughly via inducing stalls under different scenarios
                 mTimeSyncRemainingDuration -= numberOfFramesToProcess;
             }
         }

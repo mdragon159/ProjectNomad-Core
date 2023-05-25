@@ -20,4 +20,12 @@ namespace ProjectNomad {
         explicit TimeQualityResponseMessage(const TimeQualityReportMessage& reportMessage)
         : BaseNetMessage(NetMessageType::TimeQualityResponse), pong(reportMessage.ping) {}
     };
+
+    struct ValidationChecksumMessage : BaseNetMessage {
+        FrameType targetFrame = 0;
+        uint32_t checksum = 0;
+        
+        ValidationChecksumMessage(FrameType inTargetFrame, uint32_t inChecksum)
+        : BaseNetMessage(NetMessageType::ValidationChecksum), targetFrame(inTargetFrame), checksum(inChecksum) {}
+    };
 }
