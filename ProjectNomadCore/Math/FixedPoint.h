@@ -2,7 +2,13 @@
 
 #include <string>
 #include <iostream>
-#include <fpm/fixed.hpp>
+#include <fpm/FixedPoint.h>
+
+#if WITH_ENGINE // Use following necessary includes if in Unreal context
+// Nothing in here for this
+#else // Otherwise replace Unreal-specific code as appropriate
+#include "Utilities/PlatformSupport/UnrealReplacements.h"
+#endif
 
 namespace ProjectNomad {
 
@@ -11,9 +17,10 @@ namespace ProjectNomad {
     
     //using fp = fpm::fixed_16_16; // Under/overflows like crazy
 
-    using fpBaseType = std::int64_t;
-    using fp = fpm::fixed<fpBaseType, fpBaseType, 16>; // This works well so far! See following for risks and limitations: https://github.com/MikeLankamp/fpm/issues/23
-
+    using fpBaseType = int64;
+    // using fp = fpm::fixed<fpBaseType, fpBaseType, 16>; // This works well so far! See following for risks and limitations: https://github.com/MikeLankamp/fpm/issues/23
+    using fp = FFixedPoint; // See above comment's comment for risks with using same BaseType and IntermediateType
+    
     //using fp = fpm::fixed<std::int64_t, std::int64_t, 20>; // Grapple + camera bugs... but why?
     //using fp = fpm::fixed<std::int64_t, boost::multiprecision::int128_t, 32>; // Extremely slow!
 
@@ -22,12 +29,8 @@ namespace ProjectNomad {
     // In addition, fpm does NOT guard against underflow and overflow. Need to be very careful with value ranges
     //          (but still don't have a design in place to help detect those... hmm... debug helpers/catchers?)
 
-    static std::string fpToString(fp value) {
-        return std::to_string(static_cast<float>(value));
-    }
-
     inline std::ostream& operator<<(std::ostream& os, const fp& value) {
-        os << fpToString(value);
+        os << value.ToString();
         return os;
     }
 }

@@ -21,6 +21,21 @@ namespace ProjectNomad {
         Interact,
         SwitchWeapon,
 
+        UseCoreSpell1,
+        UseCoreSpell2,
+        UseCoreSpell3,
+        UseCoreSpell4,
+        
+        UseCardSpell1,
+        UseCardSpell2,
+        UseCardSpell3,
+        UseCardSpell4,
+        
+        CombineSpells1,
+        CombineSpells2,
+        CombineSpells3,
+        CombineSpells4,
+
         ENUM_COUNT // https://stackoverflow.com/a/14989325/3735890
     };
 }

@@ -1,2 +1,2 @@
 EnTT:
-https://github.com/skypjack/entt/tree/v3.9.0
+https://github.com/skypjack/entt/tree/v3.12.2

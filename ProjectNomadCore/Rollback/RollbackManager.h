@@ -61,7 +61,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Called while session not running!");
                 return;
             }
-            if (!IsMultiplayerMatch()) {
+            if (!IsOnlineMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
                 return;
             }
@@ -94,7 +94,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Called while session not running!");
                 return;
             }
-            if (!IsMultiplayerMatch()) {
+            if (!IsOnlineMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
                 return;
             }
@@ -124,7 +124,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Called while session not running!");
                 return;
             }
-            if (!IsMultiplayerMatch()) {
+            if (!IsOnlineMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Not in multiplayer session but getting called for some reason");
                 return;
             }
@@ -198,7 +198,7 @@ namespace ProjectNomad {
                 mLogger.LogWarnMessage("Ignoring as called while already paused");
                 return;
             }
-            if (IsMultiplayerMatch()) { // Theoretically could support multiplayer pausing but needs much more work
+            if (IsOnlineMultiplayerMatch()) { // Theoretically could support multiplayer pausing but needs much more work
                 mLogger.LogWarnMessage("Cannot pause in a multiplayer session!");
                 return;
             }
@@ -232,7 +232,7 @@ namespace ProjectNomad {
             }
             // If paused, then nothing to do as wel
             if (mTimeManager.IsPaused()) {
-                if (IsMultiplayerMatch()) { // Extra sanity check. Expected to never happen atm
+                if (IsOnlineMultiplayerMatch()) { // Extra sanity check. Expected to never happen atm
                     mLogger.LogWarnMessage("Game currently paused but no support for multiplayer pausing atm!");
                 }
                 return 0;
@@ -257,21 +257,11 @@ namespace ProjectNomad {
                     break; //  Stop trying to process any frames or otherwise do any further updates here
                 }
 
-                // Try to retrieve input for this frame, if any
-                FrameType targetFrame = mRuntimeState.lastProcessedFrame + 1;
-                CharacterInput localPlayerInput = {};
-                bool wasAnyInputGiven = mRollbackUser.GetInputForNextFrame(targetFrame, localPlayerInput);
-                // Edge case: If no input given, then "user" doesn't want us to process any more frames.
-                //            Such as if this was using a replay file and the replay ran out of inputs
-                if (!wasAnyInputGiven) {
+                bool wasAnyLocalInputGiven = TrySetInputFromLocalSource();
+                if (!wasAnyLocalInputGiven) { // Rare edge case. Eg, if being replay driven and replay runs out of inputs
                     numOfNewFramesToProcess = i; // Update number of frames we actually processed to be accurate for latter logic
                     break; //  Stop trying to process any frames or otherwise do any further updates here
                 }
-                
-                // Store input for given frame so can be retrieved as needed later on
-                mRuntimeState.inputManager.SetInputForPlayer(
-                    mLogger, targetFrame, mRollbackSettings.localPlayerSpot, localPlayerInput
-                );
 
                 // Actually do the processing for the "next" frame.
                 //      This is a generic method reused for "processing one more frame" during other contexts like
@@ -292,7 +282,7 @@ namespace ProjectNomad {
                 //                  this is only place that we actually first move lastProcessedFrame to higher values
                 //                  for first time, as rollback doesn't increase frame count compared to pre-rollback).
                 //      Really, this doesn't HAVE to be in this for loop here. Only added here at first cuz convenient.
-                if (IsMultiplayerMatch() && mRuntimeState.lastProcessedFrame % RollbackStaticSettings::kTimeQualityReportFrequency == 0) {
+                if (IsOnlineMultiplayerMatch() && mRuntimeState.lastProcessedFrame % RollbackStaticSettings::kTimeQualityReportFrequency == 0) {
                     mRollbackUser.SendTimeQualityReport(mRuntimeState.lastProcessedFrame);
                 }
             }
@@ -309,7 +299,7 @@ namespace ProjectNomad {
                 }
 
                 // If playing multiplayer, then send (new) local player inputs to other players in session
-                if (IsMultiplayerMatch()) {
+                if (IsOnlineMultiplayerMatch()) {
                     // Since packets are sent via "UDP" (unreliable unordered), add many inputs per update packet.
                     // In future, we only want to send a certain number of inputs to reduce packet size.
                     // However for initial implementation simplicity, just always send many inputs at once.
@@ -334,6 +324,7 @@ namespace ProjectNomad {
                 }
 
                 // Notify user of confirmed inputs (such as to help decide when to flush inputs to a replay file)
+                // TODO: Should this get combined with Verified Frames logic?
                 FrameType curLocalRollbackRange = GetCurrentMaxPossibleRollbackFrames();
                 if (curLocalRollbackRange > 0) { // Is rollback possible at all?
                     if (mRuntimeState.lastProcessedFrame >= curLocalRollbackRange) { // If beyond "initial" frames, then have frames we can confirm
@@ -420,8 +411,17 @@ namespace ProjectNomad {
                 return false;
             }
 
-            // Multiplayer only checks
-            if (rollbackSettings.IsMultiplayerSession()) {
+            // Online only checks
+            if (rollbackSettings.isOnlineSession) {
+                // All online sessions are expected to be multiplayer sessions atm.
+                //      (eg, online session with one player and spectators is not a supported use case with current implementation)
+                if (!rollbackSettings.IsMultiplayerSession()) {
+                    mLogger.LogWarnMessage(
+                        "Provided online session without multiplayer, which is currently not a supported use case!"
+                    );
+                    return false;
+                }
+                
                 if (rollbackSettings.localInputDelay < 0) {
                     mLogger.LogWarnMessage(
                         "Negative input delay not valid while in online multiplayer! Provided value: "
@@ -438,8 +438,12 @@ namespace ProjectNomad {
                     return false;
                 }
             }
-            // Single player only checks
+            // Offline only only checks
             else {
+                // FUTURE: (Minor) Reconsider these checks for doing offline splitscreen multiplayer.
+                //      Eg, should localPlayerSpot and hostPlayerSpot *always* default to Player1? Do they even matter for offline MP?
+                //      Expecting these checks to not change down the line as they're just nice to be consistent.
+                
                 if (rollbackSettings.localPlayerSpot != PlayerSpot::Player1) {
                     mLogger.LogWarnMessage(
                         "Single player mode but provided non-Player1 local spot! Provided value: "
@@ -447,6 +451,7 @@ namespace ProjectNomad {
                     );
                     return false;
                 }
+                
                 // The host spot should be local spot too.
                 //      Theoretically *shouldn't* matter as not multiplayer game, but this allows code to just explicitly
                 //      check "is local player host" without caring for multiplayer game check.
@@ -480,12 +485,64 @@ namespace ProjectNomad {
             return true;
         }
 
-        bool IsMultiplayerMatch() const { // Just for readability and not needing to remember where this is stored
-            return mRollbackSettings.IsMultiplayerSession();
+        bool IsOfflineMultiplayerMatch() const {
+            return !mRollbackSettings.isOnlineSession && mRollbackSettings.IsMultiplayerSession();
+        }
+        bool IsOnlineMultiplayerMatch() const {
+            return mRollbackSettings.isOnlineSession && mRollbackSettings.IsMultiplayerSession();
         }
         bool IsLocalPlayerHost() const {
             // Note that host player spot may not be necessarily
             return mRollbackSettings.localPlayerSpot == mRollbackSettings.hostPlayerSpot;
+        }
+
+        /**
+        * Attempt to retrieve input(s) from RollbackUser regarding local player(s). If any input retrieved, then the
+        * data will be stored as appropriate for latter retrieval.
+        * @returns true if any local player input retrieved, false otherwise and thus should not try to process frame
+        **/
+        bool TrySetInputFromLocalSource() {
+            // Try to retrieve input for this frame, if any
+            PlayerInputsForFrame localPlayerInputs;
+            FrameType targetFrame = mRuntimeState.lastProcessedFrame + 1;
+            bool wasAnyInputGiven = mRollbackUser.GetLocalInputForNextFrame(targetFrame, localPlayerInputs);
+            
+            // Edge case: If no input given, then "user" doesn't want us to process any more frames.
+            //            Such as if this was using a replay file and the replay ran out of inputs
+            if (!wasAnyInputGiven) {
+                return false;
+            }
+
+            // Sanity check expected # of local player inputs (either only 1 player or if offline MP then all players)
+            //      FUTURE: Need to adjust this for splitscreen-but-also-online matches once that's a thing
+            uint8_t expectedNumberOfInputs = IsOfflineMultiplayerMatch() ? mRollbackSettings.totalPlayers : 1;
+            if (localPlayerInputs.GetSize() != expectedNumberOfInputs) {
+                mLogger.LogWarnMessage(
+                    "Unexpected number of players' inputs provided from RollbackUser! Expected: "
+                    + std::to_string(expectedNumberOfInputs) + ", Provided: " + std::to_string(localPlayerInputs.GetSize())
+                );
+                return false;
+            }
+            
+            // Store input(s) for given frame so can be retrieved as needed later on
+            if (IsOfflineMultiplayerMatch()) {
+                // Assuming provided every player's input in order of player spots, so store them all one by one
+                for (uint8_t i = 0; i < mRollbackSettings.totalPlayers; i++) {
+                    const CharacterInput& input = localPlayerInputs.Get(i); // Already validated size of inputs earlier
+                    PlayerSpot playerSpot = static_cast<PlayerSpot>(i); // Expected to be safe as total players should already be validated
+                    
+                    mRuntimeState.inputManager.SetInputForPlayer(mLogger, targetFrame, playerSpot, input);
+                }
+            }
+            else {
+                // Only provided local player's input (whether offline or online session), so store that specifically
+                //      FUTURE: Need to also adjust this for splitscreen-but-also-online matches once that's a thing
+                mRuntimeState.inputManager.SetInputForPlayer(
+                    mLogger, targetFrame, mRollbackSettings.localPlayerSpot, localPlayerInputs.Get(0)
+                );
+            }
+
+            return true; // Did find input from local source
         }
 
         /**
@@ -688,7 +745,7 @@ namespace ProjectNomad {
         }
 
         FrameType GetCurrentMaxPossibleRollbackFrames() const {
-            if (IsMultiplayerMatch()) {
+            if (IsOnlineMultiplayerMatch()) {
                 return RollbackStaticSettings::kMaxRollbackFrames;
             }
             if (mRollbackSettings.useSyncTest) {
@@ -711,7 +768,7 @@ namespace ProjectNomad {
         }
 
         RollbackStallInfo CheckIfShouldStallForRemoteInputs() const {
-            if (!IsMultiplayerMatch()) { // Stalling is only done during multiplayer games
+            if (!IsOnlineMultiplayerMatch()) { // Stalling is only done during multiplayer games
                 return RollbackStallInfo::NoStall();
             }
 
@@ -773,7 +830,7 @@ namespace ProjectNomad {
             // Handle desync detection with peers if appropriate frame.
             //      Note that we technically *could* do desync detection every single frame, but that's expensive to do
             //      and likely not worth the effort. After all, desyncs should be rare.
-            if (IsMultiplayerMatch() && latestVerifiedFrame % RollbackStaticSettings::kDesyncDetectionFrequency == 0) {
+            if (IsOnlineMultiplayerMatch() && latestVerifiedFrame % RollbackStaticSettings::kDesyncDetectionFrequency == 0) {
                 // Calculate checksum for the verified frame (whose snapshot should still be stored)
                 //      FUTURE: Would be nice to implement caching of some sort?
                 uint32_t verifiedFrameChecksum = mRuntimeState.snapshotManager.GetSnapshot(latestVerifiedFrame).CalculateChecksum();
@@ -790,7 +847,7 @@ namespace ProjectNomad {
         void HandleDesyncDetectionChecksum(FrameType targetFrame, uint32_t checksum, bool isChecksumFromLocalPlayer) {
             // Sanity check: Validate that actually a multiplayer match.
             //      (This should have been checked earlier before wasting time calculating checksum)
-            if (!IsMultiplayerMatch()) {
+            if (!IsOnlineMultiplayerMatch()) {
                 mLogger.LogWarnMessage("Called while not in multiplayer match! This should have been checked already");
                 return;
             }

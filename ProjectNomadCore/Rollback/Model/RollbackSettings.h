@@ -6,6 +6,8 @@
 
 namespace ProjectNomad {
     struct RollbackSettings {
+        bool isOnlineSession = false;
+        
         // Expected to be no less than 0 and no greater than max number in PlayerSpot
         uint8_t totalPlayers = 0;
         // Which "spot" is locally controlled player using? 

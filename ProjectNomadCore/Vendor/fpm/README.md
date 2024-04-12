@@ -1,4 +1,6 @@
 https://github.com/MikeLankamp/fpm
-commit 8b488e3c1f9afb981cad31292b7b0be05926661e
 
-No longer using a submodule as need a custom change for boost int128 support
+Source commit 19ad7a3 on Feb 18, 2023:
+https://github.com/MikeLankamp/fpm/commit/19ad7a3336e2ec0d7faa9da5232398873b555cfb
+
+Note that changes were made to the library after taking it from the above commit

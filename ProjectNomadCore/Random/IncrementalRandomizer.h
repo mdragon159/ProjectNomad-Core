@@ -1,8 +1,8 @@
 #pragma once
 
 #include "SquirrelRNG.h"
-#include "Math/FPVector.h"
-#include "Physics/Collider.h"
+#include "Math/FVectorFP.h"
+#include "Physics/Model/FCollider.h"
 
 namespace ProjectNomad {
     /**
@@ -49,23 +49,23 @@ namespace ProjectNomad {
             return fp::from_raw_value(rawResult);
         }
         
-        FPVector GetRandomLocation(const Collider& bounds) {
-            if (bounds.isBox()) {
+        FVectorFP GetRandomLocation(const FCollider& bounds) {
+            if (bounds.IsBox()) {
                 // Get min and max points per axis
-                FPVector halfSize = bounds.getBoxHalfSize();
-                FPVector max = bounds.getCenter() + halfSize;
-                FPVector min = bounds.getCenter() - halfSize;
+                FVectorFP halfSize = bounds.GetBoxHalfSize();
+                FVectorFP max = bounds.GetCenter() + halfSize;
+                FVectorFP min = bounds.GetCenter() - halfSize;
                 
                 // Randomize along each axis
                 fp x = GetRandomFp(min.x, max.x);
                 fp y = GetRandomFp(min.y, max.y);
                 fp z = GetRandomFp(min.z, max.z);
 
-                return FPVector(x, y, z);
+                return FVectorFP(x, y, z);
             }
 
             // Not yet supporting any collider outside box
-            return bounds.getCenter();
+            return bounds.GetCenter();
         }
         
     private:

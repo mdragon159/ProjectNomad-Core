@@ -4,6 +4,7 @@
 #include <fpm/math.hpp>
 
 // Following constants based on UnrealMathUtility constants
+// TODO: Replace with the fpm e constant
 #define FP_VERY_SMALL_NUMBER (fp{1.e-4f})
 
 namespace ProjectNomad {
@@ -20,7 +21,8 @@ namespace ProjectNomad {
         }
 
         static fp sqrt(const fp& value) {
-            return fpm::sqrt(value);
+            auto result = fpm::sqrt(value.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp square(const fp& value) {
@@ -45,7 +47,8 @@ namespace ProjectNomad {
         static fp fmod(fp numerator, fp denominator) {
             // *looks at UE's implementation*
             // Yeah no, we got a library for a reason
-            return fpm::fmod(numerator, denominator);
+            auto result = fpm::fmod(numerator.ToLibraryType(), denominator.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp clampAxis(fp angle) {
@@ -113,7 +116,8 @@ namespace ProjectNomad {
         }
 
         static fp cosR(const fp& value) {
-            return fpm::cos(value);
+            auto result = fpm::cos(value.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp cosD(const fp& value) {
@@ -124,7 +128,8 @@ namespace ProjectNomad {
         }
 
         static fp sinR(const fp& value) {
-            return fpm::sin(value);
+            auto result = fpm::sin(value.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp sinD(const fp& value) {
@@ -135,7 +140,8 @@ namespace ProjectNomad {
         }
 
         static fp acosR(const fp& value) {
-            return acos(value);
+            auto result = fpm::acos(value.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp acosD(const fp& value) {
@@ -143,7 +149,8 @@ namespace ProjectNomad {
         }
 
         static fp asinR(const fp& value) {
-            return asin(value);
+            auto result = fpm::asin(value.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp asinD(const fp& value) {
@@ -152,7 +159,8 @@ namespace ProjectNomad {
 
         // Returns angle in radians
         static fp atanR(const fp& y, const fp& x) {
-            return fpm::atan2(y, x);
+            auto result = fpm::atan2(y.ToLibraryType(), x.ToLibraryType());
+            return fp::FromLibraryType(result);
         }
 
         static fp atanD(const fp& y, const fp& x) {

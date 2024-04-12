@@ -33,6 +33,9 @@ namespace ProjectNomad {
         * @param element - Element that is swap-inserted into the "front" of the buffer
         **/
         void SwapInsert(ContentType& element) {
+            // TODO: Default swap is actually slower than simply copying! Instead for FrameSnapshot, we can implement specialized swap like vectors!
+            //       https://stackoverflow.com/a/1998859/3735890
+            //       Or wait, is "move" what I'm looking for?
             std::swap(element, mArray[mNextAddValueIndex]);
             IncrementHead();
         }

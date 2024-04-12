@@ -2,11 +2,11 @@
 
 #include <vector>
 
-#include "Line.h"
+#include "Model/Line.h"
 #include "Utilities/Assertion.h"
 #include "Math/FixedPoint.h"
 #include "Math/FPMath.h"
-#include "Math/FPVector.h"
+#include "Math/FVectorFP.h"
 
 namespace ProjectNomad {
     /// <summary>TODO. I don't remember why I created this separate class</summary>
@@ -27,11 +27,11 @@ namespace ProjectNomad {
         /// Eg, value of <1, 0, 0> tests for intersection along x axis
         /// </param>
         /// <returns>Intersection amount if positive, 0 if objects are touching, and less than 0 represents distance between objects along this axis</returns>
-        static fp getIntersectionDistAlongAxis(std::vector<FPVector> boxAVertices, std::vector<FPVector> boxBVertices,
-                                               FPVector axis) {
+        static fp getIntersectionDistAlongAxis(std::vector<FVectorFP> boxAVertices, std::vector<FVectorFP> boxBVertices,
+                                               FVectorFP axis) {
             assertm(boxAVertices.size() == 8, "boxAVertices should contain exactly 8 points");
             assertm(boxBVertices.size() == 8, "boxBVertices should contain exactly 8 points");
-            assertm(axis != FPVector::zero(), "Test axis should not be invalid (zero)");
+            assertm(axis != FVectorFP::Zero(), "Test axis should not be invalid (zero)");
 
             // Variables to store min and max points along axis for each box
             // TODO: For cleaner code, use fp::Min and fp::Max or such
@@ -42,7 +42,7 @@ namespace ProjectNomad {
 
             // Find the respective min and max points along the axis for each box, vertex by vertex
             for (uint32_t i = 0; i < boxAVertices.size(); i++) {
-                fp aProjectedDist = axis.dot(boxAVertices.at(i));
+                fp aProjectedDist = axis.Dot(boxAVertices.at(i));
                 if (aMin == fp{-1} || aProjectedDist < aMin) {
                     aMin = aProjectedDist;
                 }
@@ -50,7 +50,7 @@ namespace ProjectNomad {
                     aMax = aProjectedDist;
                 }
 
-                fp bProjectedDist = axis.dot(boxBVertices.at(i));
+                fp bProjectedDist = axis.Dot(boxBVertices.at(i));
                 if (bMin == fp{-1} || bProjectedDist < bMin) {
                     bMin = bProjectedDist;
                 }
@@ -76,19 +76,19 @@ namespace ProjectNomad {
         /// <param name="segment">Line to compare with</param>
         /// <param name="point">Point to compare with</param>
         /// <returns>Squared distance between provided point and line segment</returns>
-        static fp getSquaredDistBetweenPtAndSegment(const Line& segment, const FPVector& point) {
-            FPVector segmentVector = segment.end - segment.start;
-            FPVector segmentStartToPoint = point - segment.start;
-            FPVector segmentEndToPoint = point - segment.end;
-            fp e = segmentStartToPoint.dot(segmentVector); // TODO: Var name, what is this visually/real world speaking?
+        static fp getSquaredDistBetweenPtAndSegment(const Line& segment, const FVectorFP& point) {
+            FVectorFP segmentVector = segment.end - segment.start;
+            FVectorFP segmentStartToPoint = point - segment.start;
+            FVectorFP segmentEndToPoint = point - segment.end;
+            fp e = segmentStartToPoint.Dot(segmentVector); // TODO: Var name, what is this visually/real world speaking?
 
             // Handle cases where c projects outside ab
-            if (e <= fp{0}) return segmentStartToPoint.dot(segmentStartToPoint);
-            fp f = segmentVector.dot(segmentVector); // TODO: Var name?  Isn't this just sqrd length of segment?
-            if (e >= f) return segmentEndToPoint.dot(segmentEndToPoint);
+            if (e <= fp{0}) return segmentStartToPoint.Dot(segmentStartToPoint);
+            fp f = segmentVector.Dot(segmentVector); // TODO: Var name?  Isn't this just sqrd length of segment?
+            if (e >= f) return segmentEndToPoint.Dot(segmentEndToPoint);
 
             // Handle cases where c projects onto ab
-            return segmentStartToPoint.dot(segmentStartToPoint) - e * e / f;
+            return segmentStartToPoint.Dot(segmentStartToPoint) - e * e / f;
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace ProjectNomad {
         /// </summary>
         static fp getClosestPtsBetweenTwoSegments(const Line& firstSegment, const Line& secondSegment, 
                                                   fp& timeOfClosestPointForFirstSegment, fp& timeOfClosestPointForSecondSegment,
-                                                  FPVector& closestPointOnFirstSegment, FPVector& closestPointOnSecondSegment) {
+                                                  FVectorFP& closestPointOnFirstSegment, FVectorFP& closestPointOnSecondSegment) {
 
             return getClosestPtsBetweenTwoSegments(
                 firstSegment.start, firstSegment.end, secondSegment.start, secondSegment.end,
@@ -124,25 +124,25 @@ namespace ProjectNomad {
         /// <param name="c2">Closest point on second segment</param>
         /// <returns>Squared distance between S1(s) and S2(t)</returns>
         // TODO: Delete in favor of segment-inputs version
-        static fp getClosestPtsBetweenTwoSegments(FPVector p1, FPVector q1, FPVector p2, FPVector q2,
-                                                  fp& s, fp& t, FPVector& c1, FPVector& c2) {
+        static fp getClosestPtsBetweenTwoSegments(FVectorFP p1, FVectorFP q1, FVectorFP p2, FVectorFP q2,
+                                                  fp& s, fp& t, FVectorFP& c1, FVectorFP& c2) {
             // TODO: Rewrite all vars and stuff based on better understanding. Also just adjust it all to personal style
             // TODO: Will epsilon be necessary with fixed point?
             // TODO: All da documentation above
 
-            FPVector d1 = q1 - p1; // Direction vector of segment S1
-            FPVector d2 = q2 - p2; // Direction vector of segment S2
-            FPVector r = p1 - p2;
-            fp a = d1.dot(d1); // Squared length of segment S1, always nonnegative
-            fp e = d2.dot(d2); // Squared length of segment S2, always nonnegative
-            fp f = d2.dot(r);
+            FVectorFP d1 = q1 - p1; // Direction vector of segment S1
+            FVectorFP d2 = q2 - p2; // Direction vector of segment S2
+            FVectorFP r = p1 - p2;
+            fp a = d1.Dot(d1); // Squared length of segment S1, always nonnegative
+            fp e = d2.Dot(d2); // Squared length of segment S2, always nonnegative
+            fp f = d2.Dot(r);
 
             // Check if either or both segments degenerate into points
             if (a <= getEpsilon() && e <= getEpsilon()) { // Both segments degenerate into points
                 s = t = fp{0};
                 c1 = p1;
                 c2 = p2;
-                return (c1 - c2).dot(c1 - c2);
+                return (c1 - c2).Dot(c1 - c2);
             }
             if (a <= getEpsilon()) { // First segment degenerates into a point
                 s = fp{0};
@@ -150,13 +150,13 @@ namespace ProjectNomad {
                 t = FPMath::clamp(t, fp{0.0f}, fp{1.0f});
             }
             else {
-                fp c = d1.dot(r);
+                fp c = d1.Dot(r);
                 if (e <= getEpsilon()) { // Second segment degenerates into a point
                     t = fp{0};
                     s = FPMath::clamp(-c / a, fp{0.0f}, fp{1.0f}); // t = 0 => s =(b*t-c)/a = -c/a
                 }
                 else { // The general nondegenerate case starts here
-                    fp b = d1.dot(d2);
+                    fp b = d1.Dot(d2);
                     fp denom = a * e - b * b; // Always nonnegative
 
                     // If segments not parallel, compute closest point on L1 to L2 and
@@ -186,11 +186,11 @@ namespace ProjectNomad {
 
             c1 = p1 + d1 * s;
             c2 = p2 + d2 * t;
-            return (c1 - c2).dot(c1 - c2);
+            return (c1 - c2).Dot(c1 - c2);
         }
 
-        static void getClosestPtBetweenPtAndSegment(const Line& segment, const FPVector& point, fp& timeOfIntersection,
-                                                    FPVector& closestPoint) {
+        static void getClosestPtBetweenPtAndSegment(const Line& segment, const FVectorFP& point, fp& timeOfIntersection,
+                                                    FVectorFP& closestPoint) {
             getClosestPtBetweenPtAndSegment(segment.start, segment.end, point, timeOfIntersection, closestPoint);
         }
 
@@ -205,13 +205,13 @@ namespace ProjectNomad {
         /// <param name="segmentEnd">Represents end point of line segment</param>
         /// <param name="timeOfIntersection">Time of intersection where time is defined as follows: d(t)=a+t*(b - a)</param>
         /// <param name="closestPoint">Computed closest point between provided point and line segment</param>
-        static void getClosestPtBetweenPtAndSegment(const FPVector& segmentStart, const FPVector& segmentEnd, const FPVector& point,
-                                                    fp& timeOfIntersection, FPVector& closestPoint) {
+        static void getClosestPtBetweenPtAndSegment(const FVectorFP& segmentStart, const FVectorFP& segmentEnd, const FVectorFP& point,
+                                                    fp& timeOfIntersection, FVectorFP& closestPoint) {
         
-            FPVector segmentDir = segmentEnd - segmentStart;
+            FVectorFP segmentDir = segmentEnd - segmentStart;
         
             // Project c onto ab, computing parameterized position d(t)=a+t*(b � a)
-            timeOfIntersection = segmentDir.dot(point - segmentStart) / segmentDir.dot(segmentDir);
+            timeOfIntersection = segmentDir.Dot(point - segmentStart) / segmentDir.Dot(segmentDir);
         
             // If outside segment, clamp t (and therefore d) to the closest endpoint
             if (timeOfIntersection < fp{0}) timeOfIntersection = fp{0};

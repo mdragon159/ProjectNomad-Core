@@ -6,7 +6,7 @@
 #include "ILogger.h"
 #include "NetLogMessage.h"
 #include "Utilities/DebugMessage.h"
-#include "Physics/Collider.h"
+#include "Physics/Model/FCollider.h"
 
 namespace ProjectNomad {
     class LogHelpers {

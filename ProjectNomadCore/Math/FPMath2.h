@@ -1,11 +1,10 @@
 #pragma once
 
 #include "FixedPoint.h"
-#include "FPVector.h"
-#include "FPQuat.h"
+#include "FVectorFP.h"
+#include "FQuatFP.h"
 #include "FPEulerAngles.h"
 #include "VectorUtilities.h"
-#include "GameCore/CoreConstants.h"
 
 namespace ProjectNomad {
 
@@ -27,11 +26,11 @@ namespace ProjectNomad {
         }
 
         // No promises for behavior if zeroToOne is outside range
-        static FPVector lerp(const FPVector& a, const FPVector& b, const fp& alpha) {
+        static FVectorFP lerp(const FVectorFP& a, const FVectorFP& b, const fp& alpha) {
             return a + (b - a) * alpha;
         }
 
-        static FPVector interpTo(const FPVector& current, const FPVector& target, fp interpSpeed) {
+        static FVectorFP interpTo(const FVectorFP& current, const FVectorFP& target, fp interpSpeed) {
             // Based on UnrealMath::VInterpTo
 
             // If no interp speed, jump to target value
@@ -41,23 +40,22 @@ namespace ProjectNomad {
             }
 
             // Distance to reach
-            const FPVector dist = target - current;
+            const FVectorFP dist = target - current;
 
             // If distance is too small, just set the desired location
-            if (dist.getLengthSquared() < FP_VERY_SMALL_NUMBER)
+            if (dist.GetLengthSquared() < FP_VERY_SMALL_NUMBER)
             {
                 return target;
             }
 
             // Small delta movement. Clamp so we don't overshoot
-            fp timePerFrameInSec = CoreConstants::GetTimePerFrameInSec();
-            const FPVector deltaMove =
-                dist * FPMath::clamp( timePerFrameInSec * interpSpeed, fp{0.f}, fp{1.f});
+            const FVectorFP deltaMove =
+                dist * FPMath::clamp( FrameRate::TimePerFrameInSec() * interpSpeed, fp{0.f}, fp{1.f});
 
             return current + deltaMove;
         }
 
-        static EulerAngles QuatToEuler(const FPQuat& quat) {
+        static EulerAngles QuatToEuler(const FQuatFP& quat) {
             // "Proper" way to do so: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Quaternion_to_Euler_angles_conversion
             // However, we already implemented quat to dir vector and dir vector to euler. Thus, just reuse that.
             // NOTE: It'd likely be far more efficient to work in dir vector space than to work in euler space, esp if
@@ -66,7 +64,7 @@ namespace ProjectNomad {
             return DirVectorToEuler(QuatToDirVector(quat));
         }
 
-        static FPQuat eulerToQuat(const EulerAngles& euler) {
+        static FQuatFP eulerToQuat(const EulerAngles& euler) {
             // Solid reference: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Euler_angles_to_quaternion_conversion
             // Another good algorithm reference: https://www.euclideanspace.com/maths/geometry/rotations/conversions/eulerToQuaternion/index.htm
 
@@ -78,7 +76,7 @@ namespace ProjectNomad {
             fp cr = FPMath::cosD(euler.roll * fp{0.5f});
             fp sr = FPMath::sinD(euler.roll * fp{0.5f});
 
-            FPQuat result;
+            FQuatFP result;
             result.w = cr * cp * cy + sr * sp * sy;
             result.v.x = sr * cp * cy - cr * sp * sy;
             result.v.y = cr * sp * cy + sr * cp * sy;
@@ -86,11 +84,11 @@ namespace ProjectNomad {
             return result;
         }
 
-        static FPVector eulerToDirVector(const EulerAngles& euler) {
+        static FVectorFP eulerToDirVector(const EulerAngles& euler) {
             // Based on the following: https://stackoverflow.com/a/1568687/3735890
             // Note that this doesn't take into account roll as it doesn't affect result here (following yaw -> pitch -> roll rotation order)
 
-            FPVector result;
+            FVectorFP result;
             result.x = FPMath::cosD(euler.yaw) * FPMath::cosD(euler.pitch);
             result.y = FPMath::sinD(euler.yaw) * FPMath::cosD(euler.pitch);
             result.z = FPMath::sinD(euler.pitch);
@@ -99,7 +97,7 @@ namespace ProjectNomad {
         }
 
         // NOTE: Method is untested (and currently unused). Needs unit tests!
-        static EulerAngles DirVectorToEuler(const FPVector& input) {
+        static EulerAngles DirVectorToEuler(const FVectorFP& input) {
             // High level approach: Doing the reverse of eulerToDirVector method
             EulerAngles result;
 
@@ -135,50 +133,50 @@ namespace ProjectNomad {
         * @param input - rotation to represent as a direction vector
         * @returns direction vector with provided input rotation
         **/
-        static FPVector QuatToDirVector(const FPQuat& input) {
-            return input * FPVector::forward();
+        static FVectorFP QuatToDirVector(const FQuatFP& input) {
+            return input * FVectorFP::Forward();
         }
 
         /// <returns>
         /// Returns a quaternion which represents rotation necessary to rotate FPVector::Forward in order to match
         /// the provided rotation vector.
         /// </returns>
-        static FPQuat dirVectorToQuat(const FPVector& targetVec) {
-            return dirVectorToQuat(targetVec, FPVector::forward());
+        static FQuatFP dirVectorToQuat(const FVectorFP& targetVec) {
+            return dirVectorToQuat(targetVec, FVectorFP::Forward());
         }
 
         /// <returns>
         /// Returns a quaternion which represents rotation necessary to rotate referenceVec to match the provided
         /// rotation vector.
         /// </returns>
-        static FPQuat dirVectorToQuat(const FPVector& targetVec, const FPVector& referenceVec) {
+        static FQuatFP dirVectorToQuat(const FVectorFP& targetVec, const FVectorFP& referenceVec) {
             // Goal here is to create an axis-angle representation that would rotate referenceVec to become rotationVec
             // References: Sorry, don't really have any references here. This is more so based on what a quaternion is
             //              and choosing to calculate the quat like this due to intended usage (eg, Transform rotation)
             
             // Rotation axis: Simply get direction perpendicular to both directions
             // NOTE: Order matters here. Why this order? Too lazy to figure out the math, but guess and checked with unit tests
-            FPVector rotationAxis = referenceVec.cross(targetVec);
+            FVectorFP rotationAxis = referenceVec.Cross(targetVec);
 
             // If rotation and reference vectors are parallel...
-            if (rotationAxis == FPVector::zero()) {
+            if (rotationAxis == FVectorFP::Zero()) {
                 // Need any perpendicular vector. The "easy" (least thinking) way to do this is to pick any other vector
                 // then do another cross product with one of the input vectors.
                 // NOTE:
                 //      Since this is practically only used with the overload, we COULD just hardcode another perpendicular vector in.
                 //      However, gonna do this the most flexible way for now until this is relevant in an optimization pass
-                FPVector secondTestVec = FPVector::up();
-                rotationAxis = secondTestVec.cross(referenceVec);
+                FVectorFP secondTestVec = FVectorFP::Up();
+                rotationAxis = secondTestVec.Cross(referenceVec);
 
                 // If our guessed not-parallel vec is actually parallel, then use a different (and certainly not parallel) vector
-                if  (rotationAxis == FPVector::zero()) {
-                    secondTestVec = FPVector::forward();
-                    rotationAxis = secondTestVec.cross(referenceVec);
+                if  (rotationAxis == FVectorFP::Zero()) {
+                    secondTestVec = FVectorFP::Forward();
+                    rotationAxis = secondTestVec.Cross(referenceVec);
                 }
             }
 
             // The cross product of two unit vectors is *not* always a unit vector. Thus need to re-normalize before using further
-            rotationAxis.normalize();
+            rotationAxis.Normalize();
 
             // Rotation amount around axis: Get angle between the vectors
             // Using degrees due to personal preference, and I THINK it's more accurate due to less decimal points
@@ -186,7 +184,7 @@ namespace ProjectNomad {
 
             // And that's it! We have all the info we need to rotate referenceVec into rotationVec
             // by multiplying by the resulting quat
-            return FPQuat::fromDegrees(rotationAxis, rotationAmountInDegrees);
+            return FQuatFP::fromDegrees(rotationAxis, rotationAmountInDegrees);
         }
 
         /**
@@ -201,14 +199,14 @@ namespace ProjectNomad {
         *                               Should have no vertical (z) component and expected to be normalized.
         * @returns "Yaw"-only quaternion representing the input direction
         **/
-        static FPQuat HorizontalDirVectorToYawOnlyQuat(const FPVector& desiredHorizontalDir) {
+        static FQuatFP HorizontalDirVectorToYawOnlyQuat(const FVectorFP& desiredHorizontalDir) {
             // Approach: Basically take dirVectorToQuat() but use constant rotation axis and reference axis
             
             /// Define some constants for clarity. Theoretically could replace these for other use cases in future.
             // Result rotation axis: This is the "yaw-only" part
-            static const FPVector kRotationAxis = FPVector::up();
+            static const FVectorFP kRotationAxis = FVectorFP::Up();
             // Reference axis: Want to be explicit that the output is as if applied to this vector (which is the game's standard)
-            static const FPVector kReferenceAxis = FPVector::forward();
+            static const FVectorFP kReferenceAxis = FVectorFP::Forward();
 
             // Rotation amount around axis: Get angle between the vectors.
             //   Note: Due to both being in horizontal plane (and perpendicular to vertical axis), this represents yaw
@@ -220,7 +218,7 @@ namespace ProjectNomad {
             }
             
             // Given expectations are met (ie that input is a horizontal dir), then nothing more to do!
-            return FPQuat::fromDegrees(kRotationAxis, rotationAmountInDegrees);
+            return FQuatFP::fromDegrees(kRotationAxis, rotationAmountInDegrees);
         }
 
     private:

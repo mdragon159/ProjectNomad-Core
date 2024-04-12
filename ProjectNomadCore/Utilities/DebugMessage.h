@@ -2,8 +2,8 @@
 
 #include <string>
 #include "Math/FixedPoint.h"
-#include "Math/FPQuat.h"
-#include "Math/FPVector.h"
+#include "Math/FQuatFP.h"
+#include "Math/FVectorFP.h"
 
 namespace ProjectNomad {
     enum class MessageType { Text, Box, Sphere, Capsule };
@@ -50,16 +50,16 @@ namespace ProjectNomad {
         }
 
         static DebugMessage createBoxMessage(fp displayTime,
-                                             const FPVector& drawLocation,
-                                             const FPVector& boxExtents,
-                                             const FPQuat& boxRotation) {
+                                             const FVectorFP& drawLocation,
+                                             const FVectorFP& boxExtents,
+                                             const FQuatFP& boxRotation) {
             return createBoxMessage(displayTime, drawLocation, boxExtents, boxRotation, DEFAULT_COLOR);
         }
 
         static DebugMessage createBoxMessage(fp displayTime,
-                                             const FPVector& drawLocation,
-                                             const FPVector& boxExtents,
-                                             const FPQuat& boxRotation,
+                                             const FVectorFP& drawLocation,
+                                             const FVectorFP& boxExtents,
+                                             const FQuatFP& boxRotation,
                                              OutputColor outputColor) {
             DebugMessage result(MessageType::Box, displayTime);
 
@@ -71,12 +71,12 @@ namespace ProjectNomad {
             return result;
         }
 
-        static DebugMessage createSphereMessage(fp displayTime, const FPVector& sphereCenter, fp sphereRadius) {
+        static DebugMessage createSphereMessage(fp displayTime, const FVectorFP& sphereCenter, fp sphereRadius) {
             return createSphereMessage(displayTime, sphereCenter, sphereRadius, DEFAULT_COLOR);
         }
 
         static DebugMessage createSphereMessage(fp displayTime,
-                                                const FPVector& sphereCenter,
+                                                const FVectorFP& sphereCenter,
                                                 fp sphereRadius,
                                                 OutputColor outputColor) {
             DebugMessage result(MessageType::Sphere, displayTime);
@@ -88,15 +88,15 @@ namespace ProjectNomad {
             return result;
         }
 
-        static DebugMessage createCapsuleMessage(fp displayTime, const FPVector& center, fp radius, fp halfHeight, const FPQuat& rotation) {
+        static DebugMessage createCapsuleMessage(fp displayTime, const FVectorFP& center, fp radius, fp halfHeight, const FQuatFP& rotation) {
             return createCapsuleMessage(displayTime, center, radius, halfHeight, rotation, DEFAULT_COLOR);
         }
 
         static DebugMessage createCapsuleMessage(fp displayTime,
-                                                const FPVector& center,
+                                                const FVectorFP& center,
                                                 fp radius,
                                                 fp halfHeight,
-                                                const FPQuat& rotation,
+                                                const FQuatFP& rotation,
                                                 OutputColor outputColor) {
             DebugMessage result(MessageType::Capsule, displayTime);
 
@@ -114,8 +114,8 @@ namespace ProjectNomad {
         MessageType mMessageType;
         fp mDisplayTime;
         OutputColor mOutputColor = DEFAULT_COLOR;
-        FPVector mDrawLocation;
-        FPQuat mRotation;
+        FVectorFP mDrawLocation;
+        FQuatFP mRotation;
         fp mRadius;
         
         // Text message values
@@ -124,7 +124,7 @@ namespace ProjectNomad {
         std::string mTextMessage;
 
         // Draw box values
-        FPVector mBoxExtents;
+        FVectorFP mBoxExtents;
 
         // Draw capsule values
         fp mHalfHeight;

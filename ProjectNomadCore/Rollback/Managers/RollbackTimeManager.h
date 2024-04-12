@@ -245,7 +245,7 @@ namespace ProjectNomad {
         //      See above rate limitation, which preferably shouldn't be hit at all. Otherwise may suffer from inaccuracies.
         //      FUTURE: Perhaps do some static asserts to assure max time multiplier range won't get hit if input within expected range (kMaxRollbackFrames)?
         static constexpr float kHowLongShouldTimeSyncTakeInSec = 3; // Based on a mentioned time in GGPO discord from memory
-        static constexpr FrameType kTimeSyncDuration = FrameRate::FromSeconds(fp::fromConstexprFloat(kHowLongShouldTimeSyncTakeInSec));
+        static constexpr FrameType kTimeSyncDuration = FrameRate::FromSeconds(fp(kHowLongShouldTimeSyncTakeInSec));
         
         float mTimeSyncTimeMultiplier = 1; // Why using floats? See comments in GetAdjustedTimePerFrameInMicroSec()
         FrameType mTimeSyncRemainingDuration = 0; // How long until we should stop using this time multiplier?

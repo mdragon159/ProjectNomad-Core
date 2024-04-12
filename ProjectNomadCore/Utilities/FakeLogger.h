@@ -15,14 +15,14 @@ namespace ProjectNomad {
         void addLogMessage(const std::string& message) override {}
         void addScreenAndLogMessage(fp displayLength, const std::string& message) override {}
         void addScreenAndLogMessage(fp displayLength, const std::string& message, LogSeverity logSeverity, OutputColor outputColor) override {}
-        void addShapeMessage(fp displayTime, const Collider& collider) override {}
-        void addShapeMessage(fp displayTime, const Collider& collider, OutputColor outputColor) override {}
-        void addBoxMessage(fp displayTime, const Collider& box) override {}
-        void addBoxMessage(fp displayTime, const Collider& box, OutputColor outputColor) override {}
-        void addSphereMessage(fp displayTime, const Collider& sphere) override {}
-        void addSphereMessage(fp displayTime, const Collider& sphere, OutputColor outputColor) override {}
-        void addCapsuleMessage(fp displayTime, const Collider& capsule) override {}
-        void addCapsuleMessage(fp displayTime, const Collider& capsule, OutputColor outputColor) override {}
+        void addShapeMessage(fp displayTime, const FCollider& collider) override {}
+        void addShapeMessage(fp displayTime, const FCollider& collider, OutputColor outputColor) override {}
+        void addBoxMessage(fp displayTime, const FCollider& box) override {}
+        void addBoxMessage(fp displayTime, const FCollider& box, OutputColor outputColor) override {}
+        void addSphereMessage(fp displayTime, const FCollider& sphere) override {}
+        void addSphereMessage(fp displayTime, const FCollider& sphere, OutputColor outputColor) override {}
+        void addCapsuleMessage(fp displayTime, const FCollider& capsule) override {}
+        void addCapsuleMessage(fp displayTime, const FCollider& capsule, OutputColor outputColor) override {}
         std::queue<NetLogMessage>& getNetLogMessages() override { return netLogMessages; }
         void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color) override {}
         void AddNetLogMessage(const std::string& message, LogSeverity logSeverity, OutputColor color, NetLogCategory category) override {}

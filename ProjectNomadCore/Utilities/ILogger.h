@@ -3,7 +3,7 @@
 
 #include "NetLogMessage.h"
 #include "Utilities/DebugMessage.h"
-#include "Physics/Collider.h"
+#include "Physics/Model/FCollider.h"
 
 namespace ProjectNomad {
     class ILogger {
@@ -28,21 +28,21 @@ namespace ProjectNomad {
 
         virtual void addScreenAndLogMessage(fp displayLength, const std::string& message, LogSeverity logSeverity, OutputColor outputColor) = 0;
 
-        virtual void addShapeMessage(fp displayTime, const Collider& collider) = 0;
+        virtual void addShapeMessage(fp displayTime, const FCollider& collider) = 0;
 
-        virtual void addShapeMessage(fp displayTime, const Collider& collider, OutputColor outputColor) = 0;
+        virtual void addShapeMessage(fp displayTime, const FCollider& collider, OutputColor outputColor) = 0;
 
-        virtual void addBoxMessage(fp displayTime, const Collider& box) = 0;
+        virtual void addBoxMessage(fp displayTime, const FCollider& box) = 0;
 
-        virtual void addBoxMessage(fp displayTime, const Collider& box, OutputColor outputColor) = 0;
+        virtual void addBoxMessage(fp displayTime, const FCollider& box, OutputColor outputColor) = 0;
 
-        virtual void addSphereMessage(fp displayTime, const Collider& sphere) = 0;
+        virtual void addSphereMessage(fp displayTime, const FCollider& sphere) = 0;
 
-        virtual void addSphereMessage(fp displayTime, const Collider& sphere, OutputColor outputColor) = 0;
+        virtual void addSphereMessage(fp displayTime, const FCollider& sphere, OutputColor outputColor) = 0;
 
-        virtual void addCapsuleMessage(fp displayTime, const Collider& capsule) = 0;
+        virtual void addCapsuleMessage(fp displayTime, const FCollider& capsule) = 0;
 
-        virtual void addCapsuleMessage(fp displayTime, const Collider& capsule, OutputColor outputColor) = 0;
+        virtual void addCapsuleMessage(fp displayTime, const FCollider& capsule, OutputColor outputColor) = 0;
 
 #pragma endregion
 

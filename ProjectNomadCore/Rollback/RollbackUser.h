@@ -41,7 +41,9 @@ namespace ProjectNomad {
         * @returns true if input for next frame was found, false otherwise (ie, if should stop trying to process new frames).
         *           Intended to support stopping new frame updating if replay is used and replay runs out of inputs. 
         **/
-        virtual bool GetInputForNextFrame(FrameType expectedFrame, CharacterInput& result) = 0;
+        // TODO: Update this to return an arbitrary number of inputs. If in offline mode but multiplayer, then will use as many inputs as there are player slots.
+        //       Will also make extensible for splitscreen-but-also-online matches! (albeit decently messy)
+        virtual bool GetLocalInputForNextFrame(FrameType expectedFrame, PlayerInputsForFrame& result) = 0;
         /**
         * Callback to process gameplay for a single "frame".
         * 
@@ -77,8 +79,9 @@ namespace ProjectNomad {
         * @param checksum - Checksum from snapshot for target frame
         **/
         virtual void SendValidationChecksum(FrameType targetFrame, uint32_t checksum) = 0;
-        
+        // Note that this assumes only one local player and thus does not (easily) support splitscreen-but-also-online
         virtual void SendLocalInputsToRemotePlayers(FrameType updateFrame, const InputHistoryArray& playerInputs) = 0;
+
         virtual void OnStallingForRemoteInputs(const RollbackStallInfo& stallInfo) = 0;
         
         /**

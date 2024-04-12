@@ -1,25 +1,36 @@
 #pragma once
 
 #include <EnTT/entt.hpp>
-#include "Math/FPVector.h"
+#include "Math/FVectorFP.h"
 
 namespace ProjectNomad {
-    class CollisionResultWithHitEntity {
-    public:
-        bool isColliding;
+    struct CollisionResultWithHitEntity {
+        bool isColliding = false;
+        bool didHitDynamicEntity = false;
         entt::entity hitEntity = entt::null;
 
-        CollisionResultWithHitEntity(bool inIsColliding) : isColliding(inIsColliding) {}
+        static constexpr CollisionResultWithHitEntity NoCollision() {
+            CollisionResultWithHitEntity result = {};
+            result.isColliding = false; // Redundant atm but nice to be explicit and robust
+            return result;
+        }
 
-        CollisionResultWithHitEntity(bool inIsColliding, entt::entity inHitEntity)
-            : isColliding(inIsColliding), hitEntity(inHitEntity) {}
+        static constexpr CollisionResultWithHitEntity WithCollision(entt::entity inHitEntity, bool inDidHitDynamicEntity) {
+            CollisionResultWithHitEntity result = {};
+
+            result.isColliding = true;
+            result.hitEntity = inHitEntity;
+            result.didHitDynamicEntity = inDidHitDynamicEntity;
+            
+            return result;
+        }
     };
 
     struct ImpactResult {
         bool isColliding;
 
         // Axis of penetration pointing in direction from collider "A" towards collider "B"
-        FPVector penetrationDirection = FPVector::zero();
+        FVectorFP penetrationDirection = FVectorFP::Zero();
         // How far collider "A" is penetrating into collider "B" along the penetration direction. Should NOT be negative
         fp penetrationMagnitude = fp{0};
 
@@ -29,14 +40,22 @@ namespace ProjectNomad {
         // FPVector impactNormalAlongMovingCollider;
         // FPVector impactNormalAlongStaticCollider;
         
-        ImpactResult(FPVector penDir, fp penMagnitude)
+        ImpactResult(FVectorFP penDir, fp penMagnitude)
         : isColliding(true), penetrationDirection(penDir), penetrationMagnitude(penMagnitude) {}
 
+        // Copy and flip the penetration direction of this object.
+        // This serves to represent the impact info penetration from the "other" object's perspective
+        ImpactResult Flipped() const {
+            ImpactResult result = *this;
+            result.penetrationDirection.Flip();
+            return result;
+        }
+        
         static ImpactResult noCollision() {
             return ImpactResult(false);
         }
 
-    private:
+      private:
         // Private as want to be careful and assure no accidental usage of this constructor occurs
         ImpactResult(bool isColliding) : isColliding(isColliding) {}
     };
@@ -52,11 +71,11 @@ namespace ProjectNomad {
     class HitResultOld {
     public:
         bool isColliding;
-        FPVector penetrationDepth;
+        FVectorFP penetrationDepth;
 
         HitResultOld(bool inIsColliding) : isColliding(inIsColliding) {}
 
-        HitResultOld(bool inIsColliding, FPVector inPenetrationDepth)
+        HitResultOld(bool inIsColliding, FVectorFP inPenetrationDepth)
             : isColliding(inIsColliding), penetrationDepth(inPenetrationDepth) {}
     };
 }

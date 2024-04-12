@@ -37,9 +37,9 @@ namespace ProjectNomad {
         }
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
-            resultThusFar = CRC::Calculate(&roll, sizeof(roll), CRC::CRC_32(), resultThusFar);
-            resultThusFar = CRC::Calculate(&pitch, sizeof(pitch), CRC::CRC_32(), resultThusFar);
-            resultThusFar = CRC::Calculate(&yaw, sizeof(yaw), CRC::CRC_32(), resultThusFar);
+            roll.CalculateCRC32(resultThusFar);
+            pitch.CalculateCRC32(resultThusFar);
+            yaw.CalculateCRC32(resultThusFar);
         }
 
         std::string toString() const {

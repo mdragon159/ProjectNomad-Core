@@ -7,7 +7,7 @@
 #include "LogHelpers.h"
 #include "NetLogMessage.h"
 #include "Utilities/DebugMessage.h"
-#include "Physics/Collider.h"
+#include "Physics/Model/FCollider.h"
 
 namespace ProjectNomad {
     class LoggerSingleton : public ILogger {
@@ -78,117 +78,117 @@ namespace ProjectNomad {
             ));
         }
 
-        void addShapeMessage(fp displayTime, const Collider& collider) override {
-            if (collider.isBox()) {
+        void addShapeMessage(fp displayTime, const FCollider& collider) override {
+            if (collider.IsBox()) {
                 addBoxMessage(displayTime, collider);
             }
-            else if (collider.isCapsule()) {
+            else if (collider.IsCapsule()) {
                 addCapsuleMessage(displayTime, collider);
             }
-            else if (collider.isSphere()) {
+            else if (collider.IsSphere()) {
                 addSphereMessage(displayTime, collider);
             }
         }
 
-        void addShapeMessage(fp displayTime, const Collider& collider, OutputColor outputColor) override {
-            if (collider.isBox()) {
+        void addShapeMessage(fp displayTime, const FCollider& collider, OutputColor outputColor) override {
+            if (collider.IsBox()) {
                 addBoxMessage(displayTime, collider, outputColor);
             }
-            else if (collider.isCapsule()) {
+            else if (collider.IsCapsule()) {
                 addCapsuleMessage(displayTime, collider, outputColor);
             }
-            else if (collider.isSphere()) {
+            else if (collider.IsSphere()) {
                 addSphereMessage(displayTime, collider, outputColor);
             }
         }
 
-        void addBoxMessage(fp displayTime, const Collider& box) override {
-            if (!box.isBox()) {
+        void addBoxMessage(fp displayTime, const FCollider& box) override {
+            if (!box.IsBox()) {
                 LogErrorMessage(
                     "SimContext::addBoxMessage",
-                    "Provided collider is not a box but of type: " + box.getTypeAsString()
+                    "Provided collider is not a box but of type: " + box.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(
                 DebugMessage::createBoxMessage(displayTime,
-                                        box.getCenter(),
-                                        box.getBoxHalfSize(),
-                                        box.getRotation()));
+                                        box.GetCenter(),
+                                        box.GetBoxHalfSize(),
+                                        box.GetRotation()));
         }
 
-        void addBoxMessage(fp displayTime, const Collider& box, OutputColor outputColor) override {
-            if (!box.isBox()) {
+        void addBoxMessage(fp displayTime, const FCollider& box, OutputColor outputColor) override {
+            if (!box.IsBox()) {
                 LogErrorMessage(
                     "SimContext::addBoxMessage",
-                    "Provided collider is not a box but of type: " + box.getTypeAsString()
+                    "Provided collider is not a box but of type: " + box.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(
                 DebugMessage::createBoxMessage(displayTime,
-                                        box.getCenter(),
-                                        box.getBoxHalfSize(),
-                                        box.getRotation(),
+                                        box.GetCenter(),
+                                        box.GetBoxHalfSize(),
+                                        box.GetRotation(),
                                         outputColor));
         }
 
-        void addSphereMessage(fp displayTime, const Collider& sphere) override {
-            if (!sphere.isSphere()) {
+        void addSphereMessage(fp displayTime, const FCollider& sphere) override {
+            if (!sphere.IsSphere()) {
                 LogErrorMessage(
                     "SimContext::addSphereMessage",
-                    "Provided collider is not a sphere but of type: " + sphere.getTypeAsString()
+                    "Provided collider is not a sphere but of type: " + sphere.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(
-                DebugMessage::createSphereMessage(displayTime, sphere.getCenter(), sphere.getSphereRadius())
+                DebugMessage::createSphereMessage(displayTime, sphere.GetCenter(), sphere.GetSphereRadius())
             );
         }
 
-        void addSphereMessage(fp displayTime, const Collider& sphere, OutputColor outputColor) override {
-            if (!sphere.isSphere()) {
+        void addSphereMessage(fp displayTime, const FCollider& sphere, OutputColor outputColor) override {
+            if (!sphere.IsSphere()) {
                 LogErrorMessage(
                     "SimContext::addSphereMessage",
-                    "Provided collider is not a sphere but of type: " + sphere.getTypeAsString()
+                    "Provided collider is not a sphere but of type: " + sphere.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(
-                DebugMessage::createSphereMessage(displayTime, sphere.getCenter(), sphere.getSphereRadius(), outputColor)
+                DebugMessage::createSphereMessage(displayTime, sphere.GetCenter(), sphere.GetSphereRadius(), outputColor)
             );
         }
 
-        void addCapsuleMessage(fp displayTime, const Collider& capsule) override {
-            if (!capsule.isCapsule()) {
+        void addCapsuleMessage(fp displayTime, const FCollider& capsule) override {
+            if (!capsule.IsCapsule()) {
                 LogErrorMessage(
                     "SimContext::addCapsuleMessage",
-                    "Provided collider is not a capsule but of type: " + capsule.getTypeAsString()
+                    "Provided collider is not a capsule but of type: " + capsule.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(DebugMessage::createCapsuleMessage(
-                displayTime, capsule.getCenter(), capsule.getCapsuleRadius(), capsule.getCapsuleHalfHeight(), capsule.getRotation()
+                displayTime, capsule.GetCenter(), capsule.GetCapsuleRadius(), capsule.GetCapsuleHalfHeight(), capsule.GetRotation()
             ));
         }
 
-        void addCapsuleMessage(fp displayTime, const Collider& capsule, OutputColor outputColor) override {
-            if (!capsule.isCapsule()) {
+        void addCapsuleMessage(fp displayTime, const FCollider& capsule, OutputColor outputColor) override {
+            if (!capsule.IsCapsule()) {
                 LogErrorMessage(
                     "SimContext::addCapsuleMessage",
-                    "Provided collider is not a capsule but of type: " + capsule.getTypeAsString()
+                    "Provided collider is not a capsule but of type: " + capsule.GetTypeAsString()
                 );
                 return;
             }
             
             debugMessages.push(DebugMessage::createCapsuleMessage(
-                displayTime, capsule.getCenter(), capsule.getCapsuleRadius(), capsule.getCapsuleHalfHeight(),
-                capsule.getRotation(), outputColor
+                displayTime, capsule.GetCenter(), capsule.GetCapsuleRadius(), capsule.GetCapsuleHalfHeight(),
+                capsule.GetRotation(), outputColor
             ));
         }
 

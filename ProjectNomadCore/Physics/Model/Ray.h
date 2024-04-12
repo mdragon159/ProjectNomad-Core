@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Math/FPVector.h"
+#include "Math/FixedPoint.h"
+#include "Math/FVectorFP.h"
 
 namespace ProjectNomad {
 
@@ -10,22 +11,22 @@ namespace ProjectNomad {
     /// </summary>
     class Ray {
     public:
-        FPVector origin;
-        FPVector direction;
+        FVectorFP origin;
+        FVectorFP direction;
 
         Ray() : direction(fp{0}, fp{0}, fp{1}) {}
 
-        Ray(const FPVector& origin, const FPVector& direction) : origin(origin), direction(direction) {
+        Ray(const FVectorFP& origin, const FVectorFP& direction) : origin(origin), direction(direction) {
             normalizeDirection(); // Not most efficient option but safe
         }
 
-        static Ray fromPoints(const FPVector& from, const FPVector& to) {
-            return Ray(from, (to - from).normalized());
+        static Ray fromPoints(const FVectorFP& from, const FVectorFP& to) {
+            return Ray(from, (to - from).Normalized());
         }
 
     private:
         void normalizeDirection() {
-            direction.normalize();
+            direction.Normalize();
         }
     };
 }

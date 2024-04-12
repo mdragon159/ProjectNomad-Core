@@ -195,7 +195,7 @@ namespace ProjectNomad {
         * @param message - Message to send
         * @param packetReliability - How should message be sent. This will dictate whether in UDP-style, TCP-style, etc
         * @param targetId - Which player should this message be sent to
-        * @returns 
+        * @returns true if succeeds, false otherwise
         **/
         template<typename MessageType>
         bool SendP2PMessageToSpecifiedPlayerInLobby(const MessageType& message,
@@ -361,12 +361,12 @@ namespace ProjectNomad {
                 );
                 return;
             }
-            NetMessageType messageType = static_cast<NetMessageType>(messageData[0]);
+            auto messageType = static_cast<NetMessageType>(messageData[0]);
 
             // Handle depending on message type
             //      NOTE: All downstream message casts should validate message size before proceeding
             //      TODO: Would be verrry nice if we could somehow always validate here for downstream
-            switch (messageType) {
+            switch (messageType) {  // NOLINT(clang-diagnostic-switch-enum)
                 // TODO: Clean up or rework old message types!
                 case NetMessageType::TryConnect:
                     SendAcceptConnectionMessage(senderId);
@@ -608,7 +608,7 @@ namespace ProjectNomad {
 
                 // 2. Convert to raw char array (where each one is length EOS_PRODUCTUSERID_MAX_LENGTH)
                 char* targetRawArray = messageToSend.rawPlayerSpotMapping[playerSpotIndex];
-                for (int i = 0; i < playerIdAsString.length(); i++) { // Don't use strcpy as null terminating character may be in one spot beyond EOS_PRODUCTUSERID_MAX_LENGTH
+                for (size_t i = 0; i < playerIdAsString.length(); i++) { // Don't use strcpy as null terminating character may be in one spot beyond EOS_PRODUCTUSERID_MAX_LENGTH
                     targetRawArray[i] = playerIdAsString.at(i);
                 }
                 // Add null terminating character if not using full array.

@@ -2,9 +2,9 @@
 
 #include <CRCpp/CRC.h>
 
-#include "Math/FPQuat.h"
-#include "Math/FPVector.h"
-#include "Physics/Collider.h"
+#include "Math/FQuatFP.h"
+#include "Math/FVectorFP.h"
+#include "Physics/Model/FCollider.h"
 #include "Utilities/FrameType.h"
 
 namespace ProjectNomad {
@@ -14,12 +14,12 @@ namespace ProjectNomad {
     * Anything that has a location and rotation aside from special cases (eg, static level entities) should have this comp
     **/
     struct TransformComponent {
-        FPVector location = FPVector::zero();
-        FPQuat rotation = FPQuat::identity();
+        FVectorFP location = FVectorFP::Zero();
+        FQuatFP rotation = FQuatFP::identity();
 
         // Represents direction that entity is facing, *assuming* +x axis is intended to be forward direction
-        FPVector getForwardDirection() const {
-            return rotation * FPVector::forward();
+        FVectorFP getForwardDirection() const {
+            return rotation * FVectorFP::Forward();
         }
         
         void CalculateCRC32(uint32_t& resultThusFar) const {
@@ -29,11 +29,11 @@ namespace ProjectNomad {
     };
 
     struct PhysicsComponent {
-        uint16_t mass = 100;
-        FPVector velocity = FPVector::zero();
+        FFixedPoint mass = FFixedPoint(100);
+        FVectorFP velocity = FVectorFP::Zero();
 
         bool HasAnyVelocity() const {
-            return velocity.getLengthSquared() != fp{0};
+            return velocity.GetLengthSquared() != fp{0};
         }
 
         bool HasAnyHorizontalVelocity() const {
@@ -41,13 +41,13 @@ namespace ProjectNomad {
         }
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
-            resultThusFar = CRC::Calculate(&mass, sizeof(mass), CRC::CRC_32(), resultThusFar);
+            mass.CalculateCRC32(resultThusFar);
             velocity.CalculateCRC32(resultThusFar);
         }
     };
 
     struct DynamicColliderComponent {
-        Collider collider;
+        FCollider collider = {};
 
         void CalculateCRC32(uint32_t& resultThusFar) const {
             collider.CalculateCRC32(resultThusFar);
@@ -55,7 +55,7 @@ namespace ProjectNomad {
     };
 
     struct StaticColliderComponent {
-        Collider collider;
+        FCollider collider = {};
         
         void CalculateCRC32(uint32_t& resultThusFar) const {
             collider.CalculateCRC32(resultThusFar);
